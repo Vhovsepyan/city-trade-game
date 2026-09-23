@@ -1,5 +1,6 @@
 package citytrade.engine.round;
 
+import citytrade.engine.city.CityDevelopment;
 import citytrade.engine.command.DomainEvent;
 import citytrade.engine.economy.Production;
 import citytrade.engine.economy.Storage;
@@ -11,7 +12,7 @@ import java.util.List;
 
 /**
  * The real round steps. Steps that return the state unchanged are filled in by later tasks
- * (T07 level/building Prestige, T08 offers, T09 contracts, T10 events,
+ * (T08 offers, T09 contracts, T10 events,
  * T11 projects, T12 bids, T13 scoring). The switch is exhaustive, so a new step cannot be forgotten.
  */
 public final class RoundSteps implements RoundStepHandler {
@@ -27,6 +28,7 @@ public final class RoundSteps implements RoundStepHandler {
             case STRAINED_PENALTY -> Production.applyStrainedPenalty(state);
             case PRODUCTION -> Production.produce(state, ruleset);
             case UPKEEP -> Upkeep.pay(state, ruleset, events);
+            case PRESTIGE -> CityDevelopment.awardPrestige(state, ruleset, events);
             case STORAGE_LIMITS -> Storage.discardExcess(state, ruleset, events);
             case MARKET_PRICES_MOVE -> Market.movePrices(state, ruleset, events);
             case EVENT_BECOMES_ACTIVE,
@@ -37,7 +39,6 @@ public final class RoundSteps implements RoundStepHandler {
                  TRADE_OFFERS_EXPIRE,
                  BIDS_RESOLVE,
                  PROJECT_DEADLINE,
-                 PRESTIGE,
                  TEMPORARY_EVENT_EFFECTS_END,
                  FINAL_SCORING -> state;
         };

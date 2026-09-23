@@ -1,5 +1,7 @@
 package citytrade.engine;
 
+import citytrade.engine.city.CityDevelopment;
+import citytrade.engine.command.BuildBuilding;
 import citytrade.engine.command.BuyFromMarket;
 import citytrade.engine.command.ChooseObjectives;
 import citytrade.engine.command.GameCommand;
@@ -9,6 +11,7 @@ import citytrade.engine.command.ResolveRound;
 import citytrade.engine.command.SellToMarket;
 import citytrade.engine.command.SetUpkeepPriority;
 import citytrade.engine.command.StartRound;
+import citytrade.engine.command.UpgradeCity;
 import citytrade.engine.economy.UpkeepPriorityChoice;
 import citytrade.engine.market.Market;
 import citytrade.engine.round.RoundFlow;
@@ -43,6 +46,12 @@ public final class GameEngine {
                     : invalidPhase(command, state);
             case SellToMarket sell -> state.phase() == GamePhase.WINDOW
                     ? Market.sell(state, sell, ruleset)
+                    : invalidPhase(command, state);
+            case UpgradeCity upgrade -> state.phase() == GamePhase.WINDOW
+                    ? CityDevelopment.upgrade(state, upgrade, ruleset)
+                    : invalidPhase(command, state);
+            case BuildBuilding build -> state.phase() == GamePhase.WINDOW
+                    ? CityDevelopment.build(state, build, ruleset)
                     : invalidPhase(command, state);
             case StartRound _ -> ROUND_FLOW.startRound(state, ruleset);
             case ResolveRound _ -> ROUND_FLOW.resolveRound(state, ruleset);

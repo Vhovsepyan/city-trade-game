@@ -2,6 +2,7 @@ package citytrade.engine.economy;
 
 import citytrade.engine.Resource;
 import citytrade.engine.ResourceBundle;
+import citytrade.engine.city.BuildingEffects;
 import citytrade.engine.command.DomainEvent;
 import citytrade.engine.ruleset.Ruleset;
 import citytrade.engine.state.GameState;
@@ -24,7 +25,8 @@ public final class Upkeep {
     public static GameState pay(GameState state, Ruleset ruleset, List<DomainEvent> events) {
         GameState next = state;
         for (PlayerState player : state.players()) {
-            int due = ruleset.level(player.level()).upkeepResources();
+            int due = Math.max(0, ruleset.level(player.level()).upkeepResources()
+                    - BuildingEffects.upkeepReduction(player, state.round(), ruleset));
             if (due == 0) {
                 continue;
             }

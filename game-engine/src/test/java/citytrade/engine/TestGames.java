@@ -44,8 +44,9 @@ public final class TestGames {
     /** {@code state} with the player at {@code seat} changed to the given level and holdings. */
     public static GameState withCity(GameState state, int seat, int level, ResourceBundle holdings) {
         PlayerState p = state.player(seat);
-        return state.withPlayer(new PlayerState(p.seat(), p.city(), holdings, level, p.dealtObjectives(),
-                p.keptObjectives(), p.strained(), p.strainedPenaltyActive(), p.upkeepPriority(), p.marketThisRound()));
+        return state.withPlayer(new PlayerState(p.seat(), p.city(), holdings, level, p.lastUpgradeRound(),
+                p.buildings(), p.prestige(), p.dealtObjectives(), p.keptObjectives(), p.strained(),
+                p.strainedPenaltyActive(), p.upkeepPriority(), p.marketThisRound()));
     }
 
     /** The seat that plays {@code city}. */

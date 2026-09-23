@@ -158,6 +158,6 @@ class UpkeepTest {
         assertTrue(after.strained());
         PlayerState nextRound = Production.applyStrainedPenalty(state.withPlayer(after)).player(seat);
         // Level 2: specialty 4 - 2 and Money 3 - 1, not 4 - 4 and 3 - 2.
-        assertEquals(new ResourceBundle(1, 1, 2, 1, 2), Production.productionOf(nextRound, ruleset));
+        assertEquals(new ResourceBundle(1, 1, 2, 1, 2), Production.productionOf(nextRound, 1, ruleset));
     }
 }

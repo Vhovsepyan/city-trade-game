@@ -30,6 +30,18 @@ public sealed interface DomainEvent {
     record MarketPriceMoved(Resource resource, int fromStepIndex, int toStepIndex) implements DomainEvent {
     }
 
+    /** The city went up to {@code newLevel} for {@code cost}. Its Prestige is added at resolution (step 4.4). */
+    record CityUpgraded(int seat, int newLevel, ResourceBundle cost) implements DomainEvent {
+    }
+
+    /** The player built {@code buildingId} for {@code cost}. Its effect starts next round. */
+    record BuildingBuilt(int seat, String buildingId, ResourceBundle cost) implements DomainEvent {
+    }
+
+    /** Step 4.4: {@code amount} visible Prestige was added to the player. */
+    record PrestigeGained(int seat, int amount) implements DomainEvent {
+    }
+
     /** A mandatory payment was not made in full; the Strained penalty applies next round. */
     record CityStrained(int seat) implements DomainEvent {
     }

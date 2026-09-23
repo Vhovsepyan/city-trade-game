@@ -38,7 +38,7 @@ class ProductionTest {
         for (PlayerState player : window.players()) {
             ResourceBundle expected = new ResourceBundle(other, other, other, other, money)
                     .with(player.city().specialty(), specialty);
-            assertEquals(expected, Production.productionOf(player, ruleset), player.city().toString());
+            assertEquals(expected, Production.productionOf(player, 1, ruleset), player.city().toString());
             // Upkeep (step 1.4) runs after production but never touches the specialty or Money.
             assertEquals(1 + specialty, player.holdings().amountOf(player.city().specialty()));
             assertEquals(money, player.holdings().money());
@@ -64,7 +64,7 @@ class ProductionTest {
         PlayerState industrial = state.player(seatOf(state, CityType.INDUSTRIAL)).withStrained(false, true);
 
         // Level 1: specialty 3 - 2, Money 2 - 1; other resources unchanged.
-        assertEquals(new ResourceBundle(1, 1, 1, 1, 1), Production.productionOf(industrial, ruleset));
+        assertEquals(new ResourceBundle(1, 1, 1, 1, 1), Production.productionOf(industrial, 1, ruleset));
     }
 
     @Test
@@ -72,7 +72,7 @@ class ProductionTest {
         GameState state = readyForRoundOne(SEED, ruleset);
         PlayerState industrial = state.player(seatOf(state, CityType.INDUSTRIAL)).withStrained(true, false);
 
-        assertEquals(new ResourceBundle(1, 1, 3, 1, 2), Production.productionOf(industrial, ruleset));
+        assertEquals(new ResourceBundle(1, 1, 3, 1, 2), Production.productionOf(industrial, 1, ruleset));
     }
 
     @Test
@@ -83,7 +83,7 @@ class ProductionTest {
         GameState state = readyForRoundOne(SEED, harsh);
         PlayerState energy = state.player(seatOf(state, CityType.ENERGY)).withStrained(false, true);
 
-        assertEquals(new ResourceBundle(1, 0, 1, 1, 0), Production.productionOf(energy, harsh));
+        assertEquals(new ResourceBundle(1, 0, 1, 1, 0), Production.productionOf(energy, 1, harsh));
     }
 
     @Test

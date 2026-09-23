@@ -120,7 +120,7 @@ Depends on: T05
 Docs: Numbers Sheet 11-12; Concept 18, 19.
 Accept: buy/sell at current step, per-player per-round buy limit, prices fixed during window, movement at resolution by net thresholds, min/max step, atomic rejection on insufficient Money.
 
-### T07 - City levels and buildings  `TODO`
+### T07 - City levels and buildings  `DONE`
 Depends on: T05
 Docs: Numbers Sheet 6-7, 10; D4.
 Accept: one level per round, level requirements for buildings, each building once, effects start next round, Prestige at resolution, Workshop resource parameter. Transit Network can be BUILT at Level 2; its upkeep reduction applies ONLY while the city is Level 3 (no effect at Level 2).

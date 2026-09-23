@@ -2,6 +2,7 @@ package citytrade.engine.economy;
 
 import citytrade.engine.Resource;
 import citytrade.engine.ResourceBundle;
+import citytrade.engine.city.BuildingEffects;
 import citytrade.engine.command.DomainEvent;
 import citytrade.engine.ruleset.Ruleset;
 import citytrade.engine.state.GameState;
@@ -18,9 +19,9 @@ public final class Storage {
     }
 
     public static GameState discardExcess(GameState state, Ruleset ruleset, List<DomainEvent> events) {
-        int limit = ruleset.storage().resourceLimit();
         GameState next = state;
         for (PlayerState player : state.players()) {
+            int limit = limitOf(player, state.round(), ruleset);
             ResourceBundle excess = ResourceBundle.EMPTY;
             for (Resource resource : Resource.values()) {
                 excess = excess.with(resource, Math.max(0, player.holdings().amountOf(resource) - limit));
@@ -31,5 +32,10 @@ public final class Storage {
             }
         }
         return next;
+    }
+
+    /** The limit for each of F, E, M, T in {@code round}: the base limit plus active storage buildings. */
+    public static int limitOf(PlayerState player, int round, Ruleset ruleset) {
+        return ruleset.storage().resourceLimit() + BuildingEffects.storageBonus(player, round, ruleset);
     }
 }

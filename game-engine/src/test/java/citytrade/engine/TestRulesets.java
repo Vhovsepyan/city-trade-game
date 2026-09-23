@@ -1,5 +1,6 @@
 package citytrade.engine;
 
+import citytrade.engine.ruleset.BuildingEffect;
 import citytrade.engine.ruleset.BuildingRules;
 import citytrade.engine.ruleset.ContractRules;
 import citytrade.engine.ruleset.EventCard;
@@ -39,6 +40,27 @@ public final class TestRulesets {
                 base.objectives(), base.projects(), base.opportunities());
     }
 
+    /** Numbers Sheet 10, as in prototype-001. */
+    public static List<BuildingRules> prototypeBuildings() {
+        return List.of(
+                new BuildingRules("WAREHOUSE", 1, new ResourceBundle(0, 1, 1, 1, 0), 0,
+                        new BuildingEffect.StorageBonus(4)),
+                new BuildingRules("WORKSHOP", 1, new ResourceBundle(1, 0, 1, 1, 0), 0,
+                        new BuildingEffect.ChosenNonSpecialtyProduction(1)),
+                new BuildingRules("MARKET_HALL", 1, new ResourceBundle(1, 1, 0, 1, 2), 0,
+                        new BuildingEffect.ProductionBonus(new ResourceBundle(0, 0, 0, 0, 1))),
+                new BuildingRules("SPECIALTY_COMPLEX", 2, new ResourceBundle(1, 1, 2, 2, 0), 1,
+                        new BuildingEffect.SpecialtyProduction(1)),
+                new BuildingRules("RESEARCH_LAB", 2, new ResourceBundle(2, 2, 1, 0, 0), 1,
+                        new BuildingEffect.ProductionBonus(new ResourceBundle(0, 0, 0, 1, 0))),
+                new BuildingRules("TRANSIT_NETWORK", 2, new ResourceBundle(0, 2, 2, 1, 0), 0,
+                        new BuildingEffect.UpkeepReduction(3, 1)),
+                new BuildingRules("CIVIC_CENTER", 2, new ResourceBundle(2, 2, 2, 2, 0), 2,
+                        new BuildingEffect.NoEffect()),
+                new BuildingRules("GRAND_LANDMARK", 3, new ResourceBundle(3, 3, 3, 3, 5), 3,
+                        new BuildingEffect.NoEffect()));
+    }
+
     public static Ruleset withPlayerCount(int playerCount) {
         return new Ruleset(
                 "test-001",
@@ -51,7 +73,7 @@ public final class TestRulesets {
                         new LevelRules(3, 5, 1, 4, new ResourceBundle(4, 4, 4, 4, 4), 2, 2)),
                 new StorageRules(10),
                 new StrainedRules(2, 1),
-                List.<BuildingRules>of(),
+                prototypeBuildings(),
                 new MarketRules(
                         List.of(
                                 new MarketRules.PriceStep("A", 3, 1),

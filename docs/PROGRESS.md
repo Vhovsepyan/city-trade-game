@@ -5,7 +5,7 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
 - Milestone: M0
-- Next task: T07
+- Next task: T08
 - Target ruleset: prototype-001 (`rulesets/prototype-001.json`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -31,7 +31,10 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
   change was needed. Foojay resolver downloads JDK 25 if it is missing.
 
 ## Questions for owner
-- (none)
+- T07 (please confirm, not blocking): Numbers Sheet 9 says Strained = "specialty production -2 and
+  Money income -1". The engine applies this to the TOTAL specialty production and Money income,
+  building bonuses included (e.g. L2 + Specialty Complex: 5 - 2 = 3 specialty; L1 + Market Hall:
+  3 - 1 = 2 Money). Alternative: only reduce the level values. Current choice follows the literal text.
 
 ## Suggestions (not built)
 - (none)
@@ -45,6 +48,19 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T07 - City levels and buildings - DONE (review round 1)
+- What: package `city`: `CityDevelopment` (commands `UpgradeCity`, `BuildBuilding`, WINDOW only; step 4.4
+  `awardPrestige`), `BuildingEffects` (production / storage / upkeep bonuses of ACTIVE buildings only).
+- `PlayerState` new fields: `lastUpgradeRound` (one level per round), `buildings` (`BuiltBuilding`: id,
+  roundBuilt, D4 chosenResource), `prestige` (visible). Effects start when `roundBuilt < round`.
+- Level counts at once (unlocks buildings in the same window); production/upkeep change next round.
+  Transit reduction only when city level == effect `cityLevel` (3). Prestige for level + buildings of this round in 4.4.
+- Codes: `MAX_LEVEL_REACHED`, `ALREADY_UPGRADED_THIS_ROUND`, `UNKNOWN_BUILDING`, `BUILDING_ALREADY_BUILT`,
+  `LEVEL_TOO_LOW`, `INVALID_BUILDING_CHOICE`. Events: `CityUpgraded`, `BuildingBuilt`, `PrestigeGained`.
+- `Production.productionOf` now takes the round. Strained penalty on total production (see Questions).
+- For later: T10 building cost discount event goes into `CityDevelopment.build`; T11+ add their Prestige in 4.4.
+- Tests: CityUpgradeTest (9), BuildingTest (27 incl. parameterized); TestRulesets now has the 8 buildings.
 
 ### T06 - Global market - DONE (review round 1)
 - What: package `market`: `Market` (buy/sell handlers, `buyCost`/`sellValue` at current step, step 4.6

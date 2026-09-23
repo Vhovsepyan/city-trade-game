@@ -1,6 +1,7 @@
 package citytrade.engine.ruleset;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * All balance values of one ruleset version (Numbers Sheet). Immutable.
@@ -33,5 +34,14 @@ public record Ruleset(
                 .filter(rules -> rules.level() == level)
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("ruleset has no level " + level));
+    }
+
+    public boolean hasLevel(int level) {
+        return levels.stream().anyMatch(rules -> rules.level() == level);
+    }
+
+    /** The building with {@code id}, if this ruleset has one. */
+    public Optional<BuildingRules> building(String id) {
+        return buildings.stream().filter(rules -> rules.id().equals(id)).findFirst();
     }
 }
