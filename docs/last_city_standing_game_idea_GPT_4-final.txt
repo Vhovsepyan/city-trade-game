@@ -1,0 +1,1940 @@
+UNTITLED CITY TRADE GAME
+Detailed Game Concept — GPT Revision 4
+======================================
+
+STATUS
+------
+This document is the fourth and final concept revision before numerical balancing.
+
+The design is now intentionally frozen at the concept/rules level.
+All remaining core rule contradictions from the previous reviews are resolved.
+The next major document should be a NUMBERS SHEET for the paper prototype.
+
+The public/commercial title is NOT decided yet.
+
+Previous working titles:
+- Last City Standing
+- Rival Cities
+
+"Rival Cities" should NOT be used publicly because it conflicts with an
+existing published board game.
+
+For now, use:
+UNTITLED CITY TRADE GAME
+as an internal project name only.
+
+
+============================================================
+1. CORE IDEA
+============================================================
+
+Untitled City Trade Game is a competitive social strategy game for 4 players.
+
+Each player controls a different city in the same regional economy.
+Every city is naturally strong at producing one important resource, but no city
+can efficiently produce everything it needs.
+
+As a result, players are rivals who are also economically dependent on one another.
+
+The emotional core is:
+
+"I need something from you, but you are also my rival."
+
+Players:
+- build and develop their cities
+- trade resources
+- negotiate
+- make promises
+- sign contracts
+- react to future crises
+- compete for public projects
+- pursue hidden objectives
+- try to finish with the highest Prestige
+
+The game should create memorable situations such as:
+- "You saved me during the Energy shortage."
+- "I trusted your promise and you broke it."
+- "Everybody thought I was losing, but my hidden objectives changed the result."
+- "We worked together on the public project and then competed against each other."
+- "I controlled the resource everyone needed during the drought."
+
+
+============================================================
+2. TARGET EXPERIENCE
+============================================================
+
+PLAYERS
+4 players for Version 1.
+
+Possible later testing:
+- 3 players
+- 5 players
+
+Not part of Version 1:
+- 6 players
+
+MATCH LENGTH
+Target:
+45–60 minutes digitally.
+
+Paper prototype:
+may initially take 90–120 minutes.
+
+TARGET AUDIENCE
+- board-game players
+- casual strategy players
+- friend groups
+- couples/groups
+- players who enjoy negotiation
+- players who enjoy Catan-style social interaction
+- players who like economic competition
+- players who do not want heavy RTS controls
+
+COMPLEXITY GOAL
+Easy to understand after one guided game.
+Strategically interesting after repeated games.
+
+
+============================================================
+3. VERSION 1 SCOPE
+============================================================
+
+Version 1 should stay deliberately small.
+
+The objective is not to create a large commercial game immediately.
+The objective is to answer:
+
+"Is the core interaction fun enough that people want to play again?"
+
+Version 1 contains:
+- 4 players
+- 4 asymmetric cities
+- 5 resources
+- exactly 14 rounds
+- simultaneous play
+- one combined Development & Trade Window
+- global market with buy/sell spread
+- instant trades
+- verbal promises
+- one simple formal contract system
+- 10–12 world events
+- 3 city levels
+- 1–2 public projects per match
+- hidden objectives
+- regional bidding opportunities
+- Prestige scoring
+- no player elimination
+
+Version 1 does NOT require:
+- armies
+- territory conquest
+- sabotage
+- teams
+- solo campaign
+- sophisticated AI negotiation
+- matchmaking
+- asynchronous play
+- loans
+- futures
+- embargoes
+- trade taxes
+- 6 players
+- complex diplomacy
+- mobile monetization
+- DLC design
+- a large map
+
+
+============================================================
+4. MATCH END
+============================================================
+
+Version 1 uses a FIXED GAME LENGTH.
+
+The game lasts exactly:
+
+14 rounds.
+
+There is no early Prestige trigger in the first prototype.
+
+After Round 14:
+1. All normal round effects finish.
+2. Hidden objectives are revealed.
+3. Hidden Prestige is added.
+4. Final Prestige is calculated.
+5. The player with the highest total Prestige wins.
+
+This fixed structure has several advantages:
+- every test game has comparable length
+- balancing is easier
+- there is no confusion between visible and hidden Prestige
+- players know exactly how much time remains
+- the game cannot continue indefinitely
+
+A future version may test an early-win trigger after real score distributions
+are known.
+
+
+============================================================
+5. THE FOUR CITIES
+============================================================
+
+The four Version 1 cities are:
+
+1. AGRICULTURAL CITY
+Strong at producing Food.
+
+2. INDUSTRIAL CITY
+Strong at producing Materials.
+
+3. ENERGY CITY
+Strong at producing Energy.
+
+4. TECHNOLOGY CITY
+Strong at producing Technology.
+
+Every city can earn Money.
+Every city can acquire all resources.
+Every city can produce outside its specialty, but less efficiently.
+
+The exact production numbers belong in the future Numbers Sheet.
+
+A Trading City is NOT part of Version 1.
+
+
+============================================================
+6. RESOURCES
+============================================================
+
+Version 1 has exactly five resources:
+
+FOOD
+Used for growth, development, events, and some projects.
+
+ENERGY
+Used for infrastructure, development, events, and some projects.
+
+MATERIALS
+Used for construction, development, buildings, and infrastructure.
+
+TECHNOLOGY
+A normal tradable resource.
+Used from the EARLY GAME onward.
+
+Technology is spent on:
+- city upgrades
+- buildings
+- project contributions
+- crisis responses
+- regional opportunities
+
+Technology is NOT a separate progression track in Version 1.
+
+MONEY
+Used for:
+- market transactions
+- bids
+- some buildings
+- public projects
+- contracts
+- crisis responses
+
+There is no separate:
+- Medicine
+- Population
+- Influence
+
+system in Version 1.
+
+
+============================================================
+7. RESOURCE DEMAND PRINCIPLE
+============================================================
+
+All four specialty resources must have meaningful demand from the beginning
+of the match.
+
+The design must avoid this problem:
+
+Food: high demand
+Energy: high demand
+Materials: medium demand
+Technology: low demand
+
+That would make the Technology City weak.
+
+Therefore the Numbers Sheet must contain a DEMAND TABLE.
+
+The table must list every cost in the game:
+- city upgrades
+- buildings
+- upkeep
+- events
+- public projects
+- opportunities
+- objective-related actions
+
+For each cost, record which resources it consumes.
+
+The design target:
+Food, Energy, Materials, and Technology should all have meaningful uses in
+the early, middle, and late game.
+
+The resources do NOT need identical demand, but none should become irrelevant
+for several rounds.
+
+
+============================================================
+8. STORAGE
+============================================================
+
+Food, Energy, Materials, and Technology have limited storage.
+
+Initial concept:
+Food: capacity 10
+Energy: capacity 10
+Materials: capacity 10
+Technology: capacity 10
+Money: unlimited for the first prototype
+
+Some upgrades may increase storage.
+
+STORAGE TIMING RULE
+
+Storage capacity is enforced at ROUND RESOLUTION, not continuously.
+
+During the Development & Trade Window, a player may temporarily hold more
+than the normal storage limit.
+
+Example:
+
+Food capacity:
+10
+
+Current Food:
+9
+
+The player receives:
+4 Food through trade.
+
+Temporary Food:
+13
+
+This is allowed during the active window.
+
+Before Round Resolution finishes, the player must reduce Food back to 10
+or lower by:
+
+- spending it
+- trading it
+- selling it to the global market
+
+Any excess still above storage capacity at Round Resolution is discarded.
+
+Why use end-of-round enforcement?
+
+- trades are not blocked by temporary overflow
+- players can reorganize resources freely
+- preparation for forecast crises is more flexible
+- storage still matters because excess cannot be carried into the next round
+
+Money being unlimited is something to WATCH during playtesting.
+
+If players constantly convert all surplus resources into Money, then:
+- market buy prices may be too generous
+- Money may need its own storage/maintenance rule later
+
+Do not add that complexity before testing.
+
+
+============================================================
+9. CITY DEVELOPMENT
+============================================================
+
+Version 1 has three city levels.
+
+LEVEL 1 — SETTLEMENT
+Starting level.
+
+LEVEL 2 — CITY
+Unlocks:
+- better production
+- more building choices
+- stronger specialization
+- some project advantages
+
+LEVEL 3 — METROPOLIS
+Unlocks:
+- advanced production
+- advanced buildings
+- stronger specialization
+- additional Prestige opportunities
+- stronger crisis-response options
+
+Three levels are enough for a 14-round game.
+
+
+============================================================
+10. UPKEEP
+============================================================
+
+The previous Food + Energy upkeep rule is removed.
+
+It unfairly benefited the Agricultural and Energy cities.
+
+Version 1 uses NON-SPECIALTY UPKEEP.
+
+A city may NOT use its own specialty resource to pay upkeep.
+
+Specialty restrictions:
+
+Agricultural City:
+cannot use Food for upkeep.
+
+Industrial City:
+cannot use Materials for upkeep.
+
+Energy City:
+cannot use Energy for upkeep.
+
+Technology City:
+cannot use Technology for upkeep.
+
+LEVEL 1
+No upkeep.
+
+LEVEL 2
+Pay 1 non-specialty, non-Money resource per round.
+
+LEVEL 3
+Pay 2 DIFFERENT non-specialty, non-Money resources per round.
+
+Example:
+
+Agricultural City at Level 3 may pay:
+1 Energy + 1 Materials
+
+or:
+1 Energy + 1 Technology
+
+or:
+1 Materials + 1 Technology
+
+It may NOT use Food for upkeep.
+
+Money cannot be used for normal city upkeep.
+
+Why this rule exists:
+
+- every advanced city depends on resources produced efficiently by rivals
+- all four city specializations follow the same rule
+- no specialization receives a built-in upkeep advantage
+- development increases economic interdependence
+
+This rule must be watched carefully during playtesting.
+
+If it makes trading too mandatory or creates excessive frustration, the
+Numbers Sheet can reduce upkeep amounts before changing the core rule.
+
+
+============================================================
+11. FAILED UPKEEP
+============================================================
+
+If a player cannot pay full upkeep:
+the city becomes STRAINED.
+
+A Strained City:
+- remains at its current level
+- receives reduced production NEXT ROUND
+
+Production is NOT reduced retroactively.
+
+Exact Strained penalties belong in the Numbers Sheet.
+
+The player does not automatically lose a city level.
+
+
+============================================================
+12. ROUND STRUCTURE
+============================================================
+
+Each of the 14 rounds follows the same structure.
+
+1. AUTOMATIC UPDATE
+- production resolves
+- upkeep is paid
+- contract obligations due now are checked
+- scheduled effects resolve
+- Strained penalties from the previous round apply
+
+2. WORLD UPDATE
+- current event resolves
+- next major event warning is shown
+- public opportunities/projects may appear
+
+3. DEVELOPMENT & TRADE WINDOW
+All players act simultaneously.
+
+During the same window, players may:
+- negotiate
+- trade
+- accept/counter offers
+- buy/sell through the global market
+- build
+- upgrade
+- spend Technology
+- contribute to projects
+- submit bids
+- sign contracts
+- inspect public information
+
+Resources received through trade can be used IMMEDIATELY in the same window.
+
+4. ROUND RESOLUTION
+- bids resolve
+- public project progress resolves
+- Prestige earned this round is updated
+- temporary effects expire
+- round ends
+
+
+============================================================
+13. DEVELOPMENT & TRADE WINDOW
+============================================================
+
+This is the main interactive part of the round.
+
+Initial digital target:
+approximately 2–3 minutes.
+
+Paper prototype:
+may be untimed at first.
+
+Later paper tests should introduce timers gradually.
+
+Why one combined window?
+
+Because this allows:
+
+Trade:
+"I need 2 Materials."
+
+Receive:
+2 Materials.
+
+Immediately:
+Use those Materials to build.
+
+This creates immediate value from negotiation.
+
+The older structure:
+Build first → trade afterward
+
+is removed because it forced traded resources to wait until the next round.
+
+
+============================================================
+14. PLAYER-TO-PLAYER TRADING
+============================================================
+
+Players may offer exchanges during the combined window.
+
+Examples:
+2 Food for 1 Energy
+3 Materials for 4 Money
+1 Technology + 2 Money for 2 Energy
+
+Players can:
+- accept
+- reject
+- counteroffer
+
+All negotiations happen simultaneously.
+
+There is no individual trading turn.
+
+
+============================================================
+15. THREE TYPES OF AGREEMENT
+============================================================
+
+A. INSTANT TRADE
+
+Example:
+2 Food for 1 Energy.
+
+If both sides accept:
+the game executes it immediately.
+
+Instant trades are binding.
+
+
+B. VERBAL PROMISE
+
+Example:
+"Give me Energy now and I will help you next round."
+
+The game does NOT enforce this.
+
+It is socially non-binding.
+
+The player may:
+- keep the promise
+- renegotiate
+- break the promise
+
+This creates bluffing and social stories.
+
+
+C. FORMAL CONTRACT
+
+A formal contract is explicitly recorded by the game.
+
+Example:
+
+Round 6:
+Player A gives 2 Energy now.
+
+Round 7:
+Player B owes 3 Food.
+
+Formal contracts are normally binding obligations.
+
+However, they can fail or be intentionally broken.
+
+
+============================================================
+16. FORMAL CONTRACT RULES
+============================================================
+
+Version 1 contract rules:
+
+MAXIMUM DURATION
+3 rounds.
+
+GAME-END RULE
+No formal contract obligation may be due after Round 14.
+
+Therefore:
+
+- a contract created in Round 12 may have an obligation due in Round 13 or 14
+- a contract created in Round 13 may have an obligation due in Round 14
+- a contract created in Round 14 cannot create a future obligation
+
+Instant trades are still allowed in Round 14.
+
+This prevents players from receiving resources near the end of the game in
+exchange for promises that can never come due.
+
+CONTRACT FAILURE
+If a player cannot satisfy an obligation when it becomes due:
+the contract is automatically broken.
+
+VOLUNTARY BREAK
+A player may intentionally break the contract.
+
+COMPENSATION
+Contract-break compensation is denominated primarily in Money.
+
+The compensation goes to the VICTIM, not to the bank.
+
+If the breaking player cannot pay the full required Money compensation:
+
+- the available Money is paid to the victim
+- the unpaid portion creates an additional Prestige penalty for the breaker
+- Prestige is NOT transferred to the victim
+
+This avoids creating a kingmaking tool while still making default costly.
+
+PUBLIC RECORD
+The breaking player receives:
+Contracts Broken +1
+
+This number is public.
+
+PRESTIGE
+Contract breaking may cause a Prestige penalty.
+
+MUTUAL CANCELLATION
+Both players may agree to cancel a contract without penalty before the
+obligation becomes due.
+
+The exact Money compensation and Prestige penalty values belong in the
+Numbers Sheet.
+
+
+============================================================
+17. SIMPLE REPUTATION
+============================================================
+
+Version 1 does not need a complicated reputation system.
+
+Public information includes:
+
+CONTRACTS BROKEN: X
+
+Players decide for themselves whether another player is trustworthy.
+
+The game does not assign labels such as:
+"Honest"
+"Dishonest"
+
+
+============================================================
+18. GLOBAL MARKET
+============================================================
+
+The global market is a fallback.
+
+It prevents complete economic lockout.
+
+It should NOT be the best way to trade.
+
+Each resource has:
+
+MARKET SELL PRICE
+What the player pays to buy from the market.
+
+MARKET BUY PRICE
+What the market pays when the player sells.
+
+There must be a spread.
+
+Example:
+
+Market sells:
+1 Energy for 3 Money.
+
+Market buys:
+1 Energy for 1 Money.
+
+Human trade:
+1 Energy for 2 Money.
+
+Then:
+buyer prefers player trade
+
+and
+
+seller prefers player trade.
+
+This protects the core social mechanic.
+
+
+============================================================
+19. MARKET BEHAVIOR
+============================================================
+
+For the first prototype:
+market prices should remain simple.
+
+MARKET PRICE TIMING
+
+Market prices are FIXED during the entire Development & Trade Window.
+
+They do NOT change after each individual purchase or sale.
+
+At Round Resolution:
+
+- total market buying for each resource is counted
+- total market selling for each resource is counted
+- event modifiers are applied
+- next round's prices are calculated
+
+The updated prices become active at the start of the next round.
+
+This prevents click order from determining price and makes the rule easy to
+manage in a paper prototype.
+
+Prices may move within a narrow predefined range based on:
+- net demand
+- net supply
+- events
+
+The system should not become a complex financial simulator.
+
+During tests, measure:
+- number of market transactions
+- number of player-to-player trades
+
+If global market usage dominates human trading:
+the market is too attractive.
+
+
+============================================================
+20. WORLD EVENTS
+============================================================
+
+Version 1 should contain approximately:
+
+10–12 handcrafted event cards.
+
+Events should create decisions.
+
+Events should NOT simply say:
+"Randomly lose resources."
+
+Possible events:
+
+DROUGHT
+Food production is reduced during the event round.
+
+ENERGY SHORTAGE
+Energy production is reduced or Energy costs increase.
+
+CONSTRUCTION BOOM
+Materials gain temporary extra value.
+
+TECHNOLOGY BOOM
+Technology-related costs improve.
+
+RECESSION
+Money income decreases.
+
+TRADE DISRUPTION
+Global market prices become worse.
+
+INFRASTRUCTURE FAILURE
+Players must spend Materials/Technology or take a temporary penalty.
+
+EPIDEMIC
+Uses existing resources such as Technology + Money.
+No Medicine resource.
+
+PUBLIC FESTIVAL
+Players may spend Food + Money to gain a benefit or Prestige.
+
+SUPPLY SHOCK
+One resource becomes temporarily scarce.
+
+RESEARCH BREAKTHROUGH
+Creates a temporary Technology opportunity.
+
+
+============================================================
+21. EVENT WARNING RULE
+============================================================
+
+Most major events are shown ONE ROUND BEFORE they activate.
+
+SETUP RULE
+
+The first major-event warning is revealed during game setup.
+
+Round 1 has no major crisis effect.
+
+This gives players one learning/development round while already showing them
+what they may need to prepare for.
+
+Example:
+
+During setup:
+"Drought expected in Round 2."
+
+Round 1:
+players develop and prepare.
+
+Round 2:
+Drought effect applies.
+
+For later rounds:
+
+Round 5 warning:
+"Drought expected next round."
+
+Round 6:
+Drought effect applies.
+
+The event card itself describes what happens DURING the event round.
+
+It should not say:
+"Food production decreases next round."
+
+That would accidentally add an extra delay.
+
+The warning creates the preparation gameplay.
+
+
+============================================================
+22. PUBLIC PROJECTS
+============================================================
+
+A match contains:
+1–2 major public projects.
+
+Example:
+
+REGIONAL POWER GRID
+
+Requires contributions of:
+- Energy
+- Materials
+- Money
+
+Example:
+
+REGIONAL RESEARCH INITIATIVE
+
+Requires:
+- Technology
+- Materials
+- Money
+
+Projects create:
+cooperation + competition.
+
+Players want the project to succeed.
+
+But they also want to gain more Prestige than the others.
+
+
+============================================================
+23. PUBLIC PROJECT RULES
+============================================================
+
+Every project card defines:
+- total required resources
+- duration
+- minimum qualifying contribution
+- success reward
+- largest-contributor reward
+
+QUALIFYING CONTRIBUTOR
+
+A player must contribute at least the amount printed on the project card.
+
+Example:
+Minimum qualifying contribution:
+3 total resources.
+
+SCORING CONCEPT
+
+Largest contributor:
++3 Prestige.
+
+Other qualifying contributors:
++1 Prestige.
+
+If largest contribution is tied:
+both tied leaders receive:
++2 Prestige.
+
+PROJECT FAILURE
+
+If the project deadline is reached and the project is incomplete:
+all contributed resources are LOST.
+
+This increases tension and forces players to judge whether other players
+will cooperate.
+
+PLAYTEST NOTE
+
+Because contributions are public and failure loses resources, players may
+wait until the deadline before contributing.
+
+This may create good tension or it may create frustrating stalemates.
+
+Measure:
+- whether players contribute early
+- whether most contributions happen only at the deadline
+- whether projects fail because everybody waits
+
+Do not add another project mechanic until this behavior is observed.
+
+Exact numbers belong in the Numbers Sheet.
+
+
+============================================================
+24. SECRET BIDS
+============================================================
+
+Some regional opportunities use secret Money bids.
+
+Rules:
+
+- all players may submit a bid
+- 0 means PASS
+- a bid must be at least 1 Money to win
+- highest bid wins
+- only the winner pays
+- losing players pay nothing
+
+TIE RULE
+
+If the HIGHEST bid is tied:
+
+- nobody wins
+- nobody pays
+- the opportunity remains available for the next round
+
+Example:
+
+Bids:
+5, 5, 3, 0
+
+Result:
+nobody wins.
+
+The player who bid 3 does NOT win.
+
+Example:
+
+SOLAR FIELD
+
+Benefit:
++1 Energy production.
+
+Players secretly bid.
+
+Highest untied bid wins.
+
+
+============================================================
+25. REGIONAL OPPORTUNITIES
+============================================================
+
+The first version may use:
+4–6 opportunity cards.
+
+Examples:
+
+SOLAR FIELD
+Improves Energy production.
+
+FERTILE VALLEY
+Improves Food production.
+
+INDUSTRIAL ZONE
+Improves Materials efficiency.
+
+RESEARCH CAMPUS
+Improves Technology efficiency.
+
+COMMERCIAL HUB
+Improves Money generation.
+
+These provide direct competition without requiring territorial warfare.
+
+
+============================================================
+26. HIDDEN OBJECTIVES
+============================================================
+
+At the beginning of the game:
+
+Each player receives 3 hidden objective cards.
+
+The player chooses:
+2 to keep.
+
+The third is discarded secretly.
+
+Each completed objective is worth:
++2 Prestige.
+
+Therefore maximum hidden Prestige:
+4.
+
+This is enough to create uncertainty without allowing a huge surprise swing.
+
+
+============================================================
+27. OBJECTIVE DESIGN RULES
+============================================================
+
+An objective should NOT directly match the player's city specialization.
+
+Example:
+
+Energy City should not receive:
+"End a round with 8 Energy."
+
+because it may be too easy.
+
+Objectives should encourage intentional decisions.
+
+Good objective concepts:
+
+ACTIVE TRADER
+Complete player-to-player trades with all three opponents.
+
+DIVERSIFIED ECONOMY
+Own at least one advanced building using three different resource types.
+
+PROJECT PARTNER
+Qualify for both public projects.
+
+CONTRACT PLAYER
+Complete two formal contracts without breaking one.
+
+MARKET INDEPENDENCE
+Complete a specific crisis without using the global market.
+
+RAPID DEVELOPMENT
+Reach Metropolis by a specified round.
+
+The exact objective deck belongs in the Numbers Sheet.
+
+
+============================================================
+28. OBJECTIVE VERIFICATION
+============================================================
+
+For a digital version:
+the game automatically verifies objectives.
+
+For a paper prototype:
+use one of these:
+
+OPTION A
+A fifth person acts as Banker/Game Master.
+
+OPTION B
+Use a shared spreadsheet that records hidden objective completion.
+
+The early paper prototype should preferably have a Banker/Game Master.
+
+
+============================================================
+29. PRESTIGE
+============================================================
+
+Prestige is the victory score.
+
+Most Prestige is earned through ONE-TIME achievements.
+
+Initial concept:
+
+Reach City Level 2:
++1 Prestige
+
+Reach City Level 3:
++2 Prestige
+
+Complete certain major buildings:
++1 Prestige
+
+Complete hidden objective:
++2 Prestige
+
+Largest public project contributor:
++3 Prestige
+
+Other qualifying project contributor:
++1 Prestige
+
+Tie for largest project contribution:
++2 Prestige each
+
+Certain crisis achievements:
++1 Prestige
+
+Special city achievements:
++1 or +2 Prestige
+
+These are initial design values only.
+
+The Numbers Sheet must define every exact source.
+
+
+============================================================
+30. WHAT DOES NOT GIVE PRESTIGE
+============================================================
+
+Simply holding resources does NOT give Prestige.
+
+Simply holding Money does NOT give Prestige.
+
+Reasons:
+- avoids rewarding hoarding
+- encourages resource use
+- protects trading
+- prevents score leakage from hidden reserves
+- prevents Money from becoming a passive victory strategy
+
+
+============================================================
+31. SCORE VISIBILITY
+============================================================
+
+VISIBLE DURING THE GAME
+- public Prestige
+- city level
+- public project Prestige
+- building Prestige
+- public crisis Prestige
+
+HIDDEN UNTIL THE END
+- hidden objective Prestige
+
+Therefore players understand who appears strong but cannot know the exact
+final result.
+
+
+============================================================
+32. NO HARD "NO FREE GIFTS" RULE IN THE PAPER PROTOTYPE
+============================================================
+
+The previous "every trade must exchange something" rule is removed as an
+anti-kingmaking solution.
+
+It was too easy to bypass.
+
+Example:
+
+5 Food for 1 Money
+
+is technically a trade but can still function like a gift.
+
+For the friends-only paper prototype:
+allow uneven trades.
+
+Observe:
+- whether players abuse them
+- whether kingmaking actually becomes a problem
+- whether social pressure already discourages extreme feeding
+
+Do NOT solve a theoretical problem before seeing it.
+
+For a future public matchmaking version:
+a minimum relative trade-value rule may be introduced.
+
+This is NOT required for Version 1.
+
+
+============================================================
+33. NO PLAYER ELIMINATION
+============================================================
+
+Players remain in the game through Round 14.
+
+Nobody is eliminated.
+
+A player who is behind can still:
+- trade
+- complete objectives
+- participate in projects
+- win bids
+- prepare for events
+- affect the economy
+- score late Prestige
+
+
+============================================================
+34. COMEBACK DESIGN
+============================================================
+
+The game does NOT give automatic bonuses based on being last.
+
+Comeback opportunities come from circumstances.
+
+Examples:
+- an event increases demand for the weaker player's specialty
+- hidden objectives produce late Prestige
+- a project creates a new scoring opportunity
+- leaders have more upkeep
+- market fallback prevents complete lockout
+- regional opportunities create new advantages
+
+Players should receive opportunities, not pity bonuses.
+
+
+============================================================
+35. ANTI-RUNAWAY DESIGN
+============================================================
+
+The main anti-runaway systems are:
+
+FLEXIBLE UPKEEP
+Larger cities still consume resources.
+
+STORAGE LIMITS
+Strong production cannot be hoarded forever.
+
+MARKET SPREAD
+Global market conversion is inefficient.
+
+DEPENDENCY
+Every city needs resources produced efficiently by others.
+
+ONE-TIME PRESTIGE
+Leading does not automatically generate Prestige every round.
+
+HIDDEN OBJECTIVES
+The visible leader is not guaranteed to be the final leader.
+
+FIXED 14-ROUND END
+A strong early player cannot extend the game indefinitely.
+
+
+============================================================
+36. COMPETITION WITHOUT WAR
+============================================================
+
+Version 1 has no military system.
+
+Competition comes from:
+- resource scarcity
+- negotiation
+- market timing
+- bids
+- contracts
+- city development
+- public projects
+- hidden objectives
+- crisis preparation
+
+Military mechanics should only be considered later if real playtests show
+that the game needs more direct conflict.
+
+
+============================================================
+37. INFORMATION RULES
+============================================================
+
+PUBLIC INFORMATION
+- city identity/specialization
+- city level
+- buildings
+- visible Prestige
+- market prices
+- active public projects
+- project contributions
+- regional opportunity ownership
+- formal contracts
+- Contracts Broken count
+
+PRIVATE INFORMATION
+- exact stored resources
+- exact Money balance, if testing supports this
+- hidden objective details
+- planned actions
+- verbal promises
+- negotiation intentions
+
+This creates room for bluffing.
+
+
+============================================================
+38. COMMUNICATION
+============================================================
+
+The game is designed around communication.
+
+For early testing:
+players simply talk.
+
+Possible later digital tools:
+- text chat
+- voice chat
+- quick messages
+
+Example quick messages:
+"I need Food."
+"Offering Energy."
+"Need Materials."
+"Deal?"
+"Counteroffer."
+"Too expensive."
+"I can help next round."
+"No deal."
+
+Public matchmaking would eventually require:
+- mute
+- report
+- moderation tools
+
+These are not prototype requirements.
+
+
+============================================================
+39. EXAMPLE MATCH FLOW
+============================================================
+
+Four players:
+
+GREEN
+Agricultural City
+
+RED
+Industrial City
+
+YELLOW
+Energy City
+
+BLUE
+Technology City
+
+
+ROUNDS 1–3
+
+All four resources already matter.
+
+Green has excess Food.
+
+Red needs Food and Technology for an early building.
+
+Yellow needs Materials.
+
+Blue needs Energy and Materials.
+
+Blue's Technology is useful immediately because early buildings and city
+upgrades require Technology.
+
+Trades start naturally.
+
+
+ROUND 4
+
+Warning:
+
+"Drought expected next round."
+
+Players react immediately during the Development & Trade Window.
+
+Green receives several Food offers.
+
+Red trades Materials for Food.
+
+Blue trades Technology for Food.
+
+Yellow offers Energy for Food.
+
+Resources obtained from these trades can be used immediately.
+
+
+ROUND 5
+
+Drought activates.
+
+Green has bargaining power but also needs additional resource types for
+upkeep.
+
+Green and Yellow sign a contract:
+
+Yellow gives:
+2 Energy now.
+
+Green owes:
+3 Food next round.
+
+
+ROUND 6
+
+Green receives an opportunity that also needs Food.
+
+Green must choose:
+
+Honor the contract
+
+OR
+
+break it.
+
+If Green breaks it:
+- Yellow receives compensation
+- Green's Contracts Broken count increases
+- Green may lose Prestige depending on final contract numbers
+
+
+ROUND 8
+
+Regional Research Initiative begins.
+
+Blue contributes strongly.
+
+Red contributes enough to qualify.
+
+Yellow participates.
+
+Green chooses not to contribute.
+
+
+ROUND 10
+
+Red reaches Metropolis.
+
+Red has the highest visible Prestige.
+
+Blue, however, has already completed one hidden objective.
+
+No other player knows Blue's exact final score.
+
+
+ROUND 12
+
+Energy shortage warning appears.
+
+Yellow becomes strategically important.
+
+Previous relationships matter.
+
+Yellow gives better terms to players who have traded reliably.
+
+Yellow may demand more from Green because Green previously broke a contract.
+
+
+ROUND 14
+
+Final round.
+
+Players make their last:
+- instant trades
+- builds
+- bids
+- project contributions
+- objective attempts
+
+Players may also settle formal contracts due in Round 14.
+
+No new formal contract may create an obligation after Round 14.
+
+Verbal promises about actions after the game have no rules effect.
+
+Round resolves.
+
+
+FINAL REVEAL
+
+Hidden objectives are revealed.
+
+Example:
+
+Blue visible: 17
+Blue hidden: 4
+Blue final: 21
+
+Red visible: 19
+Red hidden: 0
+Red final: 19
+
+Green visible: 15
+Green hidden: 4
+Green final: 19
+
+Yellow visible: 16
+Yellow hidden: 2
+Yellow final: 18
+
+Blue wins.
+
+
+============================================================
+40. TIEBREAKERS
+============================================================
+
+If final Prestige is tied:
+
+1. Higher city level.
+2. More completed hidden objectives.
+3. Fewer broken formal contracts.
+4. Shared victory.
+
+Money is NOT a tiebreaker.
+
+Reason:
+using Money as a tiebreaker encourages players to liquidate resources and
+hoard cash.
+
+
+============================================================
+41. GAME END SUMMARY
+============================================================
+
+The final digital game should show a story summary.
+
+Possible statistics:
+
+WINNER
+FINAL PRESTIGE
+MOST PLAYER-TO-PLAYER TRADES
+LARGEST SINGLE TRADE
+MOST CONTRACTS SIGNED
+MOST CONTRACTS BROKEN
+LARGEST PROJECT CONTRIBUTION
+MOST MARKET PURCHASES
+MOST VALUABLE RESOURCE
+BIGGEST REGIONAL BID
+MOST IMPORTANT CRISIS
+
+This is useful for:
+- storytelling
+- replay discussion
+- screenshots
+- social sharing
+
+
+============================================================
+42. FIRST PAPER PROTOTYPE
+============================================================
+
+The concept is now ready for a paper prototype.
+
+However, a paper prototype CANNOT begin until the Numbers Sheet exists.
+
+Required prototype materials:
+- 4 city sheets
+- resource tokens
+- Money tokens
+- city level markers
+- event cards
+- objective cards
+- public project cards
+- opportunity cards
+- Prestige tracker
+- market price table
+- contract cards
+- 14-round tracker
+
+
+============================================================
+43. BANKER / GAME MASTER
+============================================================
+
+The first paper tests should ideally use a fifth person.
+
+Role:
+BANKER / GAME MASTER
+
+Responsibilities:
+- manage the global market
+- track secret bids
+- help verify hidden objectives
+- resolve event timing
+- track round length
+- record test data
+- resolve unclear rules
+- avoid participating strategically
+
+Later, a simple spreadsheet can replace some of this work.
+
+
+============================================================
+44. WHAT TO MEASURE
+============================================================
+
+ROUND LENGTH
+How long did every round take?
+
+PLAYER TRADES
+How many player-to-player trades occurred?
+
+MARKET TRANSACTIONS
+How many global market transactions occurred?
+
+RESOURCE DEMAND
+Was every specialty resource useful in early, middle, and late game?
+
+FAILED OFFERS
+How many offers were rejected?
+
+FORMAL CONTRACTS
+How many contracts were signed?
+
+BROKEN CONTRACTS
+How many were broken?
+
+PROJECT PARTICIPATION
+Did people cooperate?
+
+BID ACTIVITY
+Did players care about opportunities?
+
+EVENT IMPACT
+Which events changed behavior?
+
+LEADER GAP
+Was one player obviously ahead too early?
+
+PLAYER ACTIVITY
+Was anyone waiting with nothing useful to do?
+
+KINGMAKING
+Did players make obviously irrational trades to help someone else win?
+
+LAST-ROUND BEHAVIOR
+Did players dump resources, make meaningless promises, or perform strange
+trades because the game was ending?
+
+PROJECT TIMING
+Did players contribute early, or did everybody wait until the deadline?
+
+FUN MOMENTS
+When did players laugh, argue, bluff, negotiate, or react strongly?
+
+MATCH LENGTH
+How long did the full test take?
+
+REPLAY DESIRE
+Did players voluntarily want another match?
+
+
+============================================================
+45. MAIN RISKS
+============================================================
+
+RISK 1
+Trading is not necessary enough.
+
+RISK 2
+Trading is too necessary.
+
+RISK 3
+One specialty resource has lower demand.
+
+Technology is particularly important to monitor.
+
+RISK 4
+One city is structurally stronger.
+
+RISK 5
+Negotiation takes too long.
+
+RISK 6
+Formal contracts are too safe and boring.
+
+RISK 7
+Broken contracts are too punishing.
+
+RISK 8
+Hidden objectives feel random.
+
+RISK 9
+Leader snowballs.
+
+RISK 10
+Kingmaking through unfair trades becomes common.
+
+RISK 11
+The global market replaces human interaction.
+
+RISK 12
+Events feel random rather than strategic.
+
+RISK 13
+Last-round resource dumping or irrational trades distort the result.
+
+Do not add leftover-resource Prestige before testing whether this is a real
+problem.
+
+
+============================================================
+46. NEXT DOCUMENT: NUMBERS SHEET
+============================================================
+
+The concept document should now stop changing unless a clear contradiction
+is found.
+
+The next task is to create the first playable Numbers Sheet.
+
+It must define:
+
+1. Starting resources for all four cities.
+2. Starting Money.
+3. Production per round.
+4. Specialty production bonuses.
+5. Storage capacities.
+6. City Level 2 cost.
+7. City Level 3 cost.
+8. Upkeep values.
+9. Strained City penalty.
+10. 6–10 concrete buildings:
+    - name
+    - cost
+    - effect
+    - Prestige
+11. Global market starting:
+    - buy prices
+    - sell prices
+12. Market movement rules.
+13. Contract break penalties.
+14. 10–12 event cards with exact effects.
+15. 8–12 hidden objective cards.
+16. 2–3 public project cards.
+17. 4–6 regional opportunity cards.
+18. Full Prestige table.
+19. Full resource demand table.
+20. Tie and edge rules:
+    - bid ties
+    - contract failure
+    - contracts near Round 14
+    - storage overflow timing
+    - project contribution ties
+21. Setup steps:
+    - assign cities
+    - give starting resources
+    - deal/draft hidden objectives
+    - reveal first event warning
+    - prepare market prices
+    - prepare round tracker
+
+These numbers are EXPECTED to be wrong initially.
+
+The purpose of the prototype is to discover better numbers.
+
+
+============================================================
+47. THINGS DELIBERATELY POSTPONED
+============================================================
+
+Do not decide yet:
+
+- commercial title
+- final art direction
+- final platform
+- Steam pricing
+- advertisements
+- DLC
+- cosmetics
+- mobile version
+- matchmaking
+- ranked play
+- solo campaign
+- advanced AI
+- 5–6 players
+- team mode
+- asynchronous mode
+- military
+- sabotage
+- complex diplomacy
+- loans
+- futures
+- embargoes
+- trade taxes
+
+These decisions should come only after the core game is proven fun.
+
+
+============================================================
+48. CORE DIFFERENCE FROM CATAN
+============================================================
+
+Catan is inspiration for the emotional structure:
+
+- dependency
+- negotiation
+- scarcity
+- competition
+- social pressure
+
+This game does not reproduce Catan's rules.
+
+CATAN
+- dice-driven production
+- roads
+- settlements
+- spatial expansion
+- resource trading
+- board position is central
+
+UNTITLED CITY TRADE GAME
+- asymmetric city economies
+- simultaneous timed play
+- combined building/trading window
+- forecast crises
+- global market spread
+- formal contracts
+- breakable promises
+- flexible upkeep
+- hidden objectives
+- public projects
+- secret bids
+- fixed 14-round structure
+
+Shared emotional idea:
+
+"I need your resources even though I want to beat you."
+
+
+============================================================
+49. CORE DESIGN RULES
+============================================================
+
+1. Player interaction is more important than system complexity.
+2. Every specialty resource must have meaningful demand.
+3. Technology must be useful from the early game.
+4. Player trading should normally beat the global market.
+5. Players act simultaneously whenever possible.
+6. Trading and development happen in the same window.
+7. Resources received through trade can be used immediately.
+8. Nobody is eliminated.
+9. Version 1 lasts exactly 14 rounds.
+10. Events create decisions rather than arbitrary punishment.
+11. Major events are normally forecast one round early.
+12. Prestige is mostly one-time.
+13. Resources and Money do not directly generate Prestige.
+14. Larger cities have upkeep.
+15. A city cannot pay upkeep with its own specialty resource.
+16. Storage limits are enforced at Round Resolution, not continuously.
+17. Last place does not receive automatic bonuses.
+18. Instant trades are binding.
+19. Verbal promises are not binding.
+20. Formal contracts can fail or be broken with compensation to the victim.
+21. Formal contracts last no more than three rounds.
+22. No formal contract obligation may be due after Round 14.
+23. Hidden objectives are dealt 3, keep 2.
+24. Hidden objectives should not directly match city specialization.
+25. Money is not a final-score tiebreaker.
+26. Highest bid wins; a tied highest bid produces no winner.
+27. A bid of 0 means pass and cannot win.
+28. Market prices remain fixed during a round and update at Round Resolution.
+29. Uneven trades are allowed in the friends-only prototype.
+30. Kingmaking should be measured before adding restrictions.
+31. The first prototype stays small.
+
+
+============================================================
+50. ONE-SENTENCE PITCH
+============================================================
+
+"Build a city that depends on its rivals, trade for what you cannot produce,
+prepare for coming crises, and turn negotiation, contracts, and smart
+development into the highest Prestige after 14 rounds."
+
+
+============================================================
+51. SHORT PITCH
+============================================================
+
+Your city cannot thrive alone.
+
+Four rival cities share one economy.
+Each produces something the others need.
+
+Trade resources.
+
+Develop your city.
+
+Prepare for incoming crises.
+
+Sign contracts.
+
+Make promises.
+
+Break them when the price is worth it.
+
+Compete for projects and opportunities.
+
+Pursue hidden objectives.
+
+After 14 rounds, the city with the highest Prestige wins.
+
+
+============================================================
+52. SINGLE MOST IMPORTANT TEST
+============================================================
+
+Before large-scale development, answer this:
+
+"Are four people having enough fun trading, negotiating, bluffing, signing
+contracts, preparing for crises, and competing for Prestige that they
+immediately want another match?"
+
+If YES:
+continue developing.
+
+If NO:
+do not solve the problem by adding more systems.
+
+Fix the core game first.

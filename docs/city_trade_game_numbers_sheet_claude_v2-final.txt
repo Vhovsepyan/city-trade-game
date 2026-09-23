@@ -1,0 +1,654 @@
+UNTITLED CITY TRADE GAME - NUMBERS SHEET (Claude, v2 DRAFT)
+============================================================
+
+Ruleset version: prototype-001 (not played yet, so the version stays)
+Based on: Concept GPT Revision 4 (section 46 list)
+
+THESE NUMBERS ARE EXPECTED TO BE WRONG.
+The goal is to have something playable, then fix it after tests.
+After this version: NO more theoretical balancing. Play the first game.
+
+Short names used below:
+  F = Food, E = Energy, M = Materials, T = Technology, $ = Money
+  P = Prestige
+  L1 / L2 / L3 = City Level 1 (Settlement) / 2 (City) / 3 (Metropolis)
+  "specialty" = the resource the city is strong in
+    Agricultural = F, Industrial = M, Energy = E, Technology = T
+
+
+============================================================
+CHANGES FROM v1
+============================================================
+
+1. Objective deck: 10 -> 12 cards (4 players x 3 cards).
+2. Event order: the current event becomes active at the START of the
+   round, before production.
+3. Crises are now symmetric: 4 specialty crises (one per resource) +
+   1 neutral crisis. No specialty exception for Crisis Prestige.
+4. Bids reserve Money. Total active bids <= current Money.
+5. Transit Network weaker: only Level 3 upkeep -1, no Prestige.
+6. Project timing: A = Rounds 3-6, B = Rounds 7-10.
+7. Demand table text corrected (Food Security needs no Materials).
+8. Objectives: Rapid Development now Round 7. Monument Builder removed.
+   New: Balanced Stock, Patient Investor, Big Deal.
+9. New section: WATCH LIST (things to measure, not change yet).
+
+
+============================================================
+1-2. STARTING RESOURCES AND MONEY
+============================================================
+
+Every city starts at Level 1 with:
+
+  Specialty resource:        4
+  Each other resource:       1
+  Money:                     6
+
+Example - Agricultural City:
+  F 4, E 1, M 1, T 1, $ 6
+
+Design reason:
+After round 1 production, every city has lots of its specialty but only
+2 of each other resource. Level 2 needs 3 of each.
+-> The natural first move is a TRADE in round 1.
+
+
+============================================================
+3-4. PRODUCTION PER ROUND
+============================================================
+
+                    Specialty   Each other resource   Money
+  Level 1               3               1               2
+  Level 2               4               1               3
+  Level 3               5               1               4
+
+Production can be increased by buildings, opportunities, projects and
+Research Breakthrough. Bonuses add on top of this table.
+
+Total per round (no bonuses):
+  L1: 6 resources + 2 $
+  L2: 7 resources + 3 $
+  L3: 8 resources + 4 $
+
+
+============================================================
+5. STORAGE
+============================================================
+
+  F, E, M, T:   10 each
+  Money:        unlimited
+  Warehouse building: +4 to each of F, E, M, T (-> 14)
+
+Storage is checked only at Round Resolution. During the window, a player
+may hold more. Anything above the limit at Round Resolution is discarded.
+
+
+============================================================
+6-7. CITY LEVEL COSTS
+============================================================
+
+  Level 2 (City):        3F + 3E + 3M + 3T
+  Level 3 (Metropolis):  4F + 4E + 4M + 4T + 4$
+
+- Upgrade is done during the Development & Trade Window.
+- Only one level per round.
+- New production values start next round.
+- Prestige is given at Round Resolution.
+
+
+============================================================
+8. UPKEEP
+============================================================
+
+Paid in the Automatic Update step. Money cannot be used.
+The city's own specialty cannot be used.
+
+  Level 1:  no upkeep
+  Level 2:  1 non-specialty resource
+  Level 3:  2 DIFFERENT non-specialty resources
+
+Transit Network building: Level 3 upkeep -1 (2 -> 1).
+It has no effect at Level 2.
+
+
+============================================================
+9. STRAINED CITY
+============================================================
+
+If upkeep or a crisis payment is not paid in full:
+- the city is STRAINED
+- NEXT round: specialty production -2 and Money income -1
+- the penalty does not stack (see Watch List)
+- the city does NOT lose a level
+- for upkeep: whatever part the player could pay is still paid
+- for crises: no partial payment (pay in full or nothing)
+
+
+============================================================
+10. BUILDINGS
+============================================================
+
+Each player may build each building ONCE.
+Effects start next round (except Prestige, given at Round Resolution).
+
+  #  Name                Level  Cost                    Effect                          P
+  --------------------------------------------------------------------------------------
+  1  Warehouse           L1     1E 1M 1T                Storage +4 (F, E, M, T)         0
+  2  Workshop            L1     1F 1M 1T                +1 production of ONE            0
+                                                        non-specialty resource
+                                                        (chosen when built)
+  3  Market Hall         L1     1F 1E 1T + 2$           +1 Money per round              0
+  4  Specialty Complex   L2     1F 1E 2M 2T             +1 specialty production        +1
+  5  Research Lab        L2     2F 2E 1M                +1 Technology production       +1
+  6  Transit Network     L2     2E 2M 1T                Level 3 upkeep -1               0
+  7  Civic Center        L2     2F 2E 2M 2T             (no effect)                    +2
+  8  Grand Landmark      L3     3F 3E 3M 3T + 5$        (no effect)                    +3
+
+Idea behind the list:
+- L1 buildings = economy (no Prestige)
+- L2 buildings = economy + a little Prestige
+- Transit Network = preparation for Level 3, a choice not an auto-build
+- Civic Center and Grand Landmark = pure Prestige, very expensive
+
+
+============================================================
+11-12. GLOBAL MARKET
+============================================================
+
+Every resource (F, E, M, T) uses the same price table.
+
+  "Market SELLS" = what the player PAYS to buy 1 resource
+  "Market BUYS"  = what the player GETS for selling 1 resource
+
+  Price step   Market SELLS   Market BUYS
+  ------------------------------------------
+      A             3              1
+      B (start)     4              1
+      C             5              2
+      D             6              3
+
+All four resources start at step B (buy for 4$, sell for 1$).
+Human trades around 2-3$ are better for both sides.
+
+MOVEMENT (at Round Resolution, for each resource separately):
+  net = units bought FROM the market - units sold TO the market
+  net >= +3  -> price moves one step UP   (max D)
+  net <= -3  -> price moves one step DOWN (min A)
+  otherwise  -> no change
+
+Event modifiers apply only during the event round, on top of the current
+step (and stay within A-D).
+
+Market limits:
+- Max 4 units of each resource bought per player per round.
+- No limit on selling.
+
+
+============================================================
+13. CONTRACT BREAK PENALTIES
+============================================================
+
+Formal contract rules (from concept):
+- Max duration 3 rounds.
+- No obligation may be due after Round 14.
+- Mutual cancellation before the due round: free.
+
+When a contract is broken (voluntary OR unable to pay):
+- Breaker pays the VICTIM: 2$ for each unpaid resource unit
+  (for a Money obligation: the unpaid Money x 2).
+- If the breaker cannot pay it all: pays what they have, then loses
+  1P for every 2$ still unpaid (round up). The victim does NOT get
+  this Prestige.
+- Breaker also loses 1P.
+- Public "Contracts Broken" counter +1.
+
+Example:
+B promised 4 Food in Round 7, has only 1 Food and 3$.
+- 1 Food is paid, 3 Food unpaid -> compensation 6$
+- B pays 3$, 3$ unpaid -> -2P (3/2 rounded up)
+- plus -1P for breaking
+- Total: victim gets 1 Food + 3$, B loses 3P, B's counter +1
+(Severity is on the Watch List.)
+
+
+============================================================
+14. EVENT CARDS (12)
+============================================================
+
+Schedule:
+- Round 1: no event.
+- Rounds 2-13: one event per round (all 12 cards, shuffled).
+- Round 14: no event.
+- Warning: the next event is shown one round before.
+  The first warning (for Round 2) is shown during setup.
+
+ACTIVATION:
+The event becomes active at the very START of its round (step 1.1),
+before production. Production and income modifiers therefore apply in
+the same round.
+
+CRISIS EVENTS:
+- Every L2+ city must pay the printed cost in the World Update step,
+  or become Strained. L1 cities are not affected.
+- Pay in full -> +1P (Crisis Prestige). No specialty exception.
+- Each city has exactly ONE "easy" crisis (its own specialty), and one
+  neutral crisis is equally hard for everyone.
+- Players prepare in the round before (that is what the warning is for).
+
+  #   Event                   Effect during the event round
+  ---------------------------------------------------------------------------
+  1   DROUGHT                 CRISIS. Every L2+ city pays 2F, or becomes
+                              Strained. Food market price +1 step.
+
+  2   ENERGY SHORTAGE         CRISIS. Every L2+ city pays 2E, or becomes
+                              Strained. Energy market price +1 step.
+
+  3   SUPPLY SHOCK            CRISIS. Every L2+ city pays 2M, or becomes
+                              Strained. Materials market price +1 step.
+
+  4   EPIDEMIC                CRISIS. Every L2+ city pays 2T, or becomes
+                              Strained. Technology market price +1 step.
+
+  5   INFRASTRUCTURE FAILURE  CRISIS (neutral). Every L2+ city pays 2
+                              DIFFERENT non-specialty resources, or becomes
+                              Strained.
+
+  6   CONSTRUCTION BOOM       Every building costs 1 fewer M this round
+                              (min 0). Materials market price -1 step.
+
+  7   TECHNOLOGY BOOM         City upgrades cost 2 fewer T this round.
+
+  8   RECESSION               No Money income this round.
+
+  9   TRADE DISRUPTION        Market: sell prices +2$, buy prices -1$
+                              (min 1$) this round.
+
+  10  PUBLIC FESTIVAL         Optional, once per player: pay 2F + 2$
+                              during the window -> +1P.
+
+  11  RESEARCH BREAKTHROUGH   Optional, once per player: pay 3T during the
+                              window -> +1 permanent production of any ONE
+                              non-specialty resource.
+
+  12  GOOD HARVEST YEAR       Every city +1 Food and +1 Energy production
+                              this round.
+
+Summary: 5 crises, 4 economy events, 3 opportunity events.
+
+
+============================================================
+15. HIDDEN OBJECTIVE CARDS (12)
+============================================================
+
+Deal 3, keep 2. Each completed objective = +2P (revealed at the end).
+The Banker tracks completion secretly.
+Objectives should force UNUSUAL behavior, not reward the normal path.
+None of these match a single city specialty.
+
+  #   Name                   Condition
+  ------------------------------------------------------------------------
+  1   ACTIVE TRADER          Complete at least one instant trade with each
+                             of the 3 opponents.
+  2   DIVERSIFIED ECONOMY    Own at least 4 different buildings.
+  3   PROJECT PARTNER        Qualify as a contributor in both public
+                             projects.
+  4   CONTRACT PLAYER        Complete 2 formal contracts and never break
+                             one.
+  5   MARKET INDEPENDENCE    Buy from the global market in no more than
+                             3 rounds of the whole game.
+  6   RAPID DEVELOPMENT      Reach Level 3 by the end of Round 7.
+  7   STEADY CITY            Never become Strained.
+  8   OPPORTUNITY WINNER     Win at least one regional opportunity bid.
+  9   CRISIS RESPONDER       Earn Crisis Prestige at least 3 times.
+  10  BALANCED STOCK         After any Round Resolution, hold at least
+                             5 of EACH of F, E, M, T.
+  11  PATIENT INVESTOR       Contribute to public projects in at least
+                             3 different rounds.
+  12  BIG DEAL               Complete one instant trade in which you give
+                             at least 5 resources (not Money).
+
+Changes: Crisis Responder raised from 2 to 3 because there are now 5
+crises. Monument Builder removed (it rewarded the normal winning path).
+
+
+============================================================
+16. PUBLIC PROJECT CARDS (3, use 2 per match)
+============================================================
+
+Shuffle, draw 2.
+  Project A: open Rounds 3-6  (deadline = Round Resolution of Round 6)
+  Project B: open Rounds 7-10 (deadline = Round Resolution of Round 10)
+
+Success reward starts the round after the deadline:
+  Project A reward works for Rounds 7-14 (8 rounds)
+  Project B reward works for Rounds 11-14 (4 rounds)
+For Project B, the Prestige competition is the main reason to join.
+
+CONTRIBUTION POINTS:
+  1 resource = 2 points
+  1 Money    = 1 point
+Only the resource types printed on the card can be given, and not more
+than the card still needs.
+
+Minimum qualifying contribution: 6 points.
+
+  Name                        Needs                 Success reward
+  ------------------------------------------------------------------------
+  REGIONAL POWER GRID         6E + 6M + 6$          Qualifying contributors:
+                                                    +1 Energy production
+  REGIONAL RESEARCH           6T + 4M + 6$          Qualifying contributors:
+  INITIATIVE                                        +1 Technology production
+  FOOD SECURITY PROGRAM       6F + 4E + 6$          Qualifying contributors:
+                                                    +1 Food production
+
+Prestige (only if the project succeeds):
+  Largest contributor (points):        +3P
+  Tie for largest:                     +2P each
+  Other qualifying contributors:       +1P
+If the project fails: all contributions are lost, nobody gets anything.
+
+
+============================================================
+17. REGIONAL OPPORTUNITY CARDS (5)
+============================================================
+
+Shuffle. One new card appears in Rounds 3, 5, 7, 9, 11.
+Secret Money bids in that round's window, resolved at Round Resolution.
+Several cards can be open at the same time; each card has its own bid.
+
+MONEY RESERVATION:
+- A bid RESERVES that Money until Round Resolution.
+- Reserved Money cannot be spent on anything else.
+- The TOTAL of a player's active bids cannot be more than their current
+  unreserved Money.
+- A player may change or withdraw a bid until the window ends.
+- At Round Resolution: winners pay; losing and tied bids release the
+  reserved Money.
+
+TIES:
+Highest bid tied -> nobody wins, nobody pays, the card stays for the next
+round and players bid again.
+
+  Name               Benefit (permanent, starts next round)
+  -----------------------------------------------------------
+  SOLAR FIELD        +1 Energy production
+  FERTILE VALLEY     +1 Food production
+  INDUSTRIAL ZONE    +1 Materials production
+  RESEARCH CAMPUS    +1 Technology production
+  COMMERCIAL HUB     +2 Money per round
+
+No Prestige for winning a card. If a card is never won, it is removed
+after Round 14.
+
+
+============================================================
+18. FULL PRESTIGE TABLE
+============================================================
+
+VISIBLE:
+  Reach Level 2                                   +1
+  Reach Level 3                                   +2
+  Specialty Complex                               +1
+  Research Lab                                    +1
+  Civic Center                                    +2
+  Grand Landmark                                  +3
+  Public project - largest contributor            +3
+  Public project - tie for largest                +2
+  Public project - other qualifying contributor   +1
+  Crisis Prestige (events 1-5)                    +1 each
+  Public Festival (event 10)                      +1
+  Broken contract                                 -1
+  Unpaid compensation                             -1 per 2$ unpaid
+
+HIDDEN (revealed at the end):
+  Completed hidden objective                      +2 each (max 2 cards)
+
+Rough maximum (one player doing everything):
+  levels 3 + buildings 7 + projects 6 + crises 5 + festival 1
+  + objectives 4 = 26
+Expected winning score in a real game: about 14-19.
+(Check this in the first tests.)
+
+Nothing gives Prestige for holding resources or Money.
+
+
+============================================================
+19. RESOURCE DEMAND TABLE
+============================================================
+
+Units of each resource in all LEVEL and BUILDING costs:
+
+                            F    E    M    T    $
+  Level 2                   3    3    3    3    -
+  Level 3                   4    4    4    4    4
+  Warehouse                 -    1    1    1    -
+  Workshop                  1    -    1    1    -
+  Market Hall               1    1    -    1    2
+  Specialty Complex         1    1    2    2    -
+  Research Lab              2    2    1    -    -
+  Transit Network           -    2    2    1    -
+  Civic Center              2    2    2    2    -
+  Grand Landmark            3    3    3    3    5
+  -----------------------------------------------
+  TOTAL                    17   19   19   18   11
+
+Early game only (Level 2 + the three L1 buildings):
+                            F    E    M    T
+                            5    5    5    6
+
+CRISES (each L2+ city, per card):
+  Drought          2F
+  Energy Shortage  2E
+  Supply Shock     2M
+  Epidemic         2T
+  Infrastructure   2 different non-specialty (player's choice)
+-> equal crisis demand for all four resources.
+
+PUBLIC PROJECTS (2 of these 3 are used per match):
+  Power Grid        6E + 6M + 6$
+  Research          6T + 4M + 6$
+  Food Security     6F + 4E + 6$
+Across the 3 cards: F 6, E 10, M 10, T 6.
+Energy and Materials each appear in 2 projects; Food and Technology in 1.
+Food and Technology are slightly lower here, but Food is also used by the
+Public Festival and Technology by Research Breakthrough.
+
+OTHER:
+  Food:       Public Festival
+  Technology: Research Breakthrough
+  Upkeep:     any non-specialty resource (player's choice)
+
+Result: all four resources are needed in the early, middle and late game.
+The totals are close enough for a first test.
+
+
+============================================================
+20. TIE AND EDGE RULES
+============================================================
+
+BIDS
+- 0 = pass. Minimum 1$ to win. Highest bid wins, only the winner pays.
+- Tied highest bid: nobody wins, nobody pays, card stays next round.
+- Active bids reserve Money; total bids <= unreserved Money.
+
+CONTRACTS
+- Cannot pay when due -> automatically broken (penalties in section 13).
+- No obligation may be due after Round 14.
+- A contract made in Round 14 cannot create a future obligation.
+
+STORAGE
+- Checked only at Round Resolution. Excess is discarded.
+- Players should sell or spend extra before the window ends.
+
+PROJECTS
+- Tie for largest contributor: +2P each.
+- A project cannot receive more than it still needs.
+- Failure: contributions lost.
+
+LEVELS / BUILDINGS
+- One level-up per player per round.
+- Any number of buildings per round (if affordable).
+
+CRISES
+- Only L2+ cities pay.
+- No partial payment: pay in full or become Strained.
+
+EVENTS
+- The current event is active from the start of its round.
+
+FINAL TIEBREAKERS (from concept)
+1. Higher city level
+2. More completed hidden objectives
+3. Fewer broken contracts
+4. Shared victory
+
+
+============================================================
+21. SETUP STEPS
+============================================================
+
+1. Assign cities randomly (one each: Agricultural, Industrial, Energy,
+   Technology).
+2. Give starting resources: specialty 4, others 1, Money 6.
+3. Shuffle the 12 objective cards. Deal 3 to each player; each keeps 2
+   and gives the third face down to the Banker. All 12 cards are used.
+4. Shuffle the 12 event cards. Reveal the top card as the warning for
+   Round 2.
+5. Shuffle the 3 project cards, draw 2 (Project A, Project B). Put the
+   third away unseen.
+6. Shuffle the 5 opportunity cards into a face-down pile.
+7. Set all 4 market resources to price step B (sell 4$ / buy 1$).
+8. Prepare the round tracker (below) and the Banker sheet.
+
+
+============================================================
+ROUND TRACKER
+============================================================
+
+  Round  Event        Project           Opportunity    Notes
+  ----------------------------------------------------------------------
+  1      none         -                 -              first trades
+  2      event 1      -                 -
+  3      event 2      A opens           card 1
+  4      event 3      A open            -
+  5      event 4      A open            card 2
+  6      event 5      A DEADLINE        -
+  7      event 6      B opens           card 3         Rapid Development
+                                                       deadline
+  8      event 7      B open            -
+  9      event 8      B open            card 4
+  10     event 9      B DEADLINE        -
+  11     event 10     -                 card 5
+  12     event 11     -                 -
+  13     event 12     -                 -              last contract due
+                                                       dates = R14
+  14     none         -                 -              final round
+
+
+============================================================
+ROUND ORDER (exact)
+============================================================
+
+1. AUTOMATIC UPDATE
+   1.1 This round's event card becomes ACTIVE (production and income
+       modifiers now apply).
+   1.2 Apply Strained penalty from last round (then clear Strained).
+   1.3 Production (resources + Money).
+   1.4 Upkeep. Not paid in full -> Strained (penalty next round).
+   1.5 Contract obligations due this round are paid or broken.
+
+2. WORLD UPDATE
+   2.1 Crisis payments (if a crisis event). Not paid -> Strained.
+   2.2 Show warning for next round's event.
+   2.3 New project / opportunity card appears (per tracker).
+
+3. DEVELOPMENT & TRADE WINDOW
+   Everything simultaneous: trade, market, build, upgrade, contribute,
+   bid, sign contracts, optional event actions (Festival, Breakthrough).
+
+4. ROUND RESOLUTION
+   4.1 Open trade offers expire.
+   4.2 Secret bids resolve (winners pay, other reservations released).
+   4.3 Project deadline resolves (if any).
+   4.4 Prestige for this round is added (levels, buildings, projects,
+       crises, festival).
+   4.5 Storage limits: excess discarded.
+   4.6 Market prices move for next round.
+   4.7 Temporary event effects end.
+   4.8 After Round 14: reveal hidden objectives, final score, winner.
+
+(This is also the fixed step order for the engine's ResolveRound.)
+
+
+============================================================
+PAPER PROTOTYPE COMPONENTS
+============================================================
+
+- 4 city sheets (production table, upkeep reminder, building list)
+- Resource tokens: about 60 of each (F, E, M, T) - or tracked on a sheet
+- Money tokens (or tracked by the Banker)
+- 12 event cards, 12 objective cards, 3 project cards, 5 opportunity cards
+- Market board with 4 price tracks (steps A-D)
+- Round tracker
+- Contract slips (who, what, due round)
+- Bid slips (card, amount) - the Banker holds reserved Money
+- Banker sheet: hidden objectives, market purchases per round,
+  Strained status, Crisis Prestige, contracts broken, project
+  contribution rounds, largest single trade per player
+- Timer (optional in the first game)
+
+
+============================================================
+WATCH LIST (measure in tests, do NOT change yet)
+============================================================
+
+1. LATE-GAME TRADING
+   Every city produces +1 of each non-specialty resource every round.
+   Trading may drop after the early game.
+   Measure: number of player trades per round (early / mid / late).
+   Knob if needed: 0 production for one non-specialty resource per city.
+
+2. CONTRACT PENALTY SEVERITY
+   One failed obligation can cost about -3P.
+   Measure: how many formal contracts are signed at all.
+   If almost none: lower the compensation to 1$ per unit.
+
+3. STRAINED DOES NOT STACK
+   A player who already failed upkeep can skip a crisis in the same
+   round with no extra production penalty.
+   Measure: does anyone do this on purpose?
+   Prepared fix: -1P for each extra mandatory-payment failure in the
+   same round.
+
+4. TRANSIT NETWORK
+   Is it now a real choice, or does nobody build it?
+
+5. PROJECT B
+   Do players join it only for Prestige? Does it fail more often?
+
+6. OBJECTIVE DIFFICULTY
+   Which objectives are completed almost always / almost never?
+
+7. WINNING SCORE
+   Is the winner around 14-19P? Is the hidden objective swing too big?
+
+
+============================================================
+TUNING KNOBS (what to change first after tests)
+============================================================
+
+If cities level up too fast:      raise Level 2 to 4 each, or starting
+                                  "other" resources to 0.
+If nobody trades:                 lower non-specialty production to
+                                  0 for one resource per city.
+If the market is used too much:   raise start price step to C.
+If Money has no use:              lower Money income by 1 per level.
+If Money is too tight:            start Money 8.
+If scores are too low (<12):      lower Civic Center / Landmark cost.
+If one crisis hurts too much:     crisis cost 2 -> 1.
+If projects always fail:          lower "Needs" by 2 per resource.
+If projects always succeed early: raise "Needs" by 2 per resource.
+If upkeep is frustrating:         Level 3 upkeep -> 1 resource.
+
+Change only 2-3 knobs per test. Otherwise you cannot know what helped.
+Every change after a played game = new ruleset version (prototype-002, ...).

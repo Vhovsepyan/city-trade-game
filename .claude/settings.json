@@ -1,0 +1,45 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew:*)",
+      "Bash(scripts/codex-review.sh:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)",
+      "Edit",
+      "Write",
+      "Bash(java -version)",
+      "Bash(git --version)",
+      "Bash(gradle:*)",
+      "Bash(codex:*)",
+      "Bash(chmod +x scripts/*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(scripts/usage-report.sh:*)",
+      "Bash(jq:*)"
+    ],
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git rebase:*)",
+      "Bash(git branch -D:*)",
+      "Bash(git remote:*)",
+      "Bash(rm -rf:*)"
+    ]
+  },
+  "env": {
+    "BASH_DEFAULT_TIMEOUT_MS": "1200000",
+    "BASH_MAX_TIMEOUT_MS": "1800000"
+  }
+}

@@ -1,0 +1,14 @@
+# build
+build/
+.gradle/
+out/
+# IDE
+.idea/
+*.iml
+.vscode/
+# agent review files (not committed)
+.review/
+# local
+*.log
+.env
+.DS_Store

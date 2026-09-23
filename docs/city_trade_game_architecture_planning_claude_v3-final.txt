@@ -1,0 +1,565 @@
+UNTITLED CITY TRADE GAME - TECHNOLOGY AND ARCHITECTURE PLAN (Claude, v3 FINAL)
+=============================================================================
+
+This version merges:
+- Claude planning v1 and v2
+- GPT planning reviews v1 and v2
+- Claude comments on both reviews
+
+STATUS: FINAL. Architecture reviews stop here.
+Next work: Numbers Sheet -> paper test + engine start.
+
+MAIN IDEA
+---------
+Keep it simple. Slow, round-based game for 4 players. No game engine,
+no distributed systems.
+
+Players ACT at the same time.
+The server CHANGES the state one command at a time.
+
+
+1. HIGH-LEVEL ARCHITECTURE
+==========================
+
+                    Browser
+               React + TypeScript
+          (shows PlayerGameView only)
+                      |
+               REST + WebSocket
+                      |
+                      v
+               Spring Boot Server
+        +--------------------------------+
+        | Room / Lobby Service           |
+        | Session / Reconnect Service    |
+        |                                |
+        | GameRoom (1 per active match)  |
+        |   - lifecycle status           |
+        |   - serial command queue       |
+        |   - current GameState          |
+        |   - timer / deadlines          |
+        |   - processed command outcomes |
+        |   - commandSequence            |
+        |   - stateVersion               |
+        |                                |
+        | Application Layer              |
+        |   -> pure Game Engine          |
+        |   -> View Projector            |
+        |   -> Ruleset Loader (JSON)     |
+        |                                |
+        | Persistence Adapter            |
+        +---------------+----------------+
+                        |
+                        v
+                   PostgreSQL
+          matches / results / command log
+
+
+2. GRADLE MODULES (Groovy DSL)
+==============================
+
+    game-engine      pure Java 25, no dependencies except test libraries
+    game-bots        depends on game-engine
+    game-sim         balance simulation runner (engine + bots)
+    game-server      Spring Boot (engine + bots)
+    web-client       React + TypeScript + Vite, separate build
+
+Dependency direction:
+
+    game-engine
+         ^
+         |
+    +----+------+
+    |           |
+ game-bots    game-server
+    |
+ game-sim
+
+Modular monolith. One deployable application. No microservices.
+
+
+3. JAVA VERSION
+===============
+
+Java 25 (LTS), stable features only, no preview features.
+Main tools: records, sealed types, switch pattern matching, immutable
+domain objects.
+
+
+4. GAME ENGINE (MOST IMPORTANT PART)
+====================================
+
+4.1 The engine knows NOTHING about:
+- Spring, WebSocket, HTTP
+- PostgreSQL
+- JSON / YAML
+- React, authentication, deployment
+
+4.2 Shape:
+
+    GameResult apply(GameState state, GameCommand command)
+
+GameState behaves like a VALUE:
+old state + command -> new state.
+No deep mutation of shared state from outside the engine.
+
+4.3 GameResult is a sealed type with two clear cases:
+
+    sealed interface GameResult
+
+    record Accepted(GameState state, List<DomainEvent> events)
+    record Rejected(RejectionCode code, String detail)
+
+Rules:
+- Rejected -> state unchanged, no events.
+- Accepted -> new state + events, no rejection.
+
+4.4 Machine-readable rejection codes (examples):
+    INSUFFICIENT_RESOURCES
+    OFFER_NOT_OPEN
+    NOT_OFFER_RECIPIENT
+    INVALID_PHASE
+    STORAGE_RULE_VIOLATION
+    CONTRACT_AFTER_GAME_END
+    BID_TOO_LOW
+    PROJECT_CLOSED
+The UI reacts to the code. The text is only for humans.
+
+4.5 Commands (examples):
+    Player:   ProposeTrade, AcceptTrade, RejectTrade, CounterTrade,
+              CancelTrade, Build, Upgrade, MarketBuy, MarketSell,
+              PlaceBid, ContributeToProject, SignContract,
+              BreakContract, CancelContractMutually, PayUpkeep
+    Internal: StartRound, ResolveRound
+
+4.6 Domain events (examples):
+    TradeOffered, TradeAccepted, TradeRejected, TradeInvalidated,
+    BuildingConstructed, ContractSigned, ContractBroken,
+    BidPlaced, BidResolved, RoundResolved,
+    PrestigeAwarded, EventActivated
+
+Domain events are INTERNAL. They are never sent raw to clients
+(see 6.5).
+
+4.7 Determinism
+- Same seed + same ruleset + same commands = same game.
+- The ENGINE owns the one seeded random source.
+- No other code uses the game random generator
+  (UI animations use their own randomness).
+
+4.8 Ruleset (Numbers Sheet values)
+- Values are data: production, costs, prices, event values, projects,
+  opportunities, objectives.
+- The LOADER lives outside the engine (server / sim).
+  It reads JSON and creates a plain `Ruleset` record.
+- The engine only receives the `Ruleset` object.
+- Rule BEHAVIOR stays in Java. JSON only references it by type.
+
+  Good JSON:
+    { "eventId": "DROUGHT", "foodProductionModifier": -2 }
+  Bad JSON (do not do this):
+    { "condition": "if player.city.level >= 2 then ..." }
+
+- Every ruleset has a version: prototype-001, prototype-002, ...
+- A used ruleset version is NEVER edited. Changes = new version.
+- Later: store a ruleset hash with each match.
+- Tests use a fixed test ruleset.
+
+4.9 Round Resolution = one explicit engine command
+`ResolveRound` owns the full fixed order of round-end steps.
+The order is defined in the Numbers Sheet (section "Round order")
+and encoded in ONE place. It is one of the most tested commands.
+
+4.10 GameRoom vs engine
+- GameRoom orchestrates: queue, timer, connections, versions.
+- GameRoom contains NO game rules.
+
+
+5. TRADE OFFERS AND CONTRACTS
+=============================
+
+5.1 Trade offer model - DECIDED: enum + checked transitions
+
+    enum TradeOfferStatus {
+        OPEN, ACCEPTED, REJECTED, EXPIRED, CANCELLED, INVALID
+    }
+
+Allowed transitions (only through engine methods):
+    OPEN -> ACCEPTED
+    OPEN -> REJECTED
+    OPEN -> CANCELLED
+    OPEN -> EXPIRED
+    OPEN -> INVALID
+All other transitions are rejected.
+
+Meaning:
+    REJECTED   recipient refused (or countered)
+    CANCELLED  proposer withdrew
+    EXPIRED    window ended
+    INVALID    can no longer be executed (resources gone)
+
+5.2 Who may do what
+    PROPOSER:  cancel
+    RECIPIENT: accept, reject, counter
+    SYSTEM:    expire, invalidate
+
+5.3 Counteroffers
+One command, atomic:
+- old offer -> REJECTED with closeReason = COUNTEROFFER
+- new offer created with parentOfferId = old offer
+
+    Offer #101  A -> B  2 Food for 1 Energy   REJECTED (COUNTEROFFER)
+    Offer #102  B -> A  1 Energy for 3 Food   OPEN, parentOfferId=#101
+
+5.4 Check again at acceptance time (IMPORTANT)
+- Resources are NOT reserved when an offer is sent.
+- On accept, the engine checks BOTH players' resources against the
+  current state.
+- Not enough -> command rejected, offer becomes INVALID.
+
+5.5 Offer visibility - GAME RULE, default for v1
+Only proposer and recipient see a direct offer.
+(Public offers are a possible future game-design change, not an
+architecture decision.)
+
+5.6 Formal contracts are a separate concept
+
+    FormalContract
+      id, playerA, playerB, obligations[], status, signedRound
+
+    ContractObligation
+      debtor, creditor, resourceBundle, dueRound, status
+
+Only the v1 contract types. No generic legal-contract engine.
+
+5.7 Atomic economic commands
+MarketBuy, MarketSell, Build, Upgrade, Contribute, AcceptTrade:
+validate EVERYTHING first, then change state once.
+Never subtract Money and later find the command was invalid.
+
+
+6. SERVER - SPRING BOOT
+=======================
+
+6.1 Room lifecycle
+    LOBBY -> ACTIVE -> FINISHED -> CLOSED (removed from memory)
+Host powers:
+- in LOBBY: start game, remove an accidental joiner
+- in ACTIVE: none (no kick, no pause, no rule changes)
+
+6.2 Serial command queue per room
+- One mailbox/queue per room. One command changes a room at a time.
+- Implementation: serial executor / actor style / virtual-thread worker.
+- Every processed command gets a server `commandSequence` (1, 2, 3, ...).
+  This is the ONLY order used for replay.
+
+    command -> room queue -> engine.apply -> new state -> player views
+
+6.3 Simultaneous rules still work
+- Secret bids resolve only in ResolveRound -> arrival order does not matter.
+- Market prices are fixed during the window -> click order does not matter.
+
+6.4 Round timer and the deadline
+- The server owns time. Clients only DISPLAY the countdown.
+- Server stores `phaseEndsAt`.
+- At the deadline, the timer puts `ResolveRound` into the SAME queue,
+  exactly once.
+- THE QUEUE DECIDES, not the clock at processing time:
+  - commands queued BEFORE ResolveRound are processed normally
+  - commands after it are rejected by the engine (INVALID_PHASE),
+    because the phase is closed in the game state
+- No wall-clock checks inside the engine.
+- This is an integration test.
+
+6.5 View projector (privacy)
+- NEVER send the full GameState. NEVER send raw domain events.
+- Pipeline:  domain events -> view projection -> client-safe GameMessage
+- `PlayerGameView` for each player:
+  - own resources, own Money, own hidden objectives
+  - public buildings, public Prestige, public contracts,
+    contracts-broken counters
+  - market prices, event warnings
+  - offers where the player is proposer or recipient
+- Later maybe: `SpectatorGameView`.
+
+6.6 Identity comes from the connection
+- The reconnect token is used only to OPEN the WebSocket session.
+- The server gets playerId + matchId from the SESSION.
+- Commands never contain a trusted playerId or token.
+
+6.7 Idempotency
+- Every client command has a unique `commandId`.
+- The room stores a small outcome record per processed command:
+    commandId, resultType, resultingStateVersion, rejectionCode
+- Duplicate commandId -> return the SAME outcome again (not silence).
+- Important for: accept trade, market, contributions, bids, building,
+  contracts.
+
+6.8 REST + WebSocket
+REST (request/response):
+    POST /rooms
+    POST /rooms/{code}/join
+    GET  /rooms/{code}
+WebSocket: live match.
+Both call the same application services. No business logic in handlers.
+
+6.9 WebSocket protocol
+Client -> Server: CommandEnvelope
+    protocolVersion   (= 1)
+    commandId
+    commandType
+    payload
+    (playerId and matchId come from the session - see 6.6)
+
+Server -> Client: GameMessage
+    FULL_SNAPSHOT
+    STATE_UPDATE
+    COMMAND_ACCEPTED   (commandId, resultingStateVersion)
+    COMMAND_REJECTED   (commandId, rejectionCode, message)
+    ROUND_WARNING
+    ROUND_RESOLVED
+    GAME_FINISHED
+
+`stateVersion` increases ONLY when the game state changes.
+(Rejected command, duplicate, ping -> no change.)
+Client detects a gap -> asks for FULL_SNAPSHOT.
+
+Three different versions, three different problems:
+    rulesetVersion         game balance data
+    protocolVersion        client/server message shape
+    commandSchemaVersion   stored command payload shape
+
+6.10 Sessions, reconnect, room codes
+- No accounts in v1: nickname + room code + reconnect token.
+- Room code: easy to type, short-lived, unique among active rooms
+  (generate -> check -> retry). It FINDS a room. It is not authorization.
+- Reconnect token: random, high-entropy, one seat in one room, expires
+  with the room. Stored in the browser. Treated as secret.
+- Reconnect flow:
+  1. open session with token
+  2. find GameRoom
+  3. build PlayerGameView
+  4. send FULL_SNAPSHOT
+  5. continue with updates
+
+
+7. PERSISTENCE AND REPLAY
+=========================
+
+7.1 When is a database needed?
+- Paper prototype: no.
+- Engine + simulations: no.
+- First online private-room prototype: yes, PostgreSQL.
+
+7.2 Replay using determinism
+
+    seed + rulesetVersion + state-changing commands in commandSequence order
+
+- The log includes INTERNAL commands too (StartRound, ResolveRound).
+- Rejected commands are stored for debugging, but replay skips them.
+- Never replay by timestamp, insert order or UUID order.
+
+7.3 Tables (first version)
+    matches         (id, seed, rulesetVersion, status, times)
+    match_players   (match, seat, nickname, city)
+    match_commands  (match, commandSequence, commandId, actor,
+                     commandType, commandSchemaVersion, payload JSONB,
+                     outcome, rejectionCode, resultingStateVersion)
+    match_results   (match, final scores, winner)
+Later:
+    match_snapshots, users
+
+7.4 Durability
+- v1 friend tests: losing active games after a server restart is OK.
+- Later (before public beta): persist the accepted command BEFORE
+  confirming it to clients, and add snapshots after each Round
+  Resolution for faster recovery.
+
+
+8. BOTS AND SIMULATION
+======================
+
+8.1 Two simple bot profiles
+A. BASELINE BOT
+   - no negotiation
+   - uses the market as fallback
+   - fixed build priorities
+B. TRADING BOT
+   - accepts offers within a value threshold
+   - makes simple offers for shortages
+   - prepares for announced events
+   - makes bounded bids
+
+If a city is weak even with BASELINE bots -> numbers problem.
+If results change a lot only with TRADING bots -> the economy depends
+strongly on negotiation (expected, but measure it).
+
+8.2 Simulation metrics
+- average final Prestige by city
+- when each city reaches Level 2 and 3
+- resources produced / traded / wasted (storage)
+- market usage
+- Technology demand per game phase (early / mid / late)
+- number of contracts
+- project completion rate
+- Strained rounds
+- resource scarcity by round
+
+8.3 Limit
+Simulation validates the ECONOMY.
+Human playtests validate the GAME.
+Bots cannot test trust, bluffing, betrayal, persuasion or kingmaking.
+
+
+9. CLIENT
+=========
+
+React + TypeScript + Vite + native WebSocket.
+
+The client is a VIEW, not a second rules engine:
+- it may disable a button that looks unaffordable
+- the server still validates everything
+- if client and server disagree, the server wins
+
+Client state:
+- the latest PlayerGameView
+- UI-only state: selected card, open modal, draft trade,
+  notifications, connection status
+- FULL_SNAPSHOT -> replace view
+- STATE_UPDATE -> apply only if versions match, else ask for snapshot
+
+Libraries:
+- React state/context first, Zustand if needed, no Redux
+- plain HTML/CSS, NO PixiJS in v1
+
+Serve the built React files from Spring Boot.
+Later: Electron or Tauri wrapper for Steam.
+
+
+10. NOT NEEDED FOR V1
+=====================
+
+Kafka, microservices, Redis, Kubernetes, service mesh, several app
+instances, user accounts, matchmaking, game engine (Godot/Unity).
+
+
+11. DEPLOYMENT
+==============
+
+    reverse proxy (HTTPS)
+          |
+    Spring Boot (serves React files too)  - 1 instance
+          |
+    PostgreSQL                            - 1 instance
+
+Small server (Hetzner, Fly.io, or similar).
+
+
+12. LOGGING
+===========
+
+Structured logs:
+- match ID, round, commandSequence
+- command ID, player ID, command type
+- rejection codes
+- round start / end
+- WebSocket connect / disconnect
+- game completion
+
+NEVER log:
+- reconnect / session tokens
+- hidden objectives
+- private resources (only in local debug mode)
+Command payload logs are redacted if they contain private data.
+
+
+13. TESTING
+===========
+
+game-engine - heavy unit tests:
+- bid ties and minimum bid
+- Round 14 contract restriction
+- contract default and Money compensation
+- non-specialty upkeep, Strained penalty
+- temporary storage overflow and round-end discard
+- hidden objective scoring
+- project contribution ties and project failure
+- trade accepted after resources were spent -> INVALID
+- illegal offer status transitions
+- ResolveRound step order
+- determinism: same commands -> same final state
+
+game-server - integration tests:
+- two players racing to accept / change a trade
+- duplicate commandId returns the same outcome
+- command arriving at the deadline (queue decides)
+- ResolveRound queued exactly once
+- reconnect
+- player view privacy (no hidden data leaks)
+- identity cannot be faked in a command
+
+web-client:
+- a few important interaction tests only
+
+
+14. WHAT IS NEEDED IN EACH PHASE
+================================
+
+ENGINE PHASE (Phase 1-4):
+- deterministic engine, value-like GameState
+- engine-owned seeded random source
+- immutable Ruleset + rulesetVersion
+- sealed GameResult + rejection codes
+- TradeOfferStatus enum with INVALID + checked transitions
+- revalidation at trade acceptance
+- ResolveRound as one command with fixed step order
+
+SERVER PHASE (Phase 5+):
+- room lifecycle + serial queue + commandSequence
+- timer through the same queue
+- commandId + stored outcomes
+- stateVersion + protocolVersion = 1
+- identity from the session
+- View Projector
+- command log with commandSchemaVersion
+
+LATER:
+- clientStateVersion (low value for v1)
+- persist-before-confirm durability
+- snapshots
+- spectator view
+- accounts, matchmaking
+- Steam wrapper
+
+
+15. IMPLEMENTATION ORDER
+========================
+
+PHASE 0 - NUMBERS SHEET
+PHASE 1 - PAPER TEST + ENGINE START (in parallel)
+          Engine: foundation types and stable rules only.
+          Do not implement every event/objective before the first paper test.
+PHASE 2 - ENGINE TESTS
+PHASE 3 - BASIC BOTS + SIMULATION
+PHASE 4 - REBALANCE (new rulesetVersion), repeat as needed
+PHASE 5 - SERVER
+PHASE 6 - MINIMAL WEB CLIENT (private rooms, functional UI, no art)
+PHASE 7 - ONLINE FRIEND TESTS
+PHASE 8 - ITERATE (rules and UX before graphics)
+PHASE 9 - ONLY AFTER CORE VALIDATION: art, Steam, accounts,
+          matchmaking, monetization
+
+
+16. DECISIONS
+=============
+
+RESOLVED:
+- Trade offer model: enum + checked transitions, with INVALID.
+- Counteroffer: old offer REJECTED (closeReason COUNTEROFFER) + new offer.
+- Offer visibility v1: private to the two players.
+- Deadline rule: queue order decides.
+
+NOT ARCHITECTURE (do not block work):
+- Banker for the paper test: a neutral 5th person, or a shared
+  spreadsheet with one player doing banker actions openly.
+- Final game name: keep the internal name until the game proves fun.
