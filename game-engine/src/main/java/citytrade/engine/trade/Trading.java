@@ -47,8 +47,9 @@ public final class Trading {
         TradeOffer offer = state.tradeOffer(command.offerId()).orElseThrow();
         PlayerState proposer = state.player(offer.proposerSeat());
         PlayerState recipient = state.player(offer.recipientSeat());
-        boolean proposerHasIt = proposer.holdings().covers(offer.offered());
-        boolean recipientHasIt = recipient.holdings().covers(offer.requested());
+        // Money reserved by bids cannot be traded away (Numbers Sheet 17).
+        boolean proposerHasIt = state.spendableHoldings(proposer.seat()).covers(offer.offered());
+        boolean recipientHasIt = state.spendableHoldings(recipient.seat()).covers(offer.requested());
         if (!proposerHasIt || !recipientHasIt) {
             // Architecture 5.4: the trade does not happen and the offer is closed for good. Because the offer
             // changes, this is an accepted command with a TradeInvalidated event, not a Rejected result.
@@ -145,9 +146,9 @@ public final class Trading {
         if (offered.isEmpty() && requested.isEmpty()) {
             return rejected(RejectionCode.EMPTY_TRADE, "at least one side of a trade must not be empty");
         }
-        if (!state.player(proposerSeat).holdings().covers(offered)) {
-            return rejected(RejectionCode.INSUFFICIENT_RESOURCES, "offers " + offered + ", has "
-                    + state.player(proposerSeat).holdings());
+        if (!state.spendableHoldings(proposerSeat).covers(offered)) {
+            return rejected(RejectionCode.INSUFFICIENT_RESOURCES, "offers " + offered + ", has unreserved "
+                    + state.spendableHoldings(proposerSeat));
         }
         return Optional.empty();
     }

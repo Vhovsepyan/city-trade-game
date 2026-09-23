@@ -56,6 +56,23 @@ public final class TestRulesets {
                 base.objectives(), projects, base.opportunities());
     }
 
+    /** {@code base} with other opportunity rules. */
+    public static Ruleset withOpportunities(Ruleset base, OpportunityRules opportunities) {
+        return new Ruleset(base.version(), base.roundCount(), base.playerCount(), base.starting(), base.levels(),
+                base.storage(), base.strained(), base.buildings(), base.market(), base.contracts(), base.events(),
+                base.objectives(), base.projects(), opportunities);
+    }
+
+    /** Numbers Sheet 17, as in prototype-001 (5 cards). */
+    public static List<OpportunityRules.OpportunityCard> prototypeOpportunities() {
+        return List.of(
+                new OpportunityRules.OpportunityCard("SOLAR_FIELD", new ResourceBundle(0, 1, 0, 0, 0)),
+                new OpportunityRules.OpportunityCard("FERTILE_VALLEY", new ResourceBundle(1, 0, 0, 0, 0)),
+                new OpportunityRules.OpportunityCard("INDUSTRIAL_ZONE", new ResourceBundle(0, 0, 1, 0, 0)),
+                new OpportunityRules.OpportunityCard("RESEARCH_CAMPUS", new ResourceBundle(0, 0, 0, 1, 0)),
+                new OpportunityRules.OpportunityCard("COMMERCIAL_HUB", new ResourceBundle(0, 0, 0, 0, 2)));
+    }
+
     /** Numbers Sheet 16, as in prototype-001 (3 cards). */
     public static List<ProjectRules.ProjectCard> prototypeProjects() {
         return List.of(

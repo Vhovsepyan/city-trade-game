@@ -46,7 +46,7 @@ public final class EventOptions {
         if (invalidChoice.isPresent()) {
             return invalidChoice.get();
         }
-        Optional<GameResult.Rejected> unaffordable = Payments.checkAffordable(player.holdings(), cost);
+        Optional<GameResult.Rejected> unaffordable = Payments.checkAffordable(state.spendableHoldings(command.seat()), cost);
         if (unaffordable.isPresent()) {
             return unaffordable.get();
         }

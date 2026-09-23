@@ -149,7 +149,7 @@ Depends on: T07
 Docs: Numbers Sheet 16; Concept 22, 23; D9.
 Accept: contribution points, only listed resources, cannot exceed need, qualifying minimum, success/failure at deadline, largest/tie/other Prestige, production reward from next round.
 
-### T12 - Opportunities and secret bids  `TODO`
+### T12 - Opportunities and secret bids  `DONE`
 Depends on: T06
 Docs: Numbers Sheet 17; Concept 24, 25.
 Accept: Money reservation (total bids <= free Money), change/withdraw bid, highest wins and pays, tie -> nobody wins and card stays, 0 = pass, arrival order does not matter (test with shuffled command order).

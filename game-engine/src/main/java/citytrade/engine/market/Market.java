@@ -54,9 +54,10 @@ public final class Market {
         }
         int totalCost = command.quantity() * buyCost(state, resource, ruleset);
         ResourceBundle holdings = player.holdings();
-        if (holdings.money() < totalCost) {
+        int freeMoney = state.spendableHoldings(command.seat()).money();
+        if (freeMoney < totalCost) {
             return new GameResult.Rejected(RejectionCode.INSUFFICIENT_MONEY,
-                    "costs " + totalCost + " Money, has " + holdings.money());
+                    "costs " + totalCost + " Money, has " + freeMoney + " unreserved");
         }
         ResourceBundle newHoldings = holdings
                 .with(resource, holdings.amountOf(resource) + command.quantity())

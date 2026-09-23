@@ -64,7 +64,7 @@ public final class Projects {
             return notFitting.get();
         }
         PlayerState player = state.player(command.seat());
-        Optional<GameResult.Rejected> unaffordable = Payments.checkAffordable(player.holdings(), given);
+        Optional<GameResult.Rejected> unaffordable = Payments.checkAffordable(state.spendableHoldings(command.seat()), given);
         if (unaffordable.isPresent()) {
             return unaffordable.get();
         }

@@ -5,7 +5,7 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
 - Milestone: M0
-- Next task: T12
+- Next task: T13
 - Target ruleset: prototype-001 (`rulesets/prototype-001.json`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -35,6 +35,11 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
   Money income -1". The engine applies this to the TOTAL specialty production and Money income,
   building bonuses included (e.g. L2 + Specialty Complex: 5 - 2 = 3 specialty; L1 + Market Hall:
   3 - 1 = 2 Money). Alternative: only reduce the level values. Current choice follows the literal text.
+- T12 (please confirm, not blocking): Numbers Sheet 17 says reserved Money "cannot be spent on anything else".
+  The engine also keeps it out of the Money compensation of a VOLUNTARY contract break in the window: the
+  unpaid part costs Prestige as usual (Numbers Sheet 13). So a player could bid high, break a contract and pay
+  less compensation. Alternative: compensation may use reserved Money and the player's bids are lowered.
+  Current choice follows the literal text (reserved Money is never spent before step 4.2).
 
 ## Suggestions (not built)
 - (none)
@@ -48,6 +53,20 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T12 - Opportunities and secret bids - DONE (review round 2)
+- What: package `opportunity`: `Opportunities` (step 2.3 `reveal`, command `PlaceBid`, step 4.2 `resolveBids`).
+  State: `GameState.opportunities` (`RegionalOpportunity`: card, appearedRound, `OpportunityStatus` OPEN/WON/REMOVED,
+  winnerSeat, `SecretBid`s sorted by seat, so arrival order never changes the state).
+- Rules: `PlaceBid` replaces the old bid, 0 = pass/withdraw; total bids <= Money. `GameState.spendableHoldings`
+  (holdings minus reserved Money) is now used by market buy, trades (propose + accept), contracts (propose, sign,
+  break compensation), projects, levels, buildings, event options. Single highest bid wins, pays, gets the reward
+  as `extraProduction` (next round); tie or no bid = card stays OPEN; unwon cards become REMOVED in Round 14.
+- Codes: `UNKNOWN_OPPORTUNITY`, `OPPORTUNITY_NOT_OPEN`. Events: `OpportunityRevealed`, `BidPlaced` (no amount),
+  `OpportunityWon` (with price), `OpportunityNotWon(tied)`, `OpportunityRemoved`.
+- Review: R1-P2-1 (unwon cards not removed after Round 14) fixed. Owner question added (break compensation).
+- For later: T13 Opportunity Winner objective can use `opportunities()` `winnerSeat`.
+- Tests: OpportunitiesTest (28, incl. all 720 orders of 6 bids), EventOptionsTest (Festival with reserved Money).
 
 ### T11 - Public projects - DONE (review round 1)
 - What: package `project`: `Projects` (step 2.3 `open`, command `ContributeToProject`, step 4.3 `resolveDeadline`,
@@ -152,25 +171,9 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: GameRandomTest (SplitMix64 reference values), GameSetupTest, ObjectiveChoiceTest (engine,
   Java-built `TestRulesets`), PrototypeSetupTest (real prototype-001 file).
 
-### T02 - Ruleset model + prototype-001.json + loader + validation - DONE (review round 2)
-- What: `Ruleset` records in `citytrade.engine.ruleset` (sealed `BuildingEffect`, `EventCard`,
-  `ObjectiveCard`: the kind picks the engine behavior, the fields hold values). Also `Resource`
-  and `ResourceBundle` (F, E, M, T, Money) in `citytrade.engine`; T03 should reuse them.
-- `rulesets/prototype-001.json` = all Numbers Sheet v2 values. Loader `RulesetLoader` (Jackson 2.22.3,
-  mixins keep annotations out of the engine; strict: missing/null/unknown/mistyped values fail).
-  `load(Path)` also checks that "version" matches the file name.
-- Validation reports all errors with paths. D5 (deal 3, keep 2) is enforced as a fixed rule.
-- Tests: one test per Numbers Sheet section (1-21), one failing ruleset per validation rule, strict parsing.
-- Round 1 fix: D5 deal count enforced (was only configurable).
-
-### T01 - Gradle multi-module skeleton - DONE (review round 2)
-- What: Gradle 9.7.1 wrapper (with sha256), Groovy DSL, Java 25 toolchain + foojay 1.0.0,
-  JUnit 5.14.4, modules game-engine, game-ruleset-json, game-bots, game-sim.
-- Engine rule: task `:game-engine:verifyEngineHasNoDependencies` runs in `check` and fails on
-  any non-test dependency (checked by hand: it fails with a project dep and a Jackson dep).
-- Tests: one smoke test per module, asserts the test JVM is Java 25.
-- Notes: round 1 finding (missing engine dep in game-ruleset-json) was a Codex misread; the
-  dependency existed. Codex sandbox cannot run Gradle (no network, no cache access).
-
 ## Earlier
 - T00 DONE: environment checked (Java, git, node, codex, scripts executable, Codex smoke test OK).
+- T01 DONE: Gradle 9.7.1 wrapper, Groovy DSL, Java 25 toolchain + foojay, 4 modules; `verifyEngineHasNoDependencies`
+  in `check`. Codex sandbox cannot run Gradle (no network, no cache access).
+- T02 DONE: `Ruleset` records in the engine, `rulesets/prototype-001.json`, strict Jackson loader (mixins) with
+  validation that reports all errors; one test per Numbers Sheet section.

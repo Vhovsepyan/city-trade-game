@@ -18,12 +18,14 @@ import citytrade.engine.ResourceBundle;
 import citytrade.engine.TestRulesets;
 import citytrade.engine.command.DomainEvent;
 import citytrade.engine.command.GameResult;
+import citytrade.engine.command.PlaceBid;
 import citytrade.engine.command.RejectionCode;
 import citytrade.engine.command.ResolveRound;
 import citytrade.engine.command.StartRound;
 import citytrade.engine.command.UseEventOption;
 import citytrade.engine.ruleset.Ruleset;
 import citytrade.engine.state.GameState;
+import citytrade.engine.state.RegionalOpportunity;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -65,6 +67,20 @@ class EventOptionsTest {
         GameResult.Accepted resolved = accept(used.state(), new ResolveRound(), ruleset);
         assertEquals(1, resolved.state().player(seat).prestige());
         assertTrue(resolved.events().contains(new DomainEvent.PrestigeGained(seat, 1)));
+    }
+
+    @Test
+    void festivalCannotBePaidWithMoneyReservedByABid() {
+        GameState window = festivalWindow();
+        int seat = seatOf(window, CityType.ENERGY);
+        // An opportunity card is revealed out of schedule, so a bid can reserve Money in this window.
+        RegionalOpportunity opportunity = RegionalOpportunity.revealed(window.opportunityDeck().getFirst(), 2);
+        window = withCity(window.withRevealedOpportunity(opportunity), seat, 1, new ResourceBundle(2, 0, 0, 0, 3));
+        window = accept(window, new PlaceBid(seat, opportunity.id(), 2), ruleset).state();
+
+        assertRejected(window, new UseEventOption(seat), ruleset, RejectionCode.INSUFFICIENT_MONEY);
+        window = accept(window, new PlaceBid(seat, opportunity.id(), 1), ruleset).state();
+        accept(window, new UseEventOption(seat), ruleset);
     }
 
     @Test

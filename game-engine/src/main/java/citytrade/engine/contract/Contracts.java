@@ -57,7 +57,7 @@ public final class Contracts {
                     "contract " + contract.id() + " is " + contract.status());
         }
         PlayerState creditor = state.player(contract.creditorSeat());
-        if (!creditor.holdings().covers(contract.givenNow())) {
+        if (!state.spendableHoldings(creditor.seat()).covers(contract.givenNow())) {
             // Like an instant trade (Architecture 5.4): nothing moves and the proposal is closed for good. The
             // contract changes, so this is an accepted command with an event, not a Rejected result.
             GameState next = state.withContract(contract.movedTo(ContractStatus.INVALID));
@@ -179,7 +179,8 @@ public final class Contracts {
         PlayerState creditor = state.player(contract.creditorSeat());
         ResourceBundle unpaid = contract.owed().minus(delivered);
         int compensationOwed = compensationFor(unpaid, rules);
-        int moneyLeft = debtor.holdings().money() - delivered.money();
+        // Money reserved by bids is not paid out (Numbers Sheet 17); in step 1.5 no bids are active.
+        int moneyLeft = state.spendableHoldings(debtor.seat()).money() - delivered.money();
         int compensationPaid = Math.min(compensationOwed, moneyLeft);
         int prestigeLost = Math.addExact(Math.ceilDiv(compensationOwed - compensationPaid,
                 rules.unpaidCompensationMoneyPerPrestige()), rules.breakPrestigePenalty());
@@ -246,9 +247,10 @@ public final class Contracts {
                     + latestDueRound + ", was " + command.dueRound());
         }
         PlayerState proposer = state.player(command.seat());
-        if (command.seat() == command.creditorSeat() && !proposer.holdings().covers(command.givenNow())) {
+        if (command.seat() == command.creditorSeat()
+                && !state.spendableHoldings(proposer.seat()).covers(command.givenNow())) {
             return rejected(RejectionCode.INSUFFICIENT_RESOURCES,
-                    "gives " + command.givenNow() + ", has " + proposer.holdings());
+                    "gives " + command.givenNow() + ", has unreserved " + state.spendableHoldings(proposer.seat()));
         }
         return Optional.empty();
     }

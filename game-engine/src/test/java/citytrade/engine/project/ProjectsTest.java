@@ -56,7 +56,7 @@ class ProjectsTest {
                 PublicProject.upcoming(card(GRID), ruleset.projects().windows().get(0)),
                 PublicProject.upcoming(card(RESEARCH), ruleset.projects().windows().get(1)));
         return new GameState(s.rulesetVersion(), s.round(), s.phase(), s.random(), s.players(), s.market(),
-                s.eventDeck(), s.eventWarning(), s.activeEvent(), projects, s.opportunityDeck(), s.tradeOffers(),
+                s.eventDeck(), s.eventWarning(), s.activeEvent(), projects, s.opportunityDeck(), s.opportunities(), s.tradeOffers(),
                 s.nextOfferId(), s.contracts(), s.nextContractId());
     }
 

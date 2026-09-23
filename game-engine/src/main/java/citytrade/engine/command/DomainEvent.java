@@ -180,6 +180,36 @@ public sealed interface DomainEvent {
     record ProjectFailed(String projectId, ResourceBundle lost) implements DomainEvent {
     }
 
+    /** Step 2.3: regional opportunity {@code opportunityId} is revealed and takes bids. */
+    record OpportunityRevealed(String opportunityId) implements DomainEvent {
+    }
+
+    /**
+     * The player set, changed or withdrew (amount 0) their bid on the opportunity. The amount is secret, so the
+     * event carries none; the player knows it from their own command.
+     */
+    record BidPlaced(int seat, String opportunityId) implements DomainEvent {
+    }
+
+    /**
+     * Step 4.2: {@code winnerSeat} had the single highest bid, paid {@code pricePaid} and gets
+     * {@code productionReward} from next round on. All other bids on the card are released.
+     */
+    record OpportunityWon(String opportunityId, int winnerSeat, int pricePaid, ResourceBundle productionReward)
+            implements DomainEvent {
+    }
+
+    /**
+     * Step 4.2: nobody won the opportunity, because the highest bid was {@code tied} or nobody bid. Nobody pays,
+     * all bids are released and the card stays open for the next round.
+     */
+    record OpportunityNotWon(String opportunityId, boolean tied) implements DomainEvent {
+    }
+
+    /** Step 4.2 of the last round: the opportunity was never won and is removed (Numbers Sheet 17). */
+    record OpportunityRemoved(String opportunityId) implements DomainEvent {
+    }
+
     /** The automatic and world update of {@code round} are done; the trade window is open. */
     record RoundStarted(int round) implements DomainEvent {
     }

@@ -10,6 +10,7 @@ import citytrade.engine.event.Crises;
 import citytrade.engine.event.EventOptions;
 import citytrade.engine.event.EventSchedule;
 import citytrade.engine.market.Market;
+import citytrade.engine.opportunity.Opportunities;
 import citytrade.engine.project.Projects;
 import citytrade.engine.ruleset.Ruleset;
 import citytrade.engine.state.GameState;
@@ -18,7 +19,7 @@ import java.util.List;
 
 /**
  * The real round steps. Steps that return the state unchanged are filled in by later tasks
- * (T12 bids, T13 scoring). The switch is exhaustive, so a new step cannot be forgotten.
+ * (T13 scoring). The switch is exhaustive, so a new step cannot be forgotten.
  */
 public final class RoundSteps implements RoundStepHandler {
 
@@ -39,8 +40,8 @@ public final class RoundSteps implements RoundStepHandler {
             case NEXT_EVENT_WARNING -> EventSchedule.warnNextEvent(state, ruleset, events);
             // Unsigned contract proposals end with the window, like open trade offers.
             case TRADE_OFFERS_EXPIRE -> Contracts.expireProposals(Trading.expireOpenOffers(state, events), events);
-            // T12 adds the new opportunity card here.
-            case NEW_PROJECT_OR_OPPORTUNITY -> Projects.open(state, events);
+            case NEW_PROJECT_OR_OPPORTUNITY -> Opportunities.reveal(Projects.open(state, events), ruleset, events);
+            case BIDS_RESOLVE -> Opportunities.resolveBids(state, ruleset, events);
             case PROJECT_DEADLINE -> Projects.resolveDeadline(state, ruleset, events);
             // Numbers Sheet 4.4 order: levels, buildings, projects, crises, festival.
             case PRESTIGE -> EventOptions.awardPrestige(
@@ -51,8 +52,7 @@ public final class RoundSteps implements RoundStepHandler {
             case STORAGE_LIMITS -> Storage.discardExcess(state, ruleset, events);
             case MARKET_PRICES_MOVE -> Market.movePrices(state, ruleset, events);
             case TEMPORARY_EVENT_EFFECTS_END -> EventSchedule.endTemporaryEffects(state, events);
-            case BIDS_RESOLVE,
-                 FINAL_SCORING -> state;
+            case FINAL_SCORING -> state;
         };
     }
 }

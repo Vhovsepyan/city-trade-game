@@ -84,7 +84,7 @@ public final class GameSetup {
         MarketPrices market = MarketPrices.allAt(startStepIndex(ruleset.market()));
 
         return new GameState(ruleset.version(), 0, GamePhase.SETUP, random, players, market, eventDeck, warning,
-                Optional.empty(), projects, opportunities.items(), List.of(), FIRST_OFFER_ID, List.of(), FIRST_CONTRACT_ID);
+                Optional.empty(), projects, opportunities.items(), List.of(), List.of(), FIRST_OFFER_ID, List.of(), FIRST_CONTRACT_ID);
     }
 
     private static ResourceBundle startingHoldings(CityType city, StartingRules starting) {
@@ -134,6 +134,10 @@ public final class GameSetup {
         if (ruleset.projects().cards().size() < ruleset.projects().windows().size()) {
             throw new IllegalArgumentException("project deck has " + ruleset.projects().cards().size()
                     + " cards for " + ruleset.projects().windows().size() + " windows");
+        }
+        if (ruleset.opportunities().cards().size() < ruleset.opportunities().appearanceRounds().size()) {
+            throw new IllegalArgumentException("opportunity deck has " + ruleset.opportunities().cards().size()
+                    + " cards for " + ruleset.opportunities().appearanceRounds().size() + " appearance rounds");
         }
     }
 }

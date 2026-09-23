@@ -43,7 +43,8 @@ public final class CityDevelopment {
                     "only one level per round; already upgraded in round " + state.round());
         }
         ResourceBundle cost = EventEffects.upgradeCost(state.activeEvent(), ruleset.level(newLevel).upgradeCost());
-        Optional<GameResult.Rejected> unaffordable = Payments.checkAffordable(player.holdings(), cost);
+        Optional<GameResult.Rejected> unaffordable =
+                Payments.checkAffordable(state.spendableHoldings(command.seat()), cost);
         if (unaffordable.isPresent()) {
             return unaffordable.get();
         }
@@ -76,7 +77,8 @@ public final class CityDevelopment {
             return invalidChoice.get();
         }
         ResourceBundle cost = EventEffects.buildingCost(state.activeEvent(), building.cost());
-        Optional<GameResult.Rejected> unaffordable = Payments.checkAffordable(player.holdings(), cost);
+        Optional<GameResult.Rejected> unaffordable =
+                Payments.checkAffordable(state.spendableHoldings(command.seat()), cost);
         if (unaffordable.isPresent()) {
             return unaffordable.get();
         }
