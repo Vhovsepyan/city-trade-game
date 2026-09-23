@@ -5,8 +5,10 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
 - Milestone: M0
-- Next task: T02
-- Target ruleset: prototype-001 (will be created in T02)
+- Next task: T03
+- Target ruleset: prototype-001 (`rulesets/prototype-001.json`)
+- `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
+  session start). It is not part of T02; agents do not touch or commit it.
 
 ## Environment (checked by T00, 2026-09-23)
 - OK Java for Gradle: default `java` = OpenJDK 17.0.12 (OpenLogic),
@@ -43,6 +45,17 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T02 - Ruleset model + prototype-001.json + loader + validation - DONE (review round 2)
+- What: `Ruleset` records in `citytrade.engine.ruleset` (sealed `BuildingEffect`, `EventCard`,
+  `ObjectiveCard`: the kind picks the engine behavior, the fields hold values). Also `Resource`
+  and `ResourceBundle` (F, E, M, T, Money) in `citytrade.engine`; T03 should reuse them.
+- `rulesets/prototype-001.json` = all Numbers Sheet v2 values. Loader `RulesetLoader` (Jackson 2.22.3,
+  mixins keep annotations out of the engine; strict: missing/null/unknown/mistyped values fail).
+  `load(Path)` also checks that "version" matches the file name.
+- Validation reports all errors with paths. D5 (deal 3, keep 2) is enforced as a fixed rule.
+- Tests: one test per Numbers Sheet section (1-21), one failing ruleset per validation rule, strict parsing.
+- Round 1 fix: D5 deal count enforced (was only configurable).
 
 ### T01 - Gradle multi-module skeleton - DONE (review round 2)
 - What: Gradle 9.7.1 wrapper (with sha256), Groovy DSL, Java 25 toolchain + foojay 1.0.0,

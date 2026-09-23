@@ -81,7 +81,7 @@ Accept:
 - `./gradlew -q javaToolchains` (or build output) shows JDK 25 is used for compiling.
 - A test (or build check) proves `game-engine` has no dependency on other modules.
 
-### T02 - Ruleset model + prototype-001.json + loader + validation  `TODO`
+### T02 - Ruleset model + prototype-001.json + loader + validation  `DONE`
 Depends on: T01
 Docs: Numbers Sheet (all sections), AGENTS.md section 5.
 Do:

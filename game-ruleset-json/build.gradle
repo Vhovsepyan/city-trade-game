@@ -1,3 +1,10 @@
 dependencies {
     implementation project(':game-engine')
+    implementation platform('com.fasterxml.jackson:jackson-bom:2.22.3')
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+}
+
+tasks.named('test') {
+    // Tests load the real ruleset files from the repository root.
+    systemProperty 'rulesets.dir', rootProject.file('rulesets').absolutePath
 }
