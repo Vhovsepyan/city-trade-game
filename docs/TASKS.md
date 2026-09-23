@@ -98,7 +98,7 @@ Accept:
 
 ## Milestone M1 - Game engine (pure Java)
 
-### T03 - Core state, setup, deterministic random  `TODO`
+### T03 - Core state, setup, deterministic random  `DONE`
 Depends on: T02
 Docs: Numbers Sheet 1-2, 21; Concept 5, 6; decisions D5, D11.
 Do: `Resource`, `CityType`, `ResourceBundle`, `PlayerState`, `GameState`, engine-owned seeded random, `GameSetup.create(seed, ruleset)` (cities, starting resources, shuffled event/objective/project/opportunity decks, market start step, first event warning), `ChooseObjectives` command.

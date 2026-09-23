@@ -5,7 +5,7 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
 - Milestone: M0
-- Next task: T03
+- Next task: T04
 - Target ruleset: prototype-001 (`rulesets/prototype-001.json`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -45,6 +45,16 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T03 - Core state, setup, deterministic random - DONE (review round 1)
+- What: `CityType`, `GameRandom` (SplitMix64, immutable value inside `GameState`), `PlayerState`,
+  `GameState`, `MarketPrices`, `EventWarning`, `GameSetup.create(seed, ruleset)` (random draws in
+  Numbers Sheet 21 step order: cities, objectives, events, projects, opportunities), `ChooseObjectives`.
+- For `ChooseObjectives` T03 already created minimal `GameCommand`, `GameResult`, `RejectionCode`,
+  `DomainEvent` (package `citytrade.engine.command`); handler is `setup.ObjectiveChoice`. T04 extends
+  these, adds `GameEngine.apply` and the phase check (`INVALID_PHASE`) for ChooseObjectives.
+- Tests: GameRandomTest (SplitMix64 reference values), GameSetupTest, ObjectiveChoiceTest (engine,
+  Java-built `TestRulesets`), PrototypeSetupTest (real prototype-001 file).
 
 ### T02 - Ruleset model + prototype-001.json + loader + validation - DONE (review round 2)
 - What: `Ruleset` records in `citytrade.engine.ruleset` (sealed `BuildingEffect`, `EventCard`,
