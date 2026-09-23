@@ -64,11 +64,7 @@ for (( i = 1; i <= MAX_SESSIONS; i++ )); do
   CLAUDE_EXIT=$?
 
   # Show and log Claude's final message, then log token usage.
-  if command -v jq >/dev/null 2>&1; then
-    jq -r '.result // "(no result text)"' "$RESULT_JSON" 2>/dev/null | tee -a "$LOG"
-  else
-    tee -a "$LOG" < "$RESULT_JSON"
-  fi
+  usage_result_text "$RESULT_JSON" | tee -a "$LOG"
   STATUS="exit${CLAUDE_EXIT}"
   grep -q "RESULT: ${NEXT} DONE" "$RESULT_JSON" && STATUS="DONE"
   grep -q "RESULT: ${NEXT} BLOCKED" "$RESULT_JSON" && STATUS="BLOCKED"

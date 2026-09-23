@@ -33,34 +33,52 @@ Agents write open questions in `docs/PROGRESS.md`.
 
 ## Milestone M0 - Project foundation
 
-### T00 - Environment and repository check  `TODO`
+### T00 - Environment and repository check (self-fixing)  `DONE`
 Depends on: -
 Review: Codex review NOT needed (no product code). Commit directly after checks pass.
+Rule: FIX problems yourself (AGENTS.md section 3a). Do not stop to ask the owner
+for anything that can be done without admin rights.
 Do:
-- Check tools and write versions to PROGRESS.md: `java -version` (must be 25), `git --version`, `codex --version`, `jq --version`.
-  If Gradle is installed, note `gradle --version` (only needed to create the wrapper in T01).
-- Check the repository: `.gitignore` exists and contains `.review/`, `build/`, `.gradle/`, `.idea/`.
-- Check the 3 spec documents exist in `docs/` with the names listed in AGENTS.md.
-- Check scripts are executable: `scripts/codex-review.sh`, `scripts/run-until.sh`, `scripts/usage-report.sh`.
+- Java: find any JDK 17+ to run Gradle (`java -version`, `~/.jdks`, `JAVA_HOME`).
+  JDK 25 is NOT required as the default: T01 uses a Gradle toolchain that finds or
+  downloads JDK 25. If a JDK 25 already exists (e.g. `~/.jdks/corretto-25*`), note its path.
+  If no JDK 17+ exists at all: install one user-level (e.g. `winget install --scope user EclipseAdoptium.Temurin.21.JDK`).
+- `git --version`, `node --version`, `codex --version`. (jq is NOT needed.)
+- Repository: `.gitignore` contains `.review/`, `build/`, `.gradle/`, `.idea/`.
+- The 3 spec documents exist in `docs/` with the names listed in AGENTS.md.
+- Scripts executable: `scripts/codex-review.sh`, `scripts/run-until.sh`, `scripts/usage-report.sh`
+  (fix with `chmod +x` if needed).
 - Smoke test the Codex call with the same flags as the review script:
   `codex exec --json --sandbox workspace-write -o .review/codex-smoke.txt "Reply with exactly: CODEX OK" > .review/codex-smoke.jsonl`
-  Confirm `.review/codex-smoke.txt` contains `CODEX OK` and `.review/codex-smoke.jsonl` contains `input_tokens`.
+  Confirm `.review/codex-smoke.txt` contains `CODEX OK` and the .jsonl contains `input_tokens`.
+  If a flag is wrong for the installed Codex version: check `codex exec --help`,
+  fix `scripts/codex-review.sh`, and retest.
 - `mkdir -p .review`.
+- Write all versions, paths and any environment changes to PROGRESS.md "Environment".
 Accept:
-- All checks listed in PROGRESS.md as OK, or the task is `BLOCKED` with the exact failing check
-  (for example: "Java 25 not found - install JDK 25 and set JAVA_HOME").
+- All checks OK (fixed by the agent where needed).
+- `BLOCKED` only for admin rights, logins (e.g. Codex not logged in) or paid purchases,
+  with the exact one-line action for the owner.
 
 ### T01 - Gradle multi-module skeleton  `TODO`
 Depends on: T00
 Docs: AGENTS.md sections 3, 4, 9.
 Do:
-- Root `settings.gradle` + `build.gradle` (Groovy DSL), Java 25 toolchain, JUnit 5.
+- Root `settings.gradle` + `build.gradle` (Groovy DSL), JUnit 5.
+- Java 25 via Gradle toolchain: `java { toolchain { languageVersion = JavaLanguageVersion.of(25) } }`
+  plus the foojay toolchain resolver plugin in `settings.gradle` (latest version), so JDK 25 is
+  found or downloaded automatically. Gradle version must support Java 25 (Gradle 9.1+).
+- If no global Gradle exists to create the wrapper: download the Gradle distribution zip into
+  the user folder, run its `gradle wrapper` once, commit the wrapper. No admin rights needed.
 - Modules: `game-engine`, `game-ruleset-json`, `game-bots`, `game-sim` (empty skeletons, one smoke test each).
 - Dependency rules from AGENTS.md section 4. `game-engine` has no external dependencies except test libraries.
 - `.gitignore` (build, .gradle, .idea, .review, *.iml).
 - Gradle wrapper (`./gradlew`), committed to the repository, so no global Gradle is needed later.
+- If a local JDK 25 path was found in T00, you may add it to the USER Gradle properties
+  (`~/.gradle/gradle.properties`: `org.gradle.java.installations.paths=...`), never to the project file.
 Accept:
-- `./gradlew build` passes.
+- `./gradlew build` passes in a NEW terminal where the default `java` is NOT 25.
+- `./gradlew -q javaToolchains` (or build output) shows JDK 25 is used for compiling.
 - A test (or build check) proves `game-engine` has no dependency on other modules.
 
 ### T02 - Ruleset model + prototype-001.json + loader + validation  `TODO`
