@@ -35,6 +35,12 @@ You are the implementation agent. For "do the next task" (or a named task):
    - add a short entry to PROGRESS.md (template inside the file)
    - `git add` the task files and commit with one short line: `<TASK_ID> <what was done>`
 
+## Environment problems
+
+Missing tool, wrong Java version, missing setting: fix it yourself as described in
+AGENTS.md section 3a. Do not write "owner, please install X" if you can do it
+without admin rights. Log what you changed in PROGRESS.md "Environment".
+
 ## Autonomous mode
 
 When started by `scripts/run-until.sh` or asked to "work until <milestone>":

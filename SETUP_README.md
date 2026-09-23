@@ -4,12 +4,11 @@
 
 | Tool | Why | Check |
 |------|-----|-------|
-| JDK 25 (e.g. Temurin 25) | build and run the engine | `java -version` shows 25 |
+| Any JDK 17+ | runs Gradle (JDK 25 is downloaded automatically by the Gradle toolchain) | `java -version` |
 | Git | version control | `git --version` |
 | Node.js (LTS) | needed by Claude Code and Codex CLI | `node --version` |
 | Claude Code CLI | implementation agent | `claude --version` |
 | Codex CLI | review agent | `codex --version` |
-| jq | reads token usage from agent output | `jq --version` |
 | IntelliJ IDEA (optional) | to look at the code | - |
 
 Gradle does NOT need to be installed: task T01 creates the Gradle wrapper

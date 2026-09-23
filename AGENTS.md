@@ -56,12 +56,34 @@ If a real contradiction remains and it affects game behavior: stop that part, na
 
 ## 3. Tech stack (fixed)
 
-- Java 25, **stable features only, no preview features**.
+- Java 25, **stable features only, no preview features**. Compiled via Gradle
+  toolchain (JDK 25 auto-provisioned). Gradle itself may run on any JDK 17+.
 - Gradle, **Groovy DSL** (`build.gradle`, not `.kts`), multi-module.
 - JUnit 5 (+ AssertJ allowed).
 - Later: Spring Boot, WebSocket, PostgreSQL, React + TypeScript + Vite, Docker.
 
 Do not add without an explicit task: Kafka, Redis, Kubernetes, microservices, Unity/Godot, Electron/Tauri, accounts, matchmaking, Android code.
+
+## 3a. Environment problems - fix them yourself
+
+The owner does not do setup work. When a tool, version or setting is missing,
+the agent solves it, in this order of preference:
+
+1. **Project-level solution** (best): Gradle wrapper, Gradle toolchains with
+   auto-download of JDK 25 (foojay resolver), project config files.
+   The default `java` on the computer does NOT need to be 25.
+2. **User-level install** (no admin): `winget install --scope user ...`, or download
+   into the user folder (e.g. `~/.jdks`, `~/tools`).
+3. **User environment variables** (`setx` on Windows, `~/.bashrc` on Linux/macOS),
+   only if 1 and 2 are not possible. Remember: new values work only in NEW terminals,
+   so also set them for the current session (`export ...`).
+
+Never: admin/system-wide changes, uninstalling software, changing other projects,
+changing global Git config.
+
+Write every change made outside the repository in `docs/PROGRESS.md` under
+"Environment" (what, where, how to undo).
+`BLOCKED` only if the fix needs admin rights, a password/login, or a paid purchase.
 
 ## 4. Modules
 
