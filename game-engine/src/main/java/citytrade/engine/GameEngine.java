@@ -5,7 +5,9 @@ import citytrade.engine.command.GameCommand;
 import citytrade.engine.command.GameResult;
 import citytrade.engine.command.RejectionCode;
 import citytrade.engine.command.ResolveRound;
+import citytrade.engine.command.SetUpkeepPriority;
 import citytrade.engine.command.StartRound;
+import citytrade.engine.economy.UpkeepPriorityChoice;
 import citytrade.engine.round.RoundFlow;
 import citytrade.engine.round.RoundSteps;
 import citytrade.engine.ruleset.Ruleset;
@@ -28,6 +30,10 @@ public final class GameEngine {
         return switch (command) {
             case ChooseObjectives choose -> state.phase() == GamePhase.SETUP
                     ? ObjectiveChoice.apply(state, choose, ruleset)
+                    : invalidPhase(command, state);
+            // Upkeep is paid in StartRound, so the order is set before Round 1 or in a window for later rounds.
+            case SetUpkeepPriority priority -> state.phase() == GamePhase.SETUP || state.phase() == GamePhase.WINDOW
+                    ? UpkeepPriorityChoice.apply(state, priority)
                     : invalidPhase(command, state);
             case StartRound _ -> ROUND_FLOW.startRound(state, ruleset);
             case ResolveRound _ -> ROUND_FLOW.resolveRound(state, ruleset);

@@ -36,8 +36,7 @@ class RoundFlowTest {
             PlayerState p = state.player(0);
             ResourceBundle h = p.holdings();
             ResourceBundle more = new ResourceBundle(h.food(), h.energy(), h.materials(), h.technology(), h.money() + 1);
-            return state.withPlayer(new PlayerState(p.seat(), p.city(), more, p.level(), p.dealtObjectives(),
-                    p.keptObjectives()));
+            return state.withPlayer(p.withHoldings(more));
         }
     }
 

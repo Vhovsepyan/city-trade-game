@@ -110,7 +110,7 @@ Docs: Architecture 4; Numbers Sheet "ROUND ORDER"; AGENTS.md 5.
 Do: sealed `GameCommand`, sealed `GameResult` (`Accepted`/`Rejected`), `RejectionCode` enum, `DomainEvent`, `GameEngine.apply(...)`, phases (SETUP, AUTOMATIC, WORLD, WINDOW, RESOLUTION, FINISHED), internal commands `StartRound` and `ResolveRound` as skeletons calling the steps in the exact documented order (steps may be empty for now).
 Accept: wrong-phase commands rejected with `INVALID_PHASE`; rejected commands leave state unchanged (test); step order test exists.
 
-### T05 - Production, upkeep, Strained, storage  `TODO`
+### T05 - Production, upkeep, Strained, storage  `DONE`
 Depends on: T04
 Docs: Numbers Sheet 3-5, 8-9; Concept 8, 10, 11; D1.
 Accept: `SetUpkeepPriority` command and the fallback order without it (D1); tests for L1/L2/L3 production, upkeep never uses specialty or Money, L3 needs 2 different resources, partial upkeep paid + Strained, Strained penalty next round only and not stacking, storage overflow allowed in window and discarded at resolution.

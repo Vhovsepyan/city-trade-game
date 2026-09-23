@@ -32,6 +32,13 @@ public final class TestRulesets {
         return withPlayerCount(4);
     }
 
+    /** {@code base} with other level tables, e.g. to make upkeep unpayable. */
+    public static Ruleset withLevels(Ruleset base, List<LevelRules> levels) {
+        return new Ruleset(base.version(), base.roundCount(), base.playerCount(), base.starting(), levels,
+                base.storage(), base.strained(), base.buildings(), base.market(), base.contracts(), base.events(),
+                base.objectives(), base.projects(), base.opportunities());
+    }
+
     public static Ruleset withPlayerCount(int playerCount) {
         return new Ruleset(
                 "test-001",

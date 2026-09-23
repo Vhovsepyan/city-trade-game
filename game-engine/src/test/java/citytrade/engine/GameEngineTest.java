@@ -75,13 +75,18 @@ class GameEngineTest {
             assertEquals(GamePhase.WINDOW, state.phase());
             GameResult.Accepted resolved = accept(state, new ResolveRound());
             state = resolved.state();
+            // Step events (e.g. discarded excess) come before; the round-flow events close the command.
+            List<DomainEvent> flowEvents = resolved.events().stream()
+                    .filter(e -> e instanceof DomainEvent.RoundResolved || e instanceof DomainEvent.GameFinished)
+                    .toList();
             if (round < ruleset.roundCount()) {
                 assertEquals(GamePhase.RESOLUTION, state.phase());
-                assertEquals(List.of(new DomainEvent.RoundResolved(round)), resolved.events());
+                assertEquals(List.of(new DomainEvent.RoundResolved(round)), flowEvents);
+                assertEquals(new DomainEvent.RoundResolved(round), resolved.events().getLast());
             } else {
                 assertEquals(GamePhase.FINISHED, state.phase());
-                assertEquals(List.of(new DomainEvent.RoundResolved(round), new DomainEvent.GameFinished()),
-                        resolved.events());
+                assertEquals(List.of(new DomainEvent.RoundResolved(round), new DomainEvent.GameFinished()), flowEvents);
+                assertEquals(new DomainEvent.GameFinished(), resolved.events().getLast());
             }
         }
         assertEquals(ruleset.roundCount(), state.round());

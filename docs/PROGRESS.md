@@ -5,7 +5,7 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
 - Milestone: M0
-- Next task: T05
+- Next task: T06
 - Target ruleset: prototype-001 (`rulesets/prototype-001.json`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -45,6 +45,18 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T05 - Production, upkeep, Strained, storage - DONE (review round 1)
+- What: package `economy`: `Production` (1.2 Strained penalty, 1.3 production), `Upkeep` (1.4, D1),
+  `Storage` (4.5), `UpkeepPriorityChoice` (command `SetUpkeepPriority`, allowed in SETUP and WINDOW,
+  must list each non-specialty resource once, stays until changed). Wired into `RoundSteps`.
+- `PlayerState` new fields: `strained` (penalty next round, a flag = no stacking), `strainedPenaltyActive`
+  (set in 1.2 from `strained`, used by 1.3), `upkeepPriority`. T07 must add Warehouse/Transit/production
+  bonuses to `Storage`/`Upkeep`/`Production`; T10 sets `strained` for crises.
+- Events: `UpkeepPrioritySet`, `UpkeepPaid(paid, missing)`, `CityStrained`, `ExcessDiscarded`.
+- Note: with prototype values an L2+ city always produces 1 of each other resource before upkeep, so
+  upkeep never fails in practice (tests use a ruleset with 0 other production to test Strained).
+- Tests: ProductionTest, UpkeepTest, StrainedRoundsTest, StorageTest, SetUpkeepPriorityTest; helper `TestGames`.
 
 ### T04 - Command/result framework and round phases - DONE (review round 1)
 - What: `GameEngine.apply(state, command, ruleset)` (switch over sealed `GameCommand`), `GamePhase`

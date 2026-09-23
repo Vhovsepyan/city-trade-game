@@ -51,7 +51,7 @@ public final class GameSetup {
         for (int seat = 0; seat < ruleset.playerCount(); seat++) {
             CityType city = cities.items().get(seat);
             List<ObjectiveCard> hand = objectives.items().subList(seat * dealt, (seat + 1) * dealt);
-            players.add(new PlayerState(seat, city, startingHoldings(city, ruleset.starting()), startLevel, hand, List.of()));
+            players.add(PlayerState.starting(seat, city, startingHoldings(city, ruleset.starting()), startLevel, hand));
         }
 
         // Step 4: the top event card is revealed as the warning for the first event round.

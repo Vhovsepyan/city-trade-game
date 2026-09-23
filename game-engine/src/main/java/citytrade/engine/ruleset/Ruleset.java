@@ -26,4 +26,12 @@ public record Ruleset(
         levels = List.copyOf(levels);
         buildings = List.copyOf(buildings);
     }
+
+    /** The rules of city level {@code level}. */
+    public LevelRules level(int level) {
+        return levels.stream()
+                .filter(rules -> rules.level() == level)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("ruleset has no level " + level));
+    }
 }
