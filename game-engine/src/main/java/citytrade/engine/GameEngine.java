@@ -8,6 +8,7 @@ import citytrade.engine.command.BuyFromMarket;
 import citytrade.engine.command.CancelContractMutually;
 import citytrade.engine.command.CancelTrade;
 import citytrade.engine.command.ChooseObjectives;
+import citytrade.engine.command.ContributeToProject;
 import citytrade.engine.command.CounterTrade;
 import citytrade.engine.command.GameCommand;
 import citytrade.engine.command.GameResult;
@@ -28,6 +29,7 @@ import citytrade.engine.economy.UpkeepPriorityChoice;
 import citytrade.engine.event.Crises;
 import citytrade.engine.event.EventOptions;
 import citytrade.engine.market.Market;
+import citytrade.engine.project.Projects;
 import citytrade.engine.round.RoundFlow;
 import citytrade.engine.round.RoundSteps;
 import citytrade.engine.ruleset.Ruleset;
@@ -100,6 +102,9 @@ public final class GameEngine {
                     : invalidPhase(command, state);
             case UseEventOption option -> state.phase() == GamePhase.WINDOW
                     ? EventOptions.use(state, option)
+                    : invalidPhase(command, state);
+            case ContributeToProject contribute -> state.phase() == GamePhase.WINDOW
+                    ? Projects.contribute(state, contribute, ruleset)
                     : invalidPhase(command, state);
             case StartRound _ -> ROUND_FLOW.startRound(state, ruleset);
             case ResolveRound _ -> ROUND_FLOW.resolveRound(state, ruleset);

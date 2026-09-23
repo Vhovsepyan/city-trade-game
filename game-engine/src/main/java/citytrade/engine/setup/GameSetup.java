@@ -17,6 +17,7 @@ import citytrade.engine.state.GamePhase;
 import citytrade.engine.state.GameState;
 import citytrade.engine.state.MarketPrices;
 import citytrade.engine.state.PlayerState;
+import citytrade.engine.state.PublicProject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -70,7 +71,10 @@ public final class GameSetup {
         // Step 5: draw one project card per window; the rest are put away unseen.
         GameRandom.Shuffle<ProjectCard> projectCards = random.shuffle(ruleset.projects().cards());
         random = projectCards.next();
-        List<ProjectCard> projects = projectCards.items().subList(0, ruleset.projects().windows().size());
+        List<PublicProject> projects = new ArrayList<>();
+        for (int i = 0; i < ruleset.projects().windows().size(); i++) {
+            projects.add(PublicProject.upcoming(projectCards.items().get(i), ruleset.projects().windows().get(i)));
+        }
 
         // Step 6: face-down opportunity pile.
         GameRandom.Shuffle<OpportunityCard> opportunities = random.shuffle(ruleset.opportunities().cards());

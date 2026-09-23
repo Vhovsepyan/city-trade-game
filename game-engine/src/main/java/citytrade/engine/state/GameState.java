@@ -3,7 +3,6 @@ package citytrade.engine.state;
 import citytrade.engine.GameRandom;
 import citytrade.engine.ruleset.EventCard;
 import citytrade.engine.ruleset.OpportunityRules.OpportunityCard;
-import citytrade.engine.ruleset.ProjectRules.ProjectCard;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -20,7 +19,7 @@ import java.util.Optional;
  * @param eventDeck        face-down event cards, top card first
  * @param eventWarning     the revealed event card for the next event round, if any
  * @param activeEvent      the event card of this round, from step 1.1 until step 4.7
- * @param projects         the drawn project cards, one per project window in order (A, B)
+ * @param projects         the drawn public projects, one per project window in order (A, B)
  * @param opportunityDeck  face-down opportunity cards, top card first
  * @param tradeOffers      every direct trade offer of the game in creation order; closed ones stay as history
  * @param nextOfferId      the id the next trade offer gets
@@ -37,7 +36,7 @@ public record GameState(
         List<EventCard> eventDeck,
         Optional<EventWarning> eventWarning,
         Optional<EventCard> activeEvent,
-        List<ProjectCard> projects,
+        List<PublicProject> projects,
         List<OpportunityCard> opportunityDeck,
         List<TradeOffer> tradeOffers,
         int nextOfferId,
@@ -94,6 +93,18 @@ public record GameState(
             Optional<EventCard> newActiveEvent) {
         return new GameState(rulesetVersion, round, phase, random, players, market, newDeck, newWarning,
                 newActiveEvent, projects, opportunityDeck, tradeOffers, nextOfferId, contracts, nextContractId);
+    }
+
+    public Optional<PublicProject> project(String projectId) {
+        return projects.stream().filter(project -> project.id().equals(projectId)).findFirst();
+    }
+
+    /** The state with the stored project of the same id replaced by {@code project}. */
+    public GameState withProject(PublicProject project) {
+        List<PublicProject> updated = new ArrayList<>(projects);
+        updated.replaceAll(existing -> existing.id().equals(project.id()) ? project : existing);
+        return new GameState(rulesetVersion, round, phase, random, players, market, eventDeck, eventWarning,
+                activeEvent, updated, opportunityDeck, tradeOffers, nextOfferId, contracts, nextContractId);
     }
 
     public Optional<TradeOffer> tradeOffer(int offerId) {

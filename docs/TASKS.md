@@ -144,7 +144,7 @@ Depends on: T06, T07
 Docs: Numbers Sheet 14; Concept 20, 21; D2.
 Accept: event active from step 1.1, warning one round ahead, no event in rounds 1 and 14, each of the 12 events tested, crisis only for L2+, `SetCrisisPolicy` (D2) with default policy PAY, PAY in full -> Prestige, cannot pay or SKIP -> Strained, optional events (Festival, Breakthrough) once per player. Test: a player already Strained from upkeep who SKIPs a crisis stays Strained once (no stacking) - record this behavior, do not "fix" it (Watch List item 3).
 
-### T11 - Public projects  `TODO`
+### T11 - Public projects  `DONE`
 Depends on: T07
 Docs: Numbers Sheet 16; Concept 22, 23; D9.
 Accept: contribution points, only listed resources, cannot exceed need, qualifying minimum, success/failure at deadline, largest/tie/other Prestige, production reward from next round.

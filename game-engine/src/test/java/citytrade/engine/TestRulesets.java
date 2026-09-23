@@ -49,6 +49,24 @@ public final class TestRulesets {
                 base.objectives(), base.projects(), base.opportunities());
     }
 
+    /** {@code base} with other project rules. */
+    public static Ruleset withProjects(Ruleset base, ProjectRules projects) {
+        return new Ruleset(base.version(), base.roundCount(), base.playerCount(), base.starting(), base.levels(),
+                base.storage(), base.strained(), base.buildings(), base.market(), base.contracts(), base.events(),
+                base.objectives(), projects, base.opportunities());
+    }
+
+    /** Numbers Sheet 16, as in prototype-001 (3 cards). */
+    public static List<ProjectRules.ProjectCard> prototypeProjects() {
+        return List.of(
+                new ProjectRules.ProjectCard("REGIONAL_POWER_GRID", new ResourceBundle(0, 6, 6, 0, 6),
+                        new ResourceBundle(0, 1, 0, 0, 0)),
+                new ProjectRules.ProjectCard("REGIONAL_RESEARCH_INITIATIVE", new ResourceBundle(0, 0, 4, 6, 6),
+                        new ResourceBundle(0, 0, 0, 1, 0)),
+                new ProjectRules.ProjectCard("FOOD_SECURITY_PROGRAM", new ResourceBundle(6, 4, 0, 0, 6),
+                        new ResourceBundle(1, 0, 0, 0, 0)));
+    }
+
     /** Numbers Sheet 14, as in prototype-001 (12 cards). */
     public static List<EventCard> prototypeEvents() {
         return List.of(

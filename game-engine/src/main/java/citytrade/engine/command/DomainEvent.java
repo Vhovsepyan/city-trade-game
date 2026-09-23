@@ -3,6 +3,7 @@ package citytrade.engine.command;
 import citytrade.engine.Resource;
 import citytrade.engine.ResourceBundle;
 import citytrade.engine.state.OfferCloseReason;
+import java.util.List;
 import java.util.Optional;
 
 /** Something that happened in the game, produced by an accepted command. */
@@ -153,6 +154,30 @@ public sealed interface DomainEvent {
     /** The player used the optional action of event {@code eventId} for {@code cost}. */
     record EventOptionUsed(int seat, String eventId, ResourceBundle cost, Optional<Resource> chosenResource)
             implements DomainEvent {
+    }
+
+    /** Step 2.3: public project {@code projectId} is open for contributions until {@code deadlineRound}. */
+    record ProjectOpened(String projectId, int deadlineRound) implements DomainEvent {
+    }
+
+    /** The player gave {@code given} (worth {@code points} contribution points, D9) to the project. Public (D6). */
+    record ProjectContributed(int seat, String projectId, ResourceBundle given, int points) implements DomainEvent {
+    }
+
+    /**
+     * Step 4.3: the project got everything it needs. Each of {@code qualifyingSeats} gets {@code productionReward}
+     * from next round on; Prestige follows in step 4.4.
+     */
+    record ProjectSucceeded(String projectId, List<Integer> qualifyingSeats, ResourceBundle productionReward)
+            implements DomainEvent {
+
+        public ProjectSucceeded {
+            qualifyingSeats = List.copyOf(qualifyingSeats);
+        }
+    }
+
+    /** Step 4.3: the project was not complete at its deadline; {@code lost} (all contributions) is gone. */
+    record ProjectFailed(String projectId, ResourceBundle lost) implements DomainEvent {
     }
 
     /** The automatic and world update of {@code round} are done; the trade window is open. */

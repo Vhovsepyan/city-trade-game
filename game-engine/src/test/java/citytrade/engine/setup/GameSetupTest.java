@@ -18,6 +18,8 @@ import citytrade.engine.ruleset.StartingRules;
 import citytrade.engine.state.EventWarning;
 import citytrade.engine.state.GameState;
 import citytrade.engine.state.PlayerState;
+import citytrade.engine.state.ProjectStatus;
+import citytrade.engine.state.PublicProject;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -140,7 +142,13 @@ class GameSetupTest {
         GameState state = GameSetup.create(3, ruleset);
         assertEquals(2, state.projects().size());
         assertNotEquals(state.projects().get(0), state.projects().get(1));
-        assertTrue(ruleset.projects().cards().containsAll(state.projects()));
+        assertTrue(ruleset.projects().cards().containsAll(state.projects().stream().map(PublicProject::card).toList()));
+        for (int i = 0; i < state.projects().size(); i++) {
+            PublicProject project = state.projects().get(i);
+            assertEquals(ruleset.projects().windows().get(i), project.window());
+            assertEquals(ProjectStatus.UPCOMING, project.status());
+            assertTrue(project.contributions().isEmpty());
+        }
     }
 
     @Test

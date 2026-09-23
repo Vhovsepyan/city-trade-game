@@ -27,7 +27,8 @@ import java.util.Objects;
  * @param marketThisRound         units bought from / sold to the market this round (cleared in step 4.6)
  * @param contractsBroken         the public "Contracts Broken" counter (Concept 17)
  * @param eventParticipation      crisis policy, paid crises and used optional events (Numbers Sheet 14, D2)
- * @param extraProduction         permanent production added every round from step 1.3 on (Research Breakthrough)
+ * @param extraProduction         permanent production added every round from step 1.3 on (Research Breakthrough,
+ *                                public project success rewards)
  */
 public record PlayerState(
         int seat,

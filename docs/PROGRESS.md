@@ -5,7 +5,7 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
 - Milestone: M0
-- Next task: T11
+- Next task: T12
 - Target ruleset: prototype-001 (`rulesets/prototype-001.json`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -48,6 +48,19 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T11 - Public projects - DONE (review round 1)
+- What: package `project`: `Projects` (step 2.3 `open`, command `ContributeToProject`, step 4.3 `resolveDeadline`,
+  Prestige in 4.4 after buildings, before crises). State: `GameState.projects` is now `List<PublicProject>`
+  (card, window, `ProjectStatus` UPCOMING/OPEN/SUCCEEDED/FAILED, public `ProjectContribution` log with round).
+- Rules: points from ruleset (D9); only card types, never more than still needed; contributions add up over
+  rounds; complete project stays OPEN until its deadline; failure keeps nothing. Reward goes into
+  `extraProduction` of qualifying contributors at 4.3, so it is first produced next round.
+- Choice: Prestige only for qualifying contributors; "largest" is ranked among them (with prototype values the
+  largest always qualifies). Codes: `UNKNOWN_PROJECT`, `PROJECT_NOT_OPEN`, `EMPTY_CONTRIBUTION`,
+  `RESOURCE_NOT_NEEDED`, `CONTRIBUTION_EXCEEDS_NEED`.
+- For later: T12 must check FREE Money in `Projects.contribute`; T13 objectives can use `contributions()` rounds.
+- Tests: ProjectsTest (16); GameSetupTest checks windows/status of drawn projects.
 
 ### T10 - Events and crises - DONE (review round 1)
 - What: package `event`: `EventSchedule` (1.1 activate warned card, 2.2 warn next event round, 4.7 end),
