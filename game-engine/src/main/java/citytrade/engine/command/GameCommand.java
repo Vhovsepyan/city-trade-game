@@ -1,5 +1,5 @@
 package citytrade.engine.command;
 
-/** A player or system action. T04 adds the other commands and the central {@code GameEngine.apply}. */
-public sealed interface GameCommand permits ChooseObjectives {
+/** A player or internal action. {@code GameEngine.apply} is the single entry point. */
+public sealed interface GameCommand permits ChooseObjectives, StartRound, ResolveRound {
 }

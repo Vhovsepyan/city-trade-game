@@ -5,7 +5,7 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
 - Milestone: M0
-- Next task: T04
+- Next task: T05
 - Target ruleset: prototype-001 (`rulesets/prototype-001.json`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -45,6 +45,17 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T04 - Command/result framework and round phases - DONE (review round 1)
+- What: `GameEngine.apply(state, command, ruleset)` (switch over sealed `GameCommand`), `GamePhase`
+  enum, `GameState` now has `round` + `phase`, internal commands `StartRound` / `ResolveRound`.
+- Round order lives in ONE place: enum `round.RoundStep` (declaration order = Numbers Sheet order,
+  1.1-2.3, 4.1-4.8). `round.RoundFlow` runs them; `round.RoundSteps` has the (still empty) step
+  bodies - T05+ fill in the matching `case`. StartRound: SETUP/RESOLUTION -> AUTOMATIC -> WORLD -> WINDOW.
+  ResolveRound: WINDOW -> RESOLUTION, after the last round -> FINISHED (+ `GameFinished`).
+- New codes: `INVALID_PHASE`, `OBJECTIVES_NOT_CHOSEN`. Events: `RoundStarted`, `RoundResolved`, `GameFinished`.
+- Tests: GameEngineTest (phases, wrong-phase rejections, state unchanged, full 14 rounds, determinism),
+  RoundFlowTest (recording handler: exact step order, phase, round, state threaded), RoundStepTest.
 
 ### T03 - Core state, setup, deterministic random - DONE (review round 1)
 - What: `CityType`, `GameRandom` (SplitMix64, immutable value inside `GameState`), `PlayerState`,

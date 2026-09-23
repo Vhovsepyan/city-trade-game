@@ -104,7 +104,7 @@ Docs: Numbers Sheet 1-2, 21; Concept 5, 6; decisions D5, D11.
 Do: `Resource`, `CityType`, `ResourceBundle`, `PlayerState`, `GameState`, engine-owned seeded random, `GameSetup.create(seed, ruleset)` (cities, starting resources, shuffled event/objective/project/opportunity decks, market start step, first event warning), `ChooseObjectives` command.
 Accept: same seed -> identical state; different seeds -> different decks; tests for starting resources and objective choice rules.
 
-### T04 - Command/result framework and round phases  `TODO`
+### T04 - Command/result framework and round phases  `DONE`
 Depends on: T03
 Docs: Architecture 4; Numbers Sheet "ROUND ORDER"; AGENTS.md 5.
 Do: sealed `GameCommand`, sealed `GameResult` (`Accepted`/`Rejected`), `RejectionCode` enum, `DomainEvent`, `GameEngine.apply(...)`, phases (SETUP, AUTOMATIC, WORLD, WINDOW, RESOLUTION, FINISHED), internal commands `StartRound` and `ResolveRound` as skeletons calling the steps in the exact documented order (steps may be empty for now).

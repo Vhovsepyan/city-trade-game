@@ -13,6 +13,7 @@ import citytrade.engine.ruleset.ProjectRules.ProjectCard;
 import citytrade.engine.ruleset.Ruleset;
 import citytrade.engine.ruleset.StartingRules;
 import citytrade.engine.state.EventWarning;
+import citytrade.engine.state.GamePhase;
 import citytrade.engine.state.GameState;
 import citytrade.engine.state.MarketPrices;
 import citytrade.engine.state.PlayerState;
@@ -75,7 +76,7 @@ public final class GameSetup {
         // Step 7: every resource starts at the ruleset's start step.
         MarketPrices market = MarketPrices.allAt(startStepIndex(ruleset.market()));
 
-        return new GameState(ruleset.version(), random, players, market, eventDeck, warning, projects,
+        return new GameState(ruleset.version(), 0, GamePhase.SETUP, random, players, market, eventDeck, warning, projects,
                 opportunities.items());
     }
 

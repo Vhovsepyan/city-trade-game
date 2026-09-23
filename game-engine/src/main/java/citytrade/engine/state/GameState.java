@@ -6,12 +6,15 @@ import citytrade.engine.ruleset.OpportunityRules.OpportunityCard;
 import citytrade.engine.ruleset.ProjectRules.ProjectCard;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
  * The whole game as an immutable value: old state + command -> new state.
  *
  * @param rulesetVersion   version of the ruleset this game was created with
+ * @param round            current round, 0 before Round 1 starts
+ * @param phase            where the game is in the round order
  * @param random           the engine-owned random source; replaced after every draw
  * @param players          players by seat (index = seat)
  * @param eventDeck        face-down event cards, top card first
@@ -21,6 +24,8 @@ import java.util.Optional;
  */
 public record GameState(
         String rulesetVersion,
+        int round,
+        GamePhase phase,
         GameRandom random,
         List<PlayerState> players,
         MarketPrices market,
@@ -30,6 +35,10 @@ public record GameState(
         List<OpportunityCard> opportunityDeck) {
 
     public GameState {
+        Objects.requireNonNull(phase);
+        if (round < 0) {
+            throw new IllegalArgumentException("round must not be negative: " + round);
+        }
         players = List.copyOf(players);
         for (int seat = 0; seat < players.size(); seat++) {
             if (players.get(seat).seat() != seat) {
@@ -52,7 +61,13 @@ public record GameState(
     public GameState withPlayer(PlayerState player) {
         List<PlayerState> updated = new ArrayList<>(players);
         updated.set(player.seat(), player);
-        return new GameState(rulesetVersion, random, updated, market, eventDeck, eventWarning, projects, opportunityDeck);
+        return new GameState(rulesetVersion, round, phase, random, updated, market, eventDeck, eventWarning, projects,
+                opportunityDeck);
+    }
+
+    public GameState withRoundAndPhase(int newRound, GamePhase newPhase) {
+        return new GameState(rulesetVersion, newRound, newPhase, random, players, market, eventDeck, eventWarning,
+                projects, opportunityDeck);
     }
 
     /** D5: Round 1 may not start before every player has chosen objectives. */
