@@ -7,6 +7,7 @@ import citytrade.engine.command.DomainEvent;
 import citytrade.engine.command.GameResult;
 import citytrade.engine.command.RejectionCode;
 import citytrade.engine.command.SellToMarket;
+import citytrade.engine.event.EventEffects;
 import citytrade.engine.ruleset.MarketRules;
 import citytrade.engine.ruleset.Ruleset;
 import citytrade.engine.state.GameState;
@@ -24,14 +25,14 @@ public final class Market {
     private Market() {
     }
 
-    /** Money the player pays to buy 1 unit at the current step. */
+    /** Money the player pays to buy 1 unit at the current step, with this round's event modifiers. */
     public static int buyCost(GameState state, Resource resource, Ruleset ruleset) {
-        return currentStep(state, resource, ruleset).buyCost();
+        return EventEffects.buyCost(state.activeEvent(), currentStep(state, resource, ruleset).buyCost());
     }
 
-    /** Money the player gets for selling 1 unit at the current step. */
+    /** Money the player gets for selling 1 unit at the current step, with this round's event modifiers. */
     public static int sellValue(GameState state, Resource resource, Ruleset ruleset) {
-        return currentStep(state, resource, ruleset).sellValue();
+        return EventEffects.sellValue(state.activeEvent(), currentStep(state, resource, ruleset).sellValue());
     }
 
     public static GameResult buy(GameState state, BuyFromMarket command, Ruleset ruleset) {
@@ -125,7 +126,13 @@ public final class Market {
         return next;
     }
 
+    /**
+     * The price step used in this round's window: the stored step plus the event's step change, kept
+     * within the first and last step (Numbers Sheet 11-12). The stored step itself is not changed.
+     */
     private static MarketRules.PriceStep currentStep(GameState state, Resource resource, Ruleset ruleset) {
-        return ruleset.market().steps().get(state.market().stepIndexOf(resource));
+        List<MarketRules.PriceStep> steps = ruleset.market().steps();
+        int index = state.market().stepIndexOf(resource) + EventEffects.marketStepChange(state.activeEvent(), resource);
+        return steps.get(Math.clamp(index, 0, steps.size() - 1));
     }
 }

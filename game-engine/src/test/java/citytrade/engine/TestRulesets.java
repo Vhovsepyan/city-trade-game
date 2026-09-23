@@ -40,6 +40,32 @@ public final class TestRulesets {
                 base.objectives(), base.projects(), base.opportunities());
     }
 
+    /** {@code base} with another event deck; the event rounds stay (deck size must match them). */
+    public static Ruleset withEventDeck(Ruleset base, List<EventCard> deck) {
+        EventRules events = base.events();
+        return new Ruleset(base.version(), base.roundCount(), base.playerCount(), base.starting(), base.levels(),
+                base.storage(), base.strained(), base.buildings(), base.market(), base.contracts(),
+                new EventRules(events.eventRounds(), events.crisisMinLevel(), events.crisisPrestige(), deck),
+                base.objectives(), base.projects(), base.opportunities());
+    }
+
+    /** Numbers Sheet 14, as in prototype-001 (12 cards). */
+    public static List<EventCard> prototypeEvents() {
+        return List.of(
+                new EventCard.ResourceCrisis("DROUGHT", Resource.FOOD, 2, 1),
+                new EventCard.ResourceCrisis("ENERGY_SHORTAGE", Resource.ENERGY, 2, 1),
+                new EventCard.ResourceCrisis("SUPPLY_SHOCK", Resource.MATERIALS, 2, 1),
+                new EventCard.ResourceCrisis("EPIDEMIC", Resource.TECHNOLOGY, 2, 1),
+                new EventCard.NonSpecialtyCrisis("INFRASTRUCTURE_FAILURE", 2),
+                new EventCard.BuildingCostDiscount("CONSTRUCTION_BOOM", Resource.MATERIALS, 1, -1),
+                new EventCard.UpgradeCostDiscount("TECHNOLOGY_BOOM", Resource.TECHNOLOGY, 2),
+                new EventCard.NoMoneyIncome("RECESSION"),
+                new EventCard.MarketPriceShift("TRADE_DISRUPTION", 2, -1, 1),
+                new EventCard.PrestigePurchase("PUBLIC_FESTIVAL", new ResourceBundle(2, 0, 0, 0, 2), 1),
+                new EventCard.ProductionPurchase("RESEARCH_BREAKTHROUGH", new ResourceBundle(0, 0, 0, 3, 0), 1),
+                new EventCard.ProductionBoost("GOOD_HARVEST_YEAR", new ResourceBundle(1, 1, 0, 0, 0)));
+    }
+
     /** Numbers Sheet 10, as in prototype-001. */
     public static List<BuildingRules> prototypeBuildings() {
         return List.of(
@@ -85,8 +111,9 @@ public final class TestRulesets {
                 new EventRules(
                         IntStream.rangeClosed(2, 13).boxed().toList(),
                         2, 1,
+                        // Events with no effect, so tests of other rules are not changed by random events.
                         IntStream.rangeClosed(1, 12)
-                                .mapToObj(i -> (EventCard) new EventCard.NoMoneyIncome("EVENT_" + i))
+                                .mapToObj(i -> (EventCard) new EventCard.ProductionBoost("EVENT_" + i, NOTHING))
                                 .toList()),
                 new ObjectiveRules(3, 2, 2,
                         IntStream.rangeClosed(1, 12)

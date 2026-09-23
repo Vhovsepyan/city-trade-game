@@ -17,12 +17,16 @@ import citytrade.engine.command.RejectTrade;
 import citytrade.engine.command.RejectionCode;
 import citytrade.engine.command.ResolveRound;
 import citytrade.engine.command.SellToMarket;
+import citytrade.engine.command.SetCrisisPolicy;
 import citytrade.engine.command.SetUpkeepPriority;
 import citytrade.engine.command.SignContract;
 import citytrade.engine.command.StartRound;
 import citytrade.engine.command.UpgradeCity;
+import citytrade.engine.command.UseEventOption;
 import citytrade.engine.contract.Contracts;
 import citytrade.engine.economy.UpkeepPriorityChoice;
+import citytrade.engine.event.Crises;
+import citytrade.engine.event.EventOptions;
 import citytrade.engine.market.Market;
 import citytrade.engine.round.RoundFlow;
 import citytrade.engine.round.RoundSteps;
@@ -90,6 +94,12 @@ public final class GameEngine {
                     : invalidPhase(command, state);
             case CancelContractMutually cancel -> state.phase() == GamePhase.WINDOW
                     ? Contracts.cancelMutually(state, cancel)
+                    : invalidPhase(command, state);
+            case SetCrisisPolicy policy -> state.phase() == GamePhase.WINDOW
+                    ? Crises.setPolicy(state, policy)
+                    : invalidPhase(command, state);
+            case UseEventOption option -> state.phase() == GamePhase.WINDOW
+                    ? EventOptions.use(state, option)
                     : invalidPhase(command, state);
             case StartRound _ -> ROUND_FLOW.startRound(state, ruleset);
             case ResolveRound _ -> ROUND_FLOW.resolveRound(state, ruleset);

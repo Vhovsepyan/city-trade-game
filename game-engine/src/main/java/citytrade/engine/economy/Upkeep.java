@@ -43,8 +43,11 @@ public final class Upkeep {
         return next;
     }
 
-    /** The resources {@code player} pays for {@code due} upkeep: at most one unit of each allowed resource. */
-    static ResourceBundle payment(PlayerState player, int due) {
+    /**
+     * The resources {@code player} pays for {@code due} upkeep: at most one unit of each allowed resource,
+     * in the D1 order. Also used for the neutral crisis (D2). Fewer than {@code due} units if not held.
+     */
+    public static ResourceBundle payment(PlayerState player, int due) {
         ResourceBundle paid = ResourceBundle.EMPTY;
         int count = 0;
         for (Resource resource : paymentOrder(player)) {

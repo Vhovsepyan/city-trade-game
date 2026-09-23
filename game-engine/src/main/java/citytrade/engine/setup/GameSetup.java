@@ -79,8 +79,8 @@ public final class GameSetup {
         // Step 7: every resource starts at the ruleset's start step.
         MarketPrices market = MarketPrices.allAt(startStepIndex(ruleset.market()));
 
-        return new GameState(ruleset.version(), 0, GamePhase.SETUP, random, players, market, eventDeck, warning, projects,
-                opportunities.items(), List.of(), FIRST_OFFER_ID, List.of(), FIRST_CONTRACT_ID);
+        return new GameState(ruleset.version(), 0, GamePhase.SETUP, random, players, market, eventDeck, warning,
+                Optional.empty(), projects, opportunities.items(), List.of(), FIRST_OFFER_ID, List.of(), FIRST_CONTRACT_ID);
     }
 
     private static ResourceBundle startingHoldings(CityType city, StartingRules starting) {

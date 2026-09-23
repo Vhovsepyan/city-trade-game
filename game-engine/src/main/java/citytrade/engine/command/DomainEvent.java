@@ -126,6 +126,35 @@ public sealed interface DomainEvent {
     record ContractCancelled(int contractId) implements DomainEvent {
     }
 
+    /** Step 1.1: {@code eventId} is the event of {@code round}; its effects apply until step 4.7. */
+    record EventActivated(int round, String eventId) implements DomainEvent {
+    }
+
+    /** Step 2.2 (Concept 21): {@code eventId} is revealed as the event of {@code round}. */
+    record EventWarned(int round, String eventId) implements DomainEvent {
+    }
+
+    /** Step 4.7: the temporary effects of {@code eventId} ended. */
+    record EventEnded(String eventId) implements DomainEvent {
+    }
+
+    /** The player chose a policy for the warned crisis (D2). The policy itself is private. */
+    record CrisisPolicySet(int seat) implements DomainEvent {
+    }
+
+    /** Step 2.1: the city paid the crisis {@code eventId} in full with {@code paid}; Crisis Prestige follows in 4.4. */
+    record CrisisPaid(int seat, String eventId, ResourceBundle paid) implements DomainEvent {
+    }
+
+    /** Step 2.1: the city did not pay the crisis {@code eventId}, by SKIP policy ({@code skipped}) or because it could not. */
+    record CrisisNotPaid(int seat, String eventId, boolean skipped) implements DomainEvent {
+    }
+
+    /** The player used the optional action of event {@code eventId} for {@code cost}. */
+    record EventOptionUsed(int seat, String eventId, ResourceBundle cost, Optional<Resource> chosenResource)
+            implements DomainEvent {
+    }
+
     /** The automatic and world update of {@code round} are done; the trade window is open. */
     record RoundStarted(int round) implements DomainEvent {
     }

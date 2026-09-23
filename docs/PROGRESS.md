@@ -5,7 +5,7 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
 - Milestone: M0
-- Next task: T10
+- Next task: T11
 - Target ruleset: prototype-001 (`rulesets/prototype-001.json`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -48,6 +48,20 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T10 - Events and crises - DONE (review round 1)
+- What: package `event`: `EventSchedule` (1.1 activate warned card, 2.2 warn next event round, 4.7 end),
+  `Crises` (2.1 pay-in-full or Strained, command `SetCrisisPolicy`, Crisis Prestige in 4.4), `EventOptions`
+  (command `UseEventOption` for Festival/Breakthrough, once per player; Festival Prestige in 4.4),
+  `EventEffects` (market step/price shift, building/upgrade discounts, Recession, Good Harvest). Shared `Payments`.
+- State: `GameState.activeEvent`; `PlayerState.eventParticipation` (policy, paid crisis rounds, used options)
+  and `extraProduction` (Breakthrough, permanent from next round). Policy is back to PAY after the event round's 2.1.
+- Choices: `SetCrisisPolicy` only when the warned event is a crisis (`NO_CRISIS_WARNED`); Infrastructure Failure
+  uses the D1 order (`Upkeep.payment`). Watch List 3 (upkeep fail + SKIP = Strained once) recorded in a test.
+- Test ruleset: placeholder events are now `ProductionBoost(NOTHING)` (no effect) instead of `NoMoneyIncome`,
+  so older tests are not changed by Recession; `TestRulesets.prototypeEvents()` has the real 12 cards.
+- Tests: CrisesTest (20), EconomyEventsTest (11), EventOptionsTest (11), EventScheduleTest (4).
+- For later: T13 Crisis Responder can count `eventParticipation().crisisPaidRounds()`.
 
 ### T09 - Formal contracts - DONE (review round 3)
 - What: package `contract`: `Contracts` (commands `ProposeContract`, `SignContract`, `BreakContract`,
@@ -145,10 +159,5 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Notes: round 1 finding (missing engine dep in game-ruleset-json) was a Codex misread; the
   dependency existed. Codex sandbox cannot run Gradle (no network, no cache access).
 
-### T00 - Environment and repository check - DONE (review not needed)
-- What: checked Java, git, node, codex, .gitignore, spec docs, scripts; Codex smoke test OK.
-- Fix: scripts marked executable in the git index (100755).
-- Files: docs/PROGRESS.md, docs/TASKS.md, scripts/*.sh (mode only).
-
 ## Earlier
-- (none)
+- T00 DONE: environment checked (Java, git, node, codex, scripts executable, Codex smoke test OK).

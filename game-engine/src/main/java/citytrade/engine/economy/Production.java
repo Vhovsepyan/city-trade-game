@@ -3,6 +3,7 @@ package citytrade.engine.economy;
 import citytrade.engine.Resource;
 import citytrade.engine.ResourceBundle;
 import citytrade.engine.city.BuildingEffects;
+import citytrade.engine.event.EventEffects;
 import citytrade.engine.ruleset.LevelRules;
 import citytrade.engine.ruleset.Ruleset;
 import citytrade.engine.ruleset.StrainedRules;
@@ -31,21 +32,23 @@ public final class Production {
     }
 
     /**
-     * Step 1.3: every city receives the production of its level plus its active buildings, minus an
-     * active Strained penalty.
+     * Step 1.3: every city receives the production of its level plus its active buildings and permanent
+     * extra production, minus an active Strained penalty, changed by this round's event (active since 1.1).
      */
     public static GameState produce(GameState state, Ruleset ruleset) {
         GameState next = state;
         for (PlayerState player : state.players()) {
-            ResourceBundle produced = productionOf(player, state.round(), ruleset);
+            ResourceBundle produced = EventEffects.production(state.activeEvent(),
+                    productionOf(player, state.round(), ruleset));
             next = next.withPlayer(player.withHoldings(player.holdings().plus(produced)));
         }
         return next;
     }
 
     /**
-     * What {@code player} produces in {@code round}. The Strained penalty reduces the whole specialty
-     * production and Money income, building bonuses included. Production never goes below zero.
+     * What {@code player} produces in {@code round} without the event of the round. The Strained penalty
+     * reduces the whole specialty production and Money income, building bonuses and extra production
+     * included. Production never goes below zero.
      */
     public static ResourceBundle productionOf(PlayerState player, int round, Ruleset ruleset) {
         LevelRules level = ruleset.level(player.level());
@@ -56,7 +59,7 @@ public final class Production {
                     : level.otherResourceProduction();
             produced = produced.with(resource, amount);
         }
-        produced = produced.plus(BuildingEffects.productionBonus(player, round, ruleset));
+        produced = produced.plus(BuildingEffects.productionBonus(player, round, ruleset)).plus(player.extraProduction());
         if (player.strainedPenaltyActive()) {
             StrainedRules penalty = ruleset.strained();
             Resource specialty = player.city().specialty();

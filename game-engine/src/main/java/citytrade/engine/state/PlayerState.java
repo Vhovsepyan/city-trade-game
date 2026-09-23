@@ -26,6 +26,8 @@ import java.util.Objects;
  *                                empty = default order (most held first)
  * @param marketThisRound         units bought from / sold to the market this round (cleared in step 4.6)
  * @param contractsBroken         the public "Contracts Broken" counter (Concept 17)
+ * @param eventParticipation      crisis policy, paid crises and used optional events (Numbers Sheet 14, D2)
+ * @param extraProduction         permanent production added every round from step 1.3 on (Research Breakthrough)
  */
 public record PlayerState(
         int seat,
@@ -41,7 +43,9 @@ public record PlayerState(
         boolean strainedPenaltyActive,
         List<Resource> upkeepPriority,
         MarketActivity marketThisRound,
-        int contractsBroken) {
+        int contractsBroken,
+        EventParticipation eventParticipation,
+        ResourceBundle extraProduction) {
 
     public PlayerState {
         buildings = List.copyOf(buildings);
@@ -49,13 +53,15 @@ public record PlayerState(
         keptObjectives = List.copyOf(keptObjectives);
         upkeepPriority = List.copyOf(upkeepPriority);
         Objects.requireNonNull(marketThisRound);
+        Objects.requireNonNull(eventParticipation);
+        Objects.requireNonNull(extraProduction);
     }
 
     /** A new city at setup: no buildings, no Prestige, not Strained, default upkeep order, objectives not chosen. */
     public static PlayerState starting(int seat, CityType city, ResourceBundle holdings, int level,
             List<ObjectiveCard> dealtObjectives) {
         return new PlayerState(seat, city, holdings, level, 0, List.of(), 0, dealtObjectives, List.of(), false, false,
-                List.of(), MarketActivity.NONE, 0);
+                List.of(), MarketActivity.NONE, 0, EventParticipation.NONE, ResourceBundle.EMPTY);
     }
 
     public boolean hasChosenObjectives() {
@@ -73,49 +79,70 @@ public record PlayerState(
 
     public PlayerState withKeptObjectives(List<ObjectiveCard> kept) {
         return new PlayerState(seat, city, holdings, level, lastUpgradeRound, buildings, prestige, dealtObjectives,
-                kept, strained, strainedPenaltyActive, upkeepPriority, marketThisRound, contractsBroken);
+                kept, strained, strainedPenaltyActive, upkeepPriority, marketThisRound, contractsBroken,
+                eventParticipation, extraProduction);
     }
 
     public PlayerState withHoldings(ResourceBundle newHoldings) {
         return new PlayerState(seat, city, newHoldings, level, lastUpgradeRound, buildings, prestige, dealtObjectives,
-                keptObjectives, strained, strainedPenaltyActive, upkeepPriority, marketThisRound, contractsBroken);
+                keptObjectives, strained, strainedPenaltyActive, upkeepPriority, marketThisRound, contractsBroken,
+                eventParticipation, extraProduction);
     }
 
     /** The city went up to {@code newLevel} in {@code round}. */
     public PlayerState withLevel(int newLevel, int round) {
         return new PlayerState(seat, city, holdings, newLevel, round, buildings, prestige, dealtObjectives,
-                keptObjectives, strained, strainedPenaltyActive, upkeepPriority, marketThisRound, contractsBroken);
+                keptObjectives, strained, strainedPenaltyActive, upkeepPriority, marketThisRound, contractsBroken,
+                eventParticipation, extraProduction);
     }
 
     public PlayerState withBuilding(BuiltBuilding building) {
         List<BuiltBuilding> updated = new ArrayList<>(buildings);
         updated.add(building);
         return new PlayerState(seat, city, holdings, level, lastUpgradeRound, updated, prestige, dealtObjectives,
-                keptObjectives, strained, strainedPenaltyActive, upkeepPriority, marketThisRound, contractsBroken);
+                keptObjectives, strained, strainedPenaltyActive, upkeepPriority, marketThisRound, contractsBroken,
+                eventParticipation, extraProduction);
     }
 
     public PlayerState withPrestige(int newPrestige) {
         return new PlayerState(seat, city, holdings, level, lastUpgradeRound, buildings, newPrestige, dealtObjectives,
-                keptObjectives, strained, strainedPenaltyActive, upkeepPriority, marketThisRound, contractsBroken);
+                keptObjectives, strained, strainedPenaltyActive, upkeepPriority, marketThisRound, contractsBroken,
+                eventParticipation, extraProduction);
     }
 
     public PlayerState withStrained(boolean newStrained, boolean newPenaltyActive) {
         return new PlayerState(seat, city, holdings, level, lastUpgradeRound, buildings, prestige, dealtObjectives,
-                keptObjectives, newStrained, newPenaltyActive, upkeepPriority, marketThisRound, contractsBroken);
+                keptObjectives, newStrained, newPenaltyActive, upkeepPriority, marketThisRound, contractsBroken,
+                eventParticipation, extraProduction);
     }
 
     public PlayerState withUpkeepPriority(List<Resource> order) {
         return new PlayerState(seat, city, holdings, level, lastUpgradeRound, buildings, prestige, dealtObjectives,
-                keptObjectives, strained, strainedPenaltyActive, order, marketThisRound, contractsBroken);
+                keptObjectives, strained, strainedPenaltyActive, order, marketThisRound, contractsBroken,
+                eventParticipation, extraProduction);
     }
 
     public PlayerState withMarketThisRound(MarketActivity activity) {
         return new PlayerState(seat, city, holdings, level, lastUpgradeRound, buildings, prestige, dealtObjectives,
-                keptObjectives, strained, strainedPenaltyActive, upkeepPriority, activity, contractsBroken);
+                keptObjectives, strained, strainedPenaltyActive, upkeepPriority, activity, contractsBroken,
+                eventParticipation, extraProduction);
     }
 
     public PlayerState withContractsBroken(int count) {
         return new PlayerState(seat, city, holdings, level, lastUpgradeRound, buildings, prestige, dealtObjectives,
-                keptObjectives, strained, strainedPenaltyActive, upkeepPriority, marketThisRound, count);
+                keptObjectives, strained, strainedPenaltyActive, upkeepPriority, marketThisRound, count,
+                eventParticipation, extraProduction);
+    }
+
+    public PlayerState withEventParticipation(EventParticipation participation) {
+        return new PlayerState(seat, city, holdings, level, lastUpgradeRound, buildings, prestige, dealtObjectives,
+                keptObjectives, strained, strainedPenaltyActive, upkeepPriority, marketThisRound, contractsBroken,
+                participation, extraProduction);
+    }
+
+    public PlayerState withExtraProduction(ResourceBundle production) {
+        return new PlayerState(seat, city, holdings, level, lastUpgradeRound, buildings, prestige, dealtObjectives,
+                keptObjectives, strained, strainedPenaltyActive, upkeepPriority, marketThisRound, contractsBroken,
+                eventParticipation, production);
     }
 }

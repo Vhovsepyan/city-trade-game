@@ -139,7 +139,7 @@ Depends on: T08
 Docs: Numbers Sheet 13; Concept 16, 17; D3, D10.
 Accept: max duration, no obligation after round 14, automatic payment when due, automatic break, voluntary break, mutual cancel, Money compensation to victim, Prestige penalty for unpaid part (round up), public Contracts Broken counter; the Numbers Sheet example (section 13) as a test.
 
-### T10 - Events and crises  `TODO`
+### T10 - Events and crises  `DONE`
 Depends on: T06, T07
 Docs: Numbers Sheet 14; Concept 20, 21; D2.
 Accept: event active from step 1.1, warning one round ahead, no event in rounds 1 and 14, each of the 12 events tested, crisis only for L2+, `SetCrisisPolicy` (D2) with default policy PAY, PAY in full -> Prestige, cannot pay or SKIP -> Strained, optional events (Festival, Breakthrough) once per player. Test: a player already Strained from upkeep who SKIPs a crisis stays Strained once (no stacking) - record this behavior, do not "fix" it (Watch List item 3).

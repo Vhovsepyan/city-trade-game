@@ -1,5 +1,6 @@
 package citytrade.engine.city;
 
+import citytrade.engine.Payments;
 import citytrade.engine.Resource;
 import citytrade.engine.ResourceBundle;
 import citytrade.engine.command.BuildBuilding;
@@ -7,6 +8,7 @@ import citytrade.engine.command.DomainEvent;
 import citytrade.engine.command.GameResult;
 import citytrade.engine.command.RejectionCode;
 import citytrade.engine.command.UpgradeCity;
+import citytrade.engine.event.EventEffects;
 import citytrade.engine.ruleset.BuildingEffect;
 import citytrade.engine.ruleset.BuildingRules;
 import citytrade.engine.ruleset.Ruleset;
@@ -18,7 +20,7 @@ import java.util.Optional;
 
 /**
  * City levels and buildings, Numbers Sheet 6-7 and 10, D4. Upgrading and building happen in the window
- * and are paid at once; new production, upkeep and building effects start next round, and the
+ * and are paid at once (with this round's event cost discount, Numbers Sheet 14); new production, upkeep and building effects start next round, and the
  * Prestige is added in step 4.4 of the same round.
  */
 public final class CityDevelopment {
@@ -40,8 +42,8 @@ public final class CityDevelopment {
             return new GameResult.Rejected(RejectionCode.ALREADY_UPGRADED_THIS_ROUND,
                     "only one level per round; already upgraded in round " + state.round());
         }
-        ResourceBundle cost = ruleset.level(newLevel).upgradeCost();
-        Optional<GameResult.Rejected> unaffordable = checkAffordable(player.holdings(), cost);
+        ResourceBundle cost = EventEffects.upgradeCost(state.activeEvent(), ruleset.level(newLevel).upgradeCost());
+        Optional<GameResult.Rejected> unaffordable = Payments.checkAffordable(player.holdings(), cost);
         if (unaffordable.isPresent()) {
             return unaffordable.get();
         }
@@ -73,14 +75,15 @@ public final class CityDevelopment {
         if (invalidChoice.isPresent()) {
             return invalidChoice.get();
         }
-        Optional<GameResult.Rejected> unaffordable = checkAffordable(player.holdings(), building.cost());
+        ResourceBundle cost = EventEffects.buildingCost(state.activeEvent(), building.cost());
+        Optional<GameResult.Rejected> unaffordable = Payments.checkAffordable(player.holdings(), cost);
         if (unaffordable.isPresent()) {
             return unaffordable.get();
         }
-        PlayerState updated = player.withHoldings(player.holdings().minus(building.cost()))
+        PlayerState updated = player.withHoldings(player.holdings().minus(cost))
                 .withBuilding(new BuiltBuilding(building.id(), state.round(), command.chosenResource()));
         return new GameResult.Accepted(state.withPlayer(updated),
-                List.of(new DomainEvent.BuildingBuilt(command.seat(), building.id(), building.cost())));
+                List.of(new DomainEvent.BuildingBuilt(command.seat(), building.id(), cost)));
     }
 
     /** Step 4.4: Prestige for the level reached and the buildings built this round. */
@@ -119,20 +122,6 @@ public final class CityDevelopment {
         if (choice.get() == player.city().specialty()) {
             return Optional.of(new GameResult.Rejected(RejectionCode.INVALID_BUILDING_CHOICE,
                     building.id() + " cannot produce the city's specialty " + choice.get()));
-        }
-        return Optional.empty();
-    }
-
-    private static Optional<GameResult.Rejected> checkAffordable(ResourceBundle holdings, ResourceBundle cost) {
-        for (Resource resource : Resource.values()) {
-            if (holdings.amountOf(resource) < cost.amountOf(resource)) {
-                return Optional.of(new GameResult.Rejected(RejectionCode.INSUFFICIENT_RESOURCES, "costs "
-                        + cost.amountOf(resource) + " " + resource + ", has " + holdings.amountOf(resource)));
-            }
-        }
-        if (holdings.money() < cost.money()) {
-            return Optional.of(new GameResult.Rejected(RejectionCode.INSUFFICIENT_MONEY,
-                    "costs " + cost.money() + " Money, has " + holdings.money()));
         }
         return Optional.empty();
     }
