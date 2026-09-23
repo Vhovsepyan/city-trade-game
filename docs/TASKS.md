@@ -115,7 +115,7 @@ Depends on: T04
 Docs: Numbers Sheet 3-5, 8-9; Concept 8, 10, 11; D1.
 Accept: `SetUpkeepPriority` command and the fallback order without it (D1); tests for L1/L2/L3 production, upkeep never uses specialty or Money, L3 needs 2 different resources, partial upkeep paid + Strained, Strained penalty next round only and not stacking, storage overflow allowed in window and discarded at resolution.
 
-### T06 - Global market  `TODO`
+### T06 - Global market  `DONE`
 Depends on: T05
 Docs: Numbers Sheet 11-12; Concept 18, 19.
 Accept: buy/sell at current step, per-player per-round buy limit, prices fixed during window, movement at resolution by net thresholds, min/max step, atomic rejection on insufficient Money.

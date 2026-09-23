@@ -70,6 +70,11 @@ public record GameState(
                 projects, opportunityDeck);
     }
 
+    public GameState withMarket(MarketPrices newMarket) {
+        return new GameState(rulesetVersion, round, phase, random, players, newMarket, eventDeck, eventWarning,
+                projects, opportunityDeck);
+    }
+
     /** D5: Round 1 may not start before every player has chosen objectives. */
     public boolean allObjectivesChosen() {
         return players.stream().allMatch(PlayerState::hasChosenObjectives);

@@ -33,4 +33,10 @@ public record MarketPrices(Map<Resource, Integer> stepIndexByResource) {
     public int stepIndexOf(Resource resource) {
         return stepIndexByResource.get(resource);
     }
+
+    public MarketPrices withStepIndex(Resource resource, int stepIndex) {
+        EnumMap<Resource, Integer> steps = new EnumMap<>(stepIndexByResource);
+        steps.put(resource, stepIndex);
+        return new MarketPrices(steps);
+    }
 }

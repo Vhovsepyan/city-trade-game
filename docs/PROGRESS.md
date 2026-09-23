@@ -5,7 +5,7 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
 - Milestone: M0
-- Next task: T06
+- Next task: T07
 - Target ruleset: prototype-001 (`rulesets/prototype-001.json`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -45,6 +45,16 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T06 - Global market - DONE (review round 1)
+- What: package `market`: `Market` (buy/sell handlers, `buyCost`/`sellValue` at current step, step 4.6
+  `movePrices`). Commands `BuyFromMarket`, `SellToMarket` (WINDOW only). Prices never change in the window.
+- `PlayerState.marketThisRound` (`MarketActivity`: bought/sold units) for the per-round buy limit and the
+  net count; cleared in 4.6. Codes: `INVALID_QUANTITY`, `INSUFFICIENT_MONEY`, `INSUFFICIENT_RESOURCES`,
+  `MARKET_BUY_LIMIT_EXCEEDED`. Events: `MarketBought`, `MarketSold`, `MarketPriceMoved`.
+- For later: T10 adds event price modifiers inside `Market.buyCost/sellValue`; T12 must check FREE Money
+  (minus bid reservations) in `Market.buy`. Objective "Market Independence" (T13) needs a game-long count.
+- Tests: MarketTest (22 tests: prices per step, limit, atomic rejections, phases, thresholds, min/max, per resource).
 
 ### T05 - Production, upkeep, Strained, storage - DONE (review round 1)
 - What: package `economy`: `Production` (1.2 Strained penalty, 1.3 production), `Upkeep` (1.4, D1),
