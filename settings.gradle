@@ -1,0 +1,11 @@
+plugins {
+    // Finds or downloads JDK 25 for the toolchain, so the default `java` does not matter.
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+rootProject.name = 'city-trade-game'
+
+include 'game-engine'
+include 'game-ruleset-json'
+include 'game-bots'
+include 'game-sim'

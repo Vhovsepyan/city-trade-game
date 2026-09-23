@@ -1,0 +1,27 @@
+// game-engine is pure Java: no other module, no Spring, Jackson, HTTP or DB (AGENTS.md section 4).
+// Only test libraries are allowed. This check fails the build if a main dependency is added.
+def mainDependencies = providers.provider {
+    ['compileClasspath', 'runtimeClasspath', 'annotationProcessor'].collectMany { configurationName ->
+        configurations.getByName(configurationName).allDependencies.collect { dependency ->
+            "${configurationName}: ${dependency.group}:${dependency.name}".toString()
+        }
+    }.unique().sort()
+}
+
+def verifyEngineHasNoDependencies = tasks.register('verifyEngineHasNoDependencies') {
+    group = 'verification'
+    description = 'Fails if game-engine has any non-test dependency.'
+    def dependencies = mainDependencies
+    inputs.property('mainDependencies', dependencies)
+    doLast {
+        def found = dependencies.get()
+        if (!found.isEmpty()) {
+            throw new GradleException(
+                    "game-engine must not have non-test dependencies, found: ${found.join(', ')}")
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn verifyEngineHasNoDependencies
+}

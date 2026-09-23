@@ -1,0 +1,5 @@
+dependencies {
+    implementation project(':game-engine')
+    implementation project(':game-bots')
+    implementation project(':game-ruleset-json')
+}

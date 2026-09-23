@@ -60,7 +60,7 @@ Accept:
 - `BLOCKED` only for admin rights, logins (e.g. Codex not logged in) or paid purchases,
   with the exact one-line action for the owner.
 
-### T01 - Gradle multi-module skeleton  `TODO`
+### T01 - Gradle multi-module skeleton  `DONE`
 Depends on: T00
 Docs: AGENTS.md sections 3, 4, 9.
 Do:
