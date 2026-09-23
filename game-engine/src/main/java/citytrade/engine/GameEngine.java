@@ -1,11 +1,16 @@
 package citytrade.engine;
 
 import citytrade.engine.city.CityDevelopment;
+import citytrade.engine.command.AcceptTrade;
 import citytrade.engine.command.BuildBuilding;
 import citytrade.engine.command.BuyFromMarket;
+import citytrade.engine.command.CancelTrade;
 import citytrade.engine.command.ChooseObjectives;
+import citytrade.engine.command.CounterTrade;
 import citytrade.engine.command.GameCommand;
 import citytrade.engine.command.GameResult;
+import citytrade.engine.command.ProposeTrade;
+import citytrade.engine.command.RejectTrade;
 import citytrade.engine.command.RejectionCode;
 import citytrade.engine.command.ResolveRound;
 import citytrade.engine.command.SellToMarket;
@@ -20,6 +25,7 @@ import citytrade.engine.ruleset.Ruleset;
 import citytrade.engine.setup.ObjectiveChoice;
 import citytrade.engine.state.GamePhase;
 import citytrade.engine.state.GameState;
+import citytrade.engine.trade.Trading;
 
 /**
  * The single entry point of the rules: old state + command -> new state and events, or a rejection
@@ -52,6 +58,21 @@ public final class GameEngine {
                     : invalidPhase(command, state);
             case BuildBuilding build -> state.phase() == GamePhase.WINDOW
                     ? CityDevelopment.build(state, build, ruleset)
+                    : invalidPhase(command, state);
+            case ProposeTrade propose -> state.phase() == GamePhase.WINDOW
+                    ? Trading.propose(state, propose)
+                    : invalidPhase(command, state);
+            case AcceptTrade acceptTrade -> state.phase() == GamePhase.WINDOW
+                    ? Trading.accept(state, acceptTrade)
+                    : invalidPhase(command, state);
+            case RejectTrade reject -> state.phase() == GamePhase.WINDOW
+                    ? Trading.reject(state, reject)
+                    : invalidPhase(command, state);
+            case CancelTrade cancel -> state.phase() == GamePhase.WINDOW
+                    ? Trading.cancel(state, cancel)
+                    : invalidPhase(command, state);
+            case CounterTrade counter -> state.phase() == GamePhase.WINDOW
+                    ? Trading.counter(state, counter)
                     : invalidPhase(command, state);
             case StartRound _ -> ROUND_FLOW.startRound(state, ruleset);
             case ResolveRound _ -> ROUND_FLOW.resolveRound(state, ruleset);

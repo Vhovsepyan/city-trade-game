@@ -29,6 +29,8 @@ import java.util.Optional;
  */
 public final class GameSetup {
 
+    private static final int FIRST_OFFER_ID = 1;
+
     private GameSetup() {
     }
 
@@ -77,7 +79,7 @@ public final class GameSetup {
         MarketPrices market = MarketPrices.allAt(startStepIndex(ruleset.market()));
 
         return new GameState(ruleset.version(), 0, GamePhase.SETUP, random, players, market, eventDeck, warning, projects,
-                opportunities.items());
+                opportunities.items(), List.of(), FIRST_OFFER_ID);
     }
 
     private static ResourceBundle startingHoldings(CityType city, StartingRules starting) {

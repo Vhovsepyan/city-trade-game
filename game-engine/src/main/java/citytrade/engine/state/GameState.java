@@ -21,6 +21,8 @@ import java.util.Optional;
  * @param eventWarning     the revealed event card for the next event round, if any
  * @param projects         the drawn project cards, one per project window in order (A, B)
  * @param opportunityDeck  face-down opportunity cards, top card first
+ * @param tradeOffers      every direct trade offer of the game in creation order; closed ones stay as history
+ * @param nextOfferId      the id the next trade offer gets
  */
 public record GameState(
         String rulesetVersion,
@@ -32,7 +34,9 @@ public record GameState(
         List<EventCard> eventDeck,
         Optional<EventWarning> eventWarning,
         List<ProjectCard> projects,
-        List<OpportunityCard> opportunityDeck) {
+        List<OpportunityCard> opportunityDeck,
+        List<TradeOffer> tradeOffers,
+        int nextOfferId) {
 
     public GameState {
         Objects.requireNonNull(phase);
@@ -48,6 +52,7 @@ public record GameState(
         eventDeck = List.copyOf(eventDeck);
         projects = List.copyOf(projects);
         opportunityDeck = List.copyOf(opportunityDeck);
+        tradeOffers = List.copyOf(tradeOffers);
     }
 
     public boolean hasSeat(int seat) {
@@ -62,17 +67,40 @@ public record GameState(
         List<PlayerState> updated = new ArrayList<>(players);
         updated.set(player.seat(), player);
         return new GameState(rulesetVersion, round, phase, random, updated, market, eventDeck, eventWarning, projects,
-                opportunityDeck);
+                opportunityDeck, tradeOffers, nextOfferId);
     }
 
     public GameState withRoundAndPhase(int newRound, GamePhase newPhase) {
         return new GameState(rulesetVersion, newRound, newPhase, random, players, market, eventDeck, eventWarning,
-                projects, opportunityDeck);
+                projects, opportunityDeck, tradeOffers, nextOfferId);
     }
 
     public GameState withMarket(MarketPrices newMarket) {
         return new GameState(rulesetVersion, round, phase, random, players, newMarket, eventDeck, eventWarning,
-                projects, opportunityDeck);
+                projects, opportunityDeck, tradeOffers, nextOfferId);
+    }
+
+    public Optional<TradeOffer> tradeOffer(int offerId) {
+        return tradeOffers.stream().filter(offer -> offer.id() == offerId).findFirst();
+    }
+
+    /** The state with the stored offer of the same id replaced by {@code offer}. */
+    public GameState withTradeOffer(TradeOffer offer) {
+        List<TradeOffer> updated = new ArrayList<>(tradeOffers);
+        updated.replaceAll(existing -> existing.id() == offer.id() ? offer : existing);
+        return new GameState(rulesetVersion, round, phase, random, players, market, eventDeck, eventWarning,
+                projects, opportunityDeck, updated, nextOfferId);
+    }
+
+    /** The state with a new offer, which must carry {@link #nextOfferId()}; the id counter moves on by one. */
+    public GameState withNewTradeOffer(TradeOffer offer) {
+        if (offer.id() != nextOfferId) {
+            throw new IllegalArgumentException("new offer must have id " + nextOfferId + ", but has " + offer.id());
+        }
+        List<TradeOffer> updated = new ArrayList<>(tradeOffers);
+        updated.add(offer);
+        return new GameState(rulesetVersion, round, phase, random, players, market, eventDeck, eventWarning,
+                projects, opportunityDeck, updated, nextOfferId + 1);
     }
 
     /** D5: Round 1 may not start before every player has chosen objectives. */

@@ -24,6 +24,20 @@ public record ResourceBundle(int food, int energy, int materials, int technology
         };
     }
 
+    public boolean isEmpty() {
+        return equals(EMPTY);
+    }
+
+    public boolean hasNegativeAmount() {
+        return food < 0 || energy < 0 || materials < 0 || technology < 0 || money < 0;
+    }
+
+    /** True if every amount here is at least the matching amount in {@code other}. */
+    public boolean covers(ResourceBundle other) {
+        return food >= other.food && energy >= other.energy && materials >= other.materials
+                && technology >= other.technology && money >= other.money;
+    }
+
     public ResourceBundle withMoney(int amount) {
         return new ResourceBundle(food, energy, materials, technology, amount);
     }

@@ -1,6 +1,8 @@
 package citytrade.engine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -31,5 +33,34 @@ class ResourceBundleTest {
         ResourceBundle b = new ResourceBundle(1, 2, 3, 4, 5);
         assertEquals(new ResourceBundle(6, 8, 10, 12, 14), a.plus(b));
         assertEquals(new ResourceBundle(4, 4, 4, 4, 4), a.minus(b));
+    }
+
+    @Test
+    void isEmptyOnlyWhenEveryFieldIsZero() {
+        assertTrue(ResourceBundle.EMPTY.isEmpty());
+        assertFalse(new ResourceBundle(0, 0, 0, 0, 1).isEmpty());
+        assertFalse(new ResourceBundle(1, 0, 0, 0, 0).isEmpty());
+    }
+
+    @Test
+    void hasNegativeAmountChecksEveryField() {
+        assertFalse(new ResourceBundle(0, 1, 2, 3, 4).hasNegativeAmount());
+        assertTrue(new ResourceBundle(-1, 0, 0, 0, 0).hasNegativeAmount());
+        assertTrue(new ResourceBundle(0, -1, 0, 0, 0).hasNegativeAmount());
+        assertTrue(new ResourceBundle(0, 0, -1, 0, 0).hasNegativeAmount());
+        assertTrue(new ResourceBundle(0, 0, 0, -1, 0).hasNegativeAmount());
+        assertTrue(new ResourceBundle(0, 0, 0, 0, -1).hasNegativeAmount());
+    }
+
+    @Test
+    void coversNeedsEveryFieldAtLeastAsLarge() {
+        ResourceBundle holdings = new ResourceBundle(2, 2, 2, 2, 2);
+        assertTrue(holdings.covers(holdings));
+        assertTrue(holdings.covers(ResourceBundle.EMPTY));
+        assertFalse(holdings.covers(new ResourceBundle(3, 0, 0, 0, 0)));
+        assertFalse(holdings.covers(new ResourceBundle(0, 3, 0, 0, 0)));
+        assertFalse(holdings.covers(new ResourceBundle(0, 0, 3, 0, 0)));
+        assertFalse(holdings.covers(new ResourceBundle(0, 0, 0, 3, 0)));
+        assertFalse(holdings.covers(new ResourceBundle(0, 0, 0, 0, 3)));
     }
 }

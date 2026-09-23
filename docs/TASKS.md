@@ -125,7 +125,7 @@ Depends on: T05
 Docs: Numbers Sheet 6-7, 10; D4.
 Accept: one level per round, level requirements for buildings, each building once, effects start next round, Prestige at resolution, Workshop resource parameter. Transit Network can be BUILT at Level 2; its upkeep reduction applies ONLY while the city is Level 3 (no effect at Level 2).
 
-### T08 - Instant trades and offers  `TODO`
+### T08 - Instant trades and offers  `DONE`
 Depends on: T05
 Docs: Architecture 5.1-5.5; Concept 14, 15; D7, D8, D12.
 Accept: all allowed/forbidden status transitions tested; who may cancel/accept/reject/counter; revalidation on accept -> `INVALID`; counteroffer chain with `parentOfferId`; received resources usable immediately; offers expire at resolution.

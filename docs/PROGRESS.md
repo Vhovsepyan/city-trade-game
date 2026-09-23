@@ -5,7 +5,7 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
 - Milestone: M0
-- Next task: T08
+- Next task: T09
 - Target ruleset: prototype-001 (`rulesets/prototype-001.json`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -48,6 +48,17 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T08 - Instant trades and offers - DONE (review round 1)
+- What: package `trade`: `Trading` (commands `ProposeTrade`, `AcceptTrade`, `RejectTrade`, `CancelTrade`,
+  `CounterTrade`, WINDOW only; step 4.1 `expireOpenOffers`). State: `TradeOffer`, `TradeOfferStatus`
+  (only OPEN -> closed), `OfferCloseReason.COUNTEROFFER`; `GameState.tradeOffers` (kept as history) + `nextOfferId`.
+- Choices: proposer must own the offered bundle when proposing (not reserved; checked again on accept).
+  Accept with missing resources = Accepted result with offer INVALID + `TradeInvalidated` event (a Rejected
+  result may not change state). Role is checked before status (D7: others learn nothing).
+- Codes: `TRADE_WITH_SELF`, `EMPTY_TRADE`, `UNKNOWN_OFFER`, `OFFER_NOT_OPEN`, `NOT_OFFER_RECIPIENT`, `NOT_OFFER_PROPOSER`.
+- For later: T12 must check FREE Money (minus bid reservations) in `Trading.accept`/`checkNewOffer`.
+- Tests: TradingTest (34), TradeOfferStatusTest (12), ResourceBundleTest (isEmpty/hasNegativeAmount/covers).
 
 ### T07 - City levels and buildings - DONE (review round 1)
 - What: package `city`: `CityDevelopment` (commands `UpgradeCity`, `BuildBuilding`, WINDOW only; step 4.4

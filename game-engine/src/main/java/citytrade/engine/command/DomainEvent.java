@@ -2,6 +2,8 @@ package citytrade.engine.command;
 
 import citytrade.engine.Resource;
 import citytrade.engine.ResourceBundle;
+import citytrade.engine.state.OfferCloseReason;
+import java.util.Optional;
 
 /** Something that happened in the game, produced by an accepted command. */
 public sealed interface DomainEvent {
@@ -48,6 +50,39 @@ public sealed interface DomainEvent {
 
     /** Step 4.5: resources above the storage limit were discarded. */
     record ExcessDiscarded(int seat, ResourceBundle discarded) implements DomainEvent {
+    }
+
+    /*
+     * Trade offer events concern only proposer and recipient (D7); the view layer shows them to those two only.
+     */
+
+    /** A new offer: {@code proposerSeat} gives {@code offered} for {@code requested}; a counteroffer has a parent. */
+    record TradeProposed(int offerId, Optional<Integer> parentOfferId, int proposerSeat, int recipientSeat,
+            ResourceBundle offered, ResourceBundle requested) implements DomainEvent {
+    }
+
+    /** The recipient accepted and both sides were moved at once. */
+    record TradeExecuted(int offerId, int proposerSeat, int recipientSeat, ResourceBundle offered,
+            ResourceBundle requested) implements DomainEvent {
+    }
+
+    /** The recipient refused the offer, or countered it ({@code closeReason} COUNTEROFFER). */
+    record TradeRejected(int offerId, Optional<OfferCloseReason> closeReason) implements DomainEvent {
+    }
+
+    /** The proposer withdrew the offer. */
+    record TradeCancelled(int offerId) implements DomainEvent {
+    }
+
+    /** Step 4.1 (D8): the offer was still open when the window ended. */
+    record TradeExpired(int offerId) implements DomainEvent {
+    }
+
+    /**
+     * The recipient accepted, but a side no longer had the resources (Architecture 5.4): nothing was traded
+     * and the offer is INVALID. {@code missingSeat} is the seat that lacked them (the proposer if both did).
+     */
+    record TradeInvalidated(int offerId, int missingSeat) implements DomainEvent {
     }
 
     /** The automatic and world update of {@code round} are done; the trade window is open. */
