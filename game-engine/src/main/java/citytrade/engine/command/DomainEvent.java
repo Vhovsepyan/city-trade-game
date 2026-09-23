@@ -85,6 +85,47 @@ public sealed interface DomainEvent {
     record TradeInvalidated(int offerId, int missingSeat) implements DomainEvent {
     }
 
+    /** A formal contract was proposed; {@code debtorSeat} would owe {@code owed} in {@code dueRound}. */
+    record ContractProposed(int contractId, int proposerSeat, int creditorSeat, int debtorSeat,
+            ResourceBundle givenNow, ResourceBundle owed, int dueRound) implements DomainEvent {
+    }
+
+    /** The partner signed and the creditor gave {@code givenNow} to the debtor. */
+    record ContractSigned(int contractId, int creditorSeat, int debtorSeat, ResourceBundle givenNow)
+            implements DomainEvent {
+    }
+
+    /** The partner signed, but the creditor no longer had {@code givenNow}: nothing moved, the contract is INVALID. */
+    record ContractInvalidated(int contractId, int creditorSeat) implements DomainEvent {
+    }
+
+    /** Step 4.1: the proposal was not signed before the window ended. */
+    record ContractExpired(int contractId) implements DomainEvent {
+    }
+
+    /** Step 1.5: the debtor paid {@code delivered} (the whole obligation) to the creditor. */
+    record ContractFulfilled(int contractId, int debtorSeat, int creditorSeat, ResourceBundle delivered)
+            implements DomainEvent {
+    }
+
+    /**
+     * The debtor broke the contract ({@code voluntary}) or could not pay it in full when due. The creditor got
+     * {@code delivered} and {@code compensationPaid} of {@code compensationOwed} Money; the debtor lost
+     * {@code prestigeLost} Prestige and their Contracts Broken counter went up by one.
+     */
+    record ContractBroken(int contractId, int debtorSeat, int creditorSeat, boolean voluntary,
+            ResourceBundle delivered, int compensationOwed, int compensationPaid, int prestigeLost)
+            implements DomainEvent {
+    }
+
+    /** {@code seat} agreed to cancel; the other party has not agreed yet. */
+    record ContractCancelRequested(int contractId, int seat) implements DomainEvent {
+    }
+
+    /** Both parties agreed: the contract is cancelled without penalty. */
+    record ContractCancelled(int contractId) implements DomainEvent {
+    }
+
     /** The automatic and world update of {@code round} are done; the trade window is open. */
     record RoundStarted(int round) implements DomainEvent {
     }

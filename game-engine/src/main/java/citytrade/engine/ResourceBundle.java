@@ -38,17 +38,33 @@ public record ResourceBundle(int food, int energy, int materials, int technology
                 && technology >= other.technology && money >= other.money;
     }
 
+    /** Each amount lowered to the matching amount in {@code limit}: the part of this bundle {@code limit} can pay. */
+    public ResourceBundle cappedBy(ResourceBundle limit) {
+        return new ResourceBundle(Math.min(food, limit.food), Math.min(energy, limit.energy),
+                Math.min(materials, limit.materials), Math.min(technology, limit.technology),
+                Math.min(money, limit.money));
+    }
+
+    /** Units of F, E, M and T together; Money is not counted. Throws on int overflow instead of wrapping. */
+    public int resourceUnits() {
+        return Math.addExact(Math.addExact(food, energy), Math.addExact(materials, technology));
+    }
+
     public ResourceBundle withMoney(int amount) {
         return new ResourceBundle(food, energy, materials, technology, amount);
     }
 
+    /** Throws on int overflow: a wrapped amount would silently move resources the wrong way. */
     public ResourceBundle plus(ResourceBundle other) {
-        return new ResourceBundle(food + other.food, energy + other.energy, materials + other.materials,
-                technology + other.technology, money + other.money);
+        return new ResourceBundle(Math.addExact(food, other.food), Math.addExact(energy, other.energy),
+                Math.addExact(materials, other.materials), Math.addExact(technology, other.technology),
+                Math.addExact(money, other.money));
     }
 
+    /** Throws on int overflow, like {@link #plus}. */
     public ResourceBundle minus(ResourceBundle other) {
-        return new ResourceBundle(food - other.food, energy - other.energy, materials - other.materials,
-                technology - other.technology, money - other.money);
+        return new ResourceBundle(Math.subtractExact(food, other.food), Math.subtractExact(energy, other.energy),
+                Math.subtractExact(materials, other.materials), Math.subtractExact(technology, other.technology),
+                Math.subtractExact(money, other.money));
     }
 }

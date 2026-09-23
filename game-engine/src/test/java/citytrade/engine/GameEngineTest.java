@@ -167,7 +167,8 @@ class GameEngineTest {
     private static GameState copyOf(GameState s) {
         return new GameState(s.rulesetVersion(), s.round(), s.phase(), s.random(), new ArrayList<>(s.players()),
                 s.market(), new ArrayList<>(s.eventDeck()), s.eventWarning(), new ArrayList<>(s.projects()),
-                new ArrayList<>(s.opportunityDeck()), new ArrayList<>(s.tradeOffers()), s.nextOfferId());
+                new ArrayList<>(s.opportunityDeck()), new ArrayList<>(s.tradeOffers()), s.nextOfferId(),
+                new ArrayList<>(s.contracts()), s.nextContractId());
     }
 
     private GameResult.Accepted accept(GameState state, GameCommand command) {

@@ -2,6 +2,7 @@ package citytrade.engine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,18 @@ class ResourceBundleTest {
         assertEquals(2, bundle.amountOf(Resource.ENERGY));
         assertEquals(3, bundle.amountOf(Resource.MATERIALS));
         assertEquals(4, bundle.amountOf(Resource.TECHNOLOGY));
+    }
+
+    @Test
+    void cappedByTakesTheSmallerAmountOfEach() {
+        ResourceBundle owed = new ResourceBundle(4, 0, 2, 1, 5);
+        assertEquals(new ResourceBundle(1, 0, 2, 0, 3), owed.cappedBy(new ResourceBundle(1, 7, 9, 0, 3)));
+    }
+
+    @Test
+    void resourceUnitsCountFoodEnergyMaterialsAndTechnologyButNotMoney() {
+        assertEquals(10, new ResourceBundle(1, 2, 3, 4, 50).resourceUnits());
+        assertEquals(0, ResourceBundle.EMPTY.resourceUnits());
     }
 
     @Test
@@ -33,6 +46,17 @@ class ResourceBundleTest {
         ResourceBundle b = new ResourceBundle(1, 2, 3, 4, 5);
         assertEquals(new ResourceBundle(6, 8, 10, 12, 14), a.plus(b));
         assertEquals(new ResourceBundle(4, 4, 4, 4, 4), a.minus(b));
+    }
+
+    @Test
+    void arithmeticThrowsInsteadOfWrappingAround() {
+        int max = Integer.MAX_VALUE;
+        ResourceBundle one = new ResourceBundle(1, 1, 1, 1, 1);
+        assertThrows(ArithmeticException.class, () -> new ResourceBundle(0, 0, 0, 0, max).plus(one));
+        assertThrows(ArithmeticException.class, () -> new ResourceBundle(max, 0, 0, 0, 0).plus(one));
+        assertThrows(ArithmeticException.class, () -> new ResourceBundle(0, 0, 0, Integer.MIN_VALUE, 0).minus(one));
+        assertThrows(ArithmeticException.class, () -> new ResourceBundle(max, 1, 0, 0, 0).resourceUnits());
+        assertThrows(ArithmeticException.class, () -> new ResourceBundle(0, 0, max, 1, 0).resourceUnits());
     }
 
     @Test

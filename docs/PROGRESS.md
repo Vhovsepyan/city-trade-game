@@ -5,7 +5,7 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
 - Milestone: M0
-- Next task: T09
+- Next task: T10
 - Target ruleset: prototype-001 (`rulesets/prototype-001.json`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -48,6 +48,15 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T09 - Formal contracts - DONE (review round 3)
+- What: package `contract`: `Contracts` (commands `ProposeContract`, `SignContract`, `BreakContract`,
+  `CancelContractMutually`; step 1.5 `settleDueObligations`; step 4.1 `expireProposals`), `FormalContract`,
+  `ContractStatus`. `PlayerState.contractsBroken` (public counter).
+- Owner decisions D13-D16 applied: negative Prestige allowed; voluntary break delivers nothing; due contracts
+  settled oldest first, each in full if possible; unsigned proposals expire at 4.1.
+- Review: R1-P1-2 (compensation overflow) fixed with checked arithmetic; R1-P1-1 / R1-P2-1 resolved by D15 / D16.
+- Tests: ContractsTest (incl. Numbers Sheet 13 example, D15 order), ContractStatusTest, ResourceBundleTest (overflow).
 
 ### T08 - Instant trades and offers - DONE (review round 1)
 - What: package `trade`: `Trading` (commands `ProposeTrade`, `AcceptTrade`, `RejectTrade`, `CancelTrade`,

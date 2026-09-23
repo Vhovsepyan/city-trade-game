@@ -25,6 +25,10 @@ these decisions apply. All are approved by the owner. Agents follow them without
 | D10 | Contract shape in v1 | One shape: party A gives a bundle now; party B owes a bundle in a due round (max 3 rounds later, never after Round 14). |
 | D11 | Seat and city assignment | Seat order 0-3; cities assigned by seeded shuffle at setup. |
 | D12 | Instant trade content | Any bundle of F, E, M, T and Money on each side; at least one side not empty; no "free gift" limit (concept section 32). |
+| D13 | Prestige below zero | Allowed. Penalties can make visible Prestige negative. No floor. |
+| D14 | Voluntary contract break | Nothing is delivered. Compensation is paid for the whole obligation. (The automatic break in step 1.5 delivers what the debtor has.) |
+| D15 | Several contracts due, debtor cannot pay all | Settled in creation order (oldest first). Each one is paid in full if possible; the rest break with what is left. |
+| D16 | Unsigned contract proposals | Expire at step 4.1, like trade offers (D8). "Now" and the max duration count from the signing round. |
 
 New product decisions are added here by the owner only.
 Agents write open questions in `docs/PROGRESS.md`.
@@ -130,7 +134,7 @@ Depends on: T05
 Docs: Architecture 5.1-5.5; Concept 14, 15; D7, D8, D12.
 Accept: all allowed/forbidden status transitions tested; who may cancel/accept/reject/counter; revalidation on accept -> `INVALID`; counteroffer chain with `parentOfferId`; received resources usable immediately; offers expire at resolution.
 
-### T09 - Formal contracts  `TODO`
+### T09 - Formal contracts  `DONE`
 Depends on: T08
 Docs: Numbers Sheet 13; Concept 16, 17; D3, D10.
 Accept: max duration, no obligation after round 14, automatic payment when due, automatic break, voluntary break, mutual cancel, Money compensation to victim, Prestige penalty for unpaid part (round up), public Contracts Broken counter; the Numbers Sheet example (section 13) as a test.
