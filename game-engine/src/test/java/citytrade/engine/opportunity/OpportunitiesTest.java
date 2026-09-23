@@ -75,7 +75,7 @@ class OpportunitiesTest {
         List<OpportunityCard> deck = ruleset.opportunities().cards();
         return new GameState(s.rulesetVersion(), s.round(), s.phase(), s.random(), s.players(), s.market(),
                 s.eventDeck(), s.eventWarning(), s.activeEvent(), s.projects(), deck, s.opportunities(),
-                s.tradeOffers(), s.nextOfferId(), s.contracts(), s.nextContractId());
+                s.tradeOffers(), s.nextOfferId(), s.contracts(), s.nextContractId(), s.finalResult());
     }
 
     /** From any state before a StartRound: play on until the window of {@code round} is open. */

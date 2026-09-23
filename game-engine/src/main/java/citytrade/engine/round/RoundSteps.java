@@ -10,6 +10,8 @@ import citytrade.engine.event.Crises;
 import citytrade.engine.event.EventOptions;
 import citytrade.engine.event.EventSchedule;
 import citytrade.engine.market.Market;
+import citytrade.engine.objective.FinalScoring;
+import citytrade.engine.objective.Objectives;
 import citytrade.engine.opportunity.Opportunities;
 import citytrade.engine.project.Projects;
 import citytrade.engine.ruleset.Ruleset;
@@ -17,10 +19,7 @@ import citytrade.engine.state.GameState;
 import citytrade.engine.trade.Trading;
 import java.util.List;
 
-/**
- * The real round steps. Steps that return the state unchanged are filled in by later tasks
- * (T13 scoring). The switch is exhaustive, so a new step cannot be forgotten.
- */
+/** The real round steps. The switch is exhaustive, so a new step cannot be forgotten. */
 public final class RoundSteps implements RoundStepHandler {
 
     public static final RoundSteps INSTANCE = new RoundSteps();
@@ -52,7 +51,10 @@ public final class RoundSteps implements RoundStepHandler {
             case STORAGE_LIMITS -> Storage.discardExcess(state, ruleset, events);
             case MARKET_PRICES_MOVE -> Market.movePrices(state, ruleset, events);
             case TEMPORARY_EVENT_EFFECTS_END -> EventSchedule.endTemporaryEffects(state, events);
-            case FINAL_SCORING -> state;
+            // Every round records what objectives need at the end of a Round Resolution; after the last
+            // round the objectives are revealed and the game is scored.
+            case FINAL_SCORING ->
+                    FinalScoring.scoreIfLastRound(Objectives.recordRoundEnd(state), ruleset, events);
         };
     }
 }

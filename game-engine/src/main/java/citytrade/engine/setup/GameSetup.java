@@ -84,7 +84,8 @@ public final class GameSetup {
         MarketPrices market = MarketPrices.allAt(startStepIndex(ruleset.market()));
 
         return new GameState(ruleset.version(), 0, GamePhase.SETUP, random, players, market, eventDeck, warning,
-                Optional.empty(), projects, opportunities.items(), List.of(), List.of(), FIRST_OFFER_ID, List.of(), FIRST_CONTRACT_ID);
+                Optional.empty(), projects, opportunities.items(), List.of(), List.of(), FIRST_OFFER_ID, List.of(),
+                FIRST_CONTRACT_ID, Optional.empty());
     }
 
     private static ResourceBundle startingHoldings(CityType city, StartingRules starting) {

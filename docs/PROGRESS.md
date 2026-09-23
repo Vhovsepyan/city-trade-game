@@ -5,7 +5,7 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
 - Milestone: M0
-- Next task: T13
+- Next task: T14
 - Target ruleset: prototype-001 (`rulesets/prototype-001.json`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -41,6 +41,12 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
   less compensation. Alternative: compensation may use reserved Money and the player's bids are lowered.
   Current choice follows the literal text (reserved Money is never spent before step 4.2).
 
+- T13 (please confirm, not blocking): objective readings chosen from the literal Numbers Sheet 15 text:
+  PROJECT PARTNER = at least the qualifying minimum (6 points) in both projects, even if a project fails
+  ("qualify as a contributor" is about the amount; success is not named). CONTRACT PLAYER = 2 FULFILLED contracts
+  as either party (creditor or debtor) and a Contracts Broken counter of 0. PATIENT INVESTOR counts contributions
+  to failed projects too. Alternative for the first: count only projects that succeeded.
+
 ## Suggestions (not built)
 - (none)
 
@@ -53,6 +59,18 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T13 - Hidden objectives, final scoring, tiebreakers - DONE (review round 1)
+- What: package `objective`: `Objectives` (completion check per card; step 4.8 of EVERY round records level and
+  smallest F/E/M/T amount), `FinalScoring` (step 4.8 of the last round: hidden = completed kept cards x
+  `completedPrestige`, final = visible + hidden, ranking Prestige > level > completed objectives > fewer broken
+  contracts, still equal = shared victory; Money never compared).
+- State: `PlayerState.objectiveProgress` (`ObjectiveProgress`: market buy rounds from `Market.buy`, everStrained from
+  `withStrained`, level after each round, best minimum stock); `GameState.finalResult` (`FinalResult`/`FinalScore`).
+  Visible `prestige` is not changed by the hidden score. Events: `ObjectivesRevealed`, `FinalScoresRevealed`.
+- Choices: see Questions (Project Partner, Contract Player, Patient Investor readings).
+- Tests: ObjectivesTest (pass + fail for all 12, tracking through real commands), FinalScoringTest (8).
+- Note: Codex review left a temp folder `%LOCALAPPDATA%\Temp\codex-t13-jdk25` (its delete was blocked). Safe to delete.
 
 ### T12 - Opportunities and secret bids - DONE (review round 2)
 - What: package `opportunity`: `Opportunities` (step 2.3 `reveal`, command `PlaceBid`, step 4.2 `resolveBids`).
@@ -161,17 +179,9 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: GameEngineTest (phases, wrong-phase rejections, state unchanged, full 14 rounds, determinism),
   RoundFlowTest (recording handler: exact step order, phase, round, state threaded), RoundStepTest.
 
-### T03 - Core state, setup, deterministic random - DONE (review round 1)
-- What: `CityType`, `GameRandom` (SplitMix64, immutable value inside `GameState`), `PlayerState`,
-  `GameState`, `MarketPrices`, `EventWarning`, `GameSetup.create(seed, ruleset)` (random draws in
-  Numbers Sheet 21 step order: cities, objectives, events, projects, opportunities), `ChooseObjectives`.
-- For `ChooseObjectives` T03 already created minimal `GameCommand`, `GameResult`, `RejectionCode`,
-  `DomainEvent` (package `citytrade.engine.command`); handler is `setup.ObjectiveChoice`. T04 extends
-  these, adds `GameEngine.apply` and the phase check (`INVALID_PHASE`) for ChooseObjectives.
-- Tests: GameRandomTest (SplitMix64 reference values), GameSetupTest, ObjectiveChoiceTest (engine,
-  Java-built `TestRulesets`), PrototypeSetupTest (real prototype-001 file).
-
 ## Earlier
+- T03 DONE: core state, `GameRandom` (SplitMix64), `GameSetup.create` (Numbers Sheet 21 draw order),
+  `ChooseObjectives` (`setup.ObjectiveChoice`).
 - T00 DONE: environment checked (Java, git, node, codex, scripts executable, Codex smoke test OK).
 - T01 DONE: Gradle 9.7.1 wrapper, Groovy DSL, Java 25 toolchain + foojay, 4 modules; `verifyEngineHasNoDependencies`
   in `check`. Codex sandbox cannot run Gradle (no network, no cache access).

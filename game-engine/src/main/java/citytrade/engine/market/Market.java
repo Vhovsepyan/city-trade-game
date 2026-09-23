@@ -63,7 +63,8 @@ public final class Market {
                 .with(resource, holdings.amountOf(resource) + command.quantity())
                 .withMoney(holdings.money() - totalCost);
         PlayerState updated = player.withHoldings(newHoldings)
-                .withMarketThisRound(player.marketThisRound().withBought(resource, command.quantity()));
+                .withMarketThisRound(player.marketThisRound().withBought(resource, command.quantity()))
+                .withObjectiveProgress(player.objectiveProgress().withMarketBuyIn(state.round()));
         return new GameResult.Accepted(state.withPlayer(updated),
                 List.of(new DomainEvent.MarketBought(command.seat(), resource, command.quantity(), totalCost)));
     }

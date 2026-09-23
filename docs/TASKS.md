@@ -154,7 +154,7 @@ Depends on: T06
 Docs: Numbers Sheet 17; Concept 24, 25.
 Accept: Money reservation (total bids <= free Money), change/withdraw bid, highest wins and pays, tie -> nobody wins and card stays, 0 = pass, arrival order does not matter (test with shuffled command order).
 
-### T13 - Hidden objectives, final scoring, tiebreakers  `TODO`
+### T13 - Hidden objectives, final scoring, tiebreakers  `DONE`
 Depends on: T09, T10, T11, T12
 Docs: Numbers Sheet 15, 18, 20; Concept 26-31, 40.
 Accept: each of the 12 objectives has a pass and a fail test; final score = visible + hidden; tiebreakers in order; Money never a tiebreaker.

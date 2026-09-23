@@ -169,7 +169,7 @@ class GameEngineTest {
                 s.market(), new ArrayList<>(s.eventDeck()), s.eventWarning(), s.activeEvent(), new ArrayList<>(s.projects()),
                 new ArrayList<>(s.opportunityDeck()), new ArrayList<>(s.opportunities()),
                 new ArrayList<>(s.tradeOffers()), s.nextOfferId(),
-                new ArrayList<>(s.contracts()), s.nextContractId());
+                new ArrayList<>(s.contracts()), s.nextContractId(), s.finalResult());
     }
 
     private GameResult.Accepted accept(GameState state, GameCommand command) {

@@ -57,7 +57,7 @@ class ProjectsTest {
                 PublicProject.upcoming(card(RESEARCH), ruleset.projects().windows().get(1)));
         return new GameState(s.rulesetVersion(), s.round(), s.phase(), s.random(), s.players(), s.market(),
                 s.eventDeck(), s.eventWarning(), s.activeEvent(), projects, s.opportunityDeck(), s.opportunities(), s.tradeOffers(),
-                s.nextOfferId(), s.contracts(), s.nextContractId());
+                s.nextOfferId(), s.contracts(), s.nextContractId(), s.finalResult());
     }
 
     /** From any state before a StartRound: play on until the window of {@code round} is open. */

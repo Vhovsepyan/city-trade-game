@@ -27,6 +27,7 @@ import java.util.Optional;
  * @param nextOfferId      the id the next trade offer gets
  * @param contracts        every formal contract of the game in creation order; finished ones stay as history
  * @param nextContractId   the id the next formal contract gets
+ * @param finalResult      final scores and winners; set in step 4.8 of the last round, empty before
  */
 public record GameState(
         String rulesetVersion,
@@ -44,12 +45,14 @@ public record GameState(
         List<TradeOffer> tradeOffers,
         int nextOfferId,
         List<FormalContract> contracts,
-        int nextContractId) {
+        int nextContractId,
+        Optional<FinalResult> finalResult) {
 
     public GameState {
         Objects.requireNonNull(phase);
         Objects.requireNonNull(eventWarning);
         Objects.requireNonNull(activeEvent);
+        Objects.requireNonNull(finalResult);
         if (round < 0) {
             throw new IllegalArgumentException("round must not be negative: " + round);
         }
@@ -79,24 +82,28 @@ public record GameState(
         List<PlayerState> updated = new ArrayList<>(players);
         updated.set(player.seat(), player);
         return new GameState(rulesetVersion, round, phase, random, updated, market, eventDeck, eventWarning,
-                activeEvent, projects, opportunityDeck, opportunities,tradeOffers, nextOfferId, contracts, nextContractId);
+                activeEvent, projects, opportunityDeck, opportunities, tradeOffers, nextOfferId, contracts,
+                nextContractId, finalResult);
     }
 
     public GameState withRoundAndPhase(int newRound, GamePhase newPhase) {
         return new GameState(rulesetVersion, newRound, newPhase, random, players, market, eventDeck, eventWarning,
-                activeEvent, projects, opportunityDeck, opportunities,tradeOffers, nextOfferId, contracts, nextContractId);
+                activeEvent, projects, opportunityDeck, opportunities, tradeOffers, nextOfferId, contracts,
+                nextContractId, finalResult);
     }
 
     public GameState withMarket(MarketPrices newMarket) {
         return new GameState(rulesetVersion, round, phase, random, players, newMarket, eventDeck, eventWarning,
-                activeEvent, projects, opportunityDeck, opportunities,tradeOffers, nextOfferId, contracts, nextContractId);
+                activeEvent, projects, opportunityDeck, opportunities, tradeOffers, nextOfferId, contracts,
+                nextContractId, finalResult);
     }
 
     /** The state with a new event deck, warning and active event (the three always change together). */
     public GameState withEvents(List<EventCard> newDeck, Optional<EventWarning> newWarning,
             Optional<EventCard> newActiveEvent) {
         return new GameState(rulesetVersion, round, phase, random, players, market, newDeck, newWarning,
-                newActiveEvent, projects, opportunityDeck, opportunities,tradeOffers, nextOfferId, contracts, nextContractId);
+                newActiveEvent, projects, opportunityDeck, opportunities, tradeOffers, nextOfferId, contracts,
+                nextContractId, finalResult);
     }
 
     public Optional<PublicProject> project(String projectId) {
@@ -108,7 +115,8 @@ public record GameState(
         List<PublicProject> updated = new ArrayList<>(projects);
         updated.replaceAll(existing -> existing.id().equals(project.id()) ? project : existing);
         return new GameState(rulesetVersion, round, phase, random, players, market, eventDeck, eventWarning,
-                activeEvent, updated, opportunityDeck, opportunities,tradeOffers, nextOfferId, contracts, nextContractId);
+                activeEvent, updated, opportunityDeck, opportunities, tradeOffers, nextOfferId, contracts,
+                nextContractId, finalResult);
     }
 
     public Optional<RegionalOpportunity> opportunity(String opportunityId) {
@@ -120,7 +128,8 @@ public record GameState(
         List<RegionalOpportunity> updated = new ArrayList<>(opportunities);
         updated.replaceAll(existing -> existing.id().equals(opportunity.id()) ? opportunity : existing);
         return new GameState(rulesetVersion, round, phase, random, players, market, eventDeck, eventWarning,
-                activeEvent, projects, opportunityDeck, updated, tradeOffers, nextOfferId, contracts, nextContractId);
+                activeEvent, projects, opportunityDeck, updated, tradeOffers, nextOfferId, contracts, nextContractId,
+                finalResult);
     }
 
     /** The state with the top card of the opportunity deck revealed as {@code opportunity}. */
@@ -132,7 +141,7 @@ public record GameState(
         updated.add(opportunity);
         return new GameState(rulesetVersion, round, phase, random, players, market, eventDeck, eventWarning,
                 activeEvent, projects, opportunityDeck.subList(1, opportunityDeck.size()), updated, tradeOffers,
-                nextOfferId, contracts, nextContractId);
+                nextOfferId, contracts, nextContractId, finalResult);
     }
 
     /** Numbers Sheet 17: Money of {@code seat} reserved by its active bids on open opportunities. */
@@ -161,7 +170,8 @@ public record GameState(
         List<TradeOffer> updated = new ArrayList<>(tradeOffers);
         updated.replaceAll(existing -> existing.id() == offer.id() ? offer : existing);
         return new GameState(rulesetVersion, round, phase, random, players, market, eventDeck, eventWarning,
-                activeEvent, projects, opportunityDeck, opportunities,updated, nextOfferId, contracts, nextContractId);
+                activeEvent, projects, opportunityDeck, opportunities, updated, nextOfferId, contracts,
+                nextContractId, finalResult);
     }
 
     /** The state with a new offer, which must carry {@link #nextOfferId()}; the id counter moves on by one. */
@@ -172,7 +182,8 @@ public record GameState(
         List<TradeOffer> updated = new ArrayList<>(tradeOffers);
         updated.add(offer);
         return new GameState(rulesetVersion, round, phase, random, players, market, eventDeck, eventWarning,
-                activeEvent, projects, opportunityDeck, opportunities,updated, nextOfferId + 1, contracts, nextContractId);
+                activeEvent, projects, opportunityDeck, opportunities, updated, nextOfferId + 1, contracts,
+                nextContractId, finalResult);
     }
 
     public Optional<FormalContract> contract(int contractId) {
@@ -184,7 +195,8 @@ public record GameState(
         List<FormalContract> updated = new ArrayList<>(contracts);
         updated.replaceAll(existing -> existing.id() == contract.id() ? contract : existing);
         return new GameState(rulesetVersion, round, phase, random, players, market, eventDeck, eventWarning,
-                activeEvent, projects, opportunityDeck, opportunities,tradeOffers, nextOfferId, updated, nextContractId);
+                activeEvent, projects, opportunityDeck, opportunities, tradeOffers, nextOfferId, updated,
+                nextContractId, finalResult);
     }
 
     /** The state with a new contract, which must carry {@link #nextContractId()}; the id counter moves on by one. */
@@ -196,7 +208,14 @@ public record GameState(
         List<FormalContract> updated = new ArrayList<>(contracts);
         updated.add(contract);
         return new GameState(rulesetVersion, round, phase, random, players, market, eventDeck, eventWarning,
-                activeEvent, projects, opportunityDeck, opportunities,tradeOffers, nextOfferId, updated, nextContractId + 1);
+                activeEvent, projects, opportunityDeck, opportunities, tradeOffers, nextOfferId, updated,
+                nextContractId + 1, finalResult);
+    }
+
+    public GameState withFinalResult(FinalResult result) {
+        return new GameState(rulesetVersion, round, phase, random, players, market, eventDeck, eventWarning,
+                activeEvent, projects, opportunityDeck, opportunities, tradeOffers, nextOfferId, contracts,
+                nextContractId, Optional.of(result));
     }
 
     /** D5: Round 1 may not start before every player has chosen objectives. */

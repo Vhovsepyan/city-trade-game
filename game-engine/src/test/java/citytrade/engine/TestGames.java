@@ -47,7 +47,7 @@ public final class TestGames {
         return state.withPlayer(new PlayerState(p.seat(), p.city(), holdings, level, p.lastUpgradeRound(),
                 p.buildings(), p.prestige(), p.dealtObjectives(), p.keptObjectives(), p.strained(),
                 p.strainedPenaltyActive(), p.upkeepPriority(), p.marketThisRound(), p.contractsBroken(),
-                p.eventParticipation(), p.extraProduction()));
+                p.eventParticipation(), p.extraProduction(), p.objectiveProgress()));
     }
 
     /** The seat that plays {@code city}. */

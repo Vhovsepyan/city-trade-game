@@ -2,6 +2,7 @@ package citytrade.engine.command;
 
 import citytrade.engine.Resource;
 import citytrade.engine.ResourceBundle;
+import citytrade.engine.state.FinalResult;
 import citytrade.engine.state.OfferCloseReason;
 import java.util.List;
 import java.util.Optional;
@@ -216,6 +217,23 @@ public sealed interface DomainEvent {
 
     /** All resolution steps of {@code round} are done. */
     record RoundResolved(int round) implements DomainEvent {
+    }
+
+    /**
+     * Step 4.8 of the last round: the player's kept hidden objectives are revealed with the ones completed
+     * and the hidden Prestige they give (Numbers Sheet 15).
+     */
+    record ObjectivesRevealed(int seat, List<String> keptObjectives, List<String> completedObjectives,
+            int hiddenPrestige) implements DomainEvent {
+
+        public ObjectivesRevealed {
+            keptObjectives = List.copyOf(keptObjectives);
+            completedObjectives = List.copyOf(completedObjectives);
+        }
+    }
+
+    /** Step 4.8 of the last round: final scores and the winner(s); several winners = shared victory. */
+    record FinalScoresRevealed(FinalResult result) implements DomainEvent {
     }
 
     /** The last round is resolved; no more commands are accepted. */
