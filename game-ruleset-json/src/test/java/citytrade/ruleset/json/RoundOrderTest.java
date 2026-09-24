@@ -60,9 +60,9 @@ class RoundOrderTest {
     void scriptProducesEventsInMostSteps() {
         Set<RoundStep> seen = EnumSet.noneOf(RoundStep.class);
         played.events().forEach(events -> events.forEach(event -> stepOf(event).ifPresent(seen::add)));
-        // 1.2 and 1.3 change state without an event of their own.
+        // 1.2 changes state without an event of its own.
         Set<RoundStep> expected = EnumSet.allOf(RoundStep.class);
-        expected.removeAll(Set.of(RoundStep.STRAINED_PENALTY, RoundStep.PRODUCTION));
+        expected.remove(RoundStep.STRAINED_PENALTY);
         assertEquals(expected, seen);
     }
 
@@ -70,6 +70,7 @@ class RoundOrderTest {
     private static Optional<RoundStep> stepOf(DomainEvent event) {
         RoundStep step = switch (event) {
             case DomainEvent.EventActivated e -> RoundStep.EVENT_BECOMES_ACTIVE;
+            case DomainEvent.ResourcesProduced e -> RoundStep.PRODUCTION;
             case DomainEvent.UpkeepPaid e -> RoundStep.UPKEEP;
             case DomainEvent.ContractFulfilled e -> RoundStep.CONTRACT_OBLIGATIONS;
             case DomainEvent.ContractBroken e when !e.voluntary() -> RoundStep.CONTRACT_OBLIGATIONS;

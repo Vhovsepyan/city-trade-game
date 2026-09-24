@@ -32,7 +32,7 @@ public final class RoundSteps implements RoundStepHandler {
         return switch (step) {
             case EVENT_BECOMES_ACTIVE -> EventSchedule.activate(state, events);
             case STRAINED_PENALTY -> Production.applyStrainedPenalty(state);
-            case PRODUCTION -> Production.produce(state, ruleset);
+            case PRODUCTION -> Production.produce(state, ruleset, events);
             case UPKEEP -> Upkeep.pay(state, ruleset, events);
             case CONTRACT_OBLIGATIONS -> Contracts.settleDueObligations(state, ruleset, events);
             case CRISIS_PAYMENTS -> Crises.pay(state, ruleset, events);

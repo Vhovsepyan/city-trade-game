@@ -49,8 +49,13 @@ class StrainedRoundsTest {
         assertEquals(new ResourceBundle(0, 0, 4, 0, 3), p.holdings());
         assertTrue(p.strained());
         assertFalse(p.strainedPenaltyActive(), "production is not reduced in the round of the failure");
-        assertEquals(List.of(new DomainEvent.UpkeepPaid(seat, NONE, 1), new DomainEvent.CityStrained(seat),
-                new DomainEvent.RoundStarted(1)), round1.events());
+        assertEquals(List.of(new DomainEvent.ResourcesProduced(seat, new ResourceBundle(0, 0, 4, 0, 3)),
+                new DomainEvent.UpkeepPaid(seat, NONE, 1), new DomainEvent.CityStrained(seat),
+                new DomainEvent.RoundStarted(1)),
+                round1.events().stream()
+                        .filter(event -> !(event instanceof DomainEvent.ResourcesProduced produced)
+                                || produced.seat() == seat)
+                        .toList());
         state = accept(round1.state(), new ResolveRound(), ruleset).state();
 
         // Round 2: penalty (Materials 4 - 2, Money 3 - 1); upkeep fails again.

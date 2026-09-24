@@ -3,12 +3,14 @@ package citytrade.engine.economy;
 import citytrade.engine.Resource;
 import citytrade.engine.ResourceBundle;
 import citytrade.engine.city.BuildingEffects;
+import citytrade.engine.command.DomainEvent;
 import citytrade.engine.event.EventEffects;
 import citytrade.engine.ruleset.LevelRules;
 import citytrade.engine.ruleset.Ruleset;
 import citytrade.engine.ruleset.StrainedRules;
 import citytrade.engine.state.GameState;
 import citytrade.engine.state.PlayerState;
+import java.util.List;
 
 /**
  * Step 1.2 (Strained penalty) and step 1.3 (production), Numbers Sheet 3-4 and 9.
@@ -35,12 +37,13 @@ public final class Production {
      * Step 1.3: every city receives the production of its level plus its active buildings and permanent
      * extra production, minus an active Strained penalty, changed by this round's event (active since 1.1).
      */
-    public static GameState produce(GameState state, Ruleset ruleset) {
+    public static GameState produce(GameState state, Ruleset ruleset, List<DomainEvent> events) {
         GameState next = state;
         for (PlayerState player : state.players()) {
             ResourceBundle produced = EventEffects.production(state.activeEvent(),
                     productionOf(player, state.round(), ruleset));
             next = next.withPlayer(player.withHoldings(player.holdings().plus(produced)));
+            events.add(new DomainEvent.ResourcesProduced(player.seat(), produced));
         }
         return next;
     }

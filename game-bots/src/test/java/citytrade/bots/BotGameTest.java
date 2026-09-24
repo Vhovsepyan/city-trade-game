@@ -10,6 +10,7 @@ import citytrade.engine.ResourceBundle;
 import citytrade.engine.command.AcceptTrade;
 import citytrade.engine.command.BuildBuilding;
 import citytrade.engine.command.ChooseObjectives;
+import citytrade.engine.command.DomainEvent;
 import citytrade.engine.command.GameCommand;
 import citytrade.engine.command.GameResult;
 import citytrade.engine.command.PlaceBid;
@@ -23,6 +24,7 @@ import citytrade.engine.state.GameState;
 import citytrade.engine.state.PlayerState;
 import citytrade.engine.state.TradeOffer;
 import citytrade.engine.state.TradeOfferStatus;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -194,6 +196,29 @@ class BotGameTest {
         return result.finalState().players().stream()
                 .mapToInt(player -> player.eventParticipation().crisisPaidRounds().size())
                 .sum();
+    }
+
+    @Test
+    void observerSeesEveryAcceptedCommandInOrderWithItsStateAndEvents() {
+        List<Bot> traders = Collections.nCopies(ruleset.playerCount(), new TraderBot());
+        List<GameCommand> seen = new ArrayList<>();
+        List<GameState> states = new ArrayList<>();
+        List<Integer> startEvents = new ArrayList<>();
+
+        BotGame.Result result = BotGame.play(3, ruleset, traders, (command, stateAfter, events) -> {
+            seen.add(command);
+            states.add(stateAfter);
+            if (command instanceof StartRound) {
+                startEvents.add(events.size());
+                assertInstanceOf(DomainEvent.RoundStarted.class, events.getLast());
+            }
+        });
+
+        assertEquals(result.commands(), seen);
+        assertEquals(result.finalState(), states.getLast());
+        assertEquals(ruleset.roundCount(), startEvents.size());
+        // The observer does not change the game.
+        assertEquals(BotGame.play(3, ruleset, traders).finalState(), result.finalState());
     }
 
     @Test

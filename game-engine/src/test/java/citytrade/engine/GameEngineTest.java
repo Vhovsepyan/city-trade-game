@@ -10,11 +10,13 @@ import citytrade.engine.command.GameResult;
 import citytrade.engine.command.RejectionCode;
 import citytrade.engine.command.ResolveRound;
 import citytrade.engine.command.StartRound;
+import citytrade.engine.economy.Production;
 import citytrade.engine.ruleset.ObjectiveCard;
 import citytrade.engine.ruleset.Ruleset;
 import citytrade.engine.setup.GameSetup;
 import citytrade.engine.state.GamePhase;
 import citytrade.engine.state.GameState;
+import citytrade.engine.state.PlayerState;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -51,10 +53,17 @@ class GameEngineTest {
 
     @Test
     void startRoundOpensTheWindowOfTheNextRound() {
-        GameResult.Accepted accepted = accept(readyForRoundOne(), new StartRound());
+        GameState ready = readyForRoundOne();
+        GameResult.Accepted accepted = accept(ready, new StartRound());
         assertEquals(GamePhase.WINDOW, accepted.state().phase());
         assertEquals(1, accepted.state().round());
-        assertEquals(List.of(new DomainEvent.RoundStarted(1)), accepted.events());
+        // Round 1 has no event, no upkeep at level 1 and no contracts: only production (1.3) happens.
+        List<DomainEvent> expected = new ArrayList<>();
+        for (PlayerState player : ready.players()) {
+            expected.add(new DomainEvent.ResourcesProduced(player.seat(), Production.productionOf(player, 1, ruleset)));
+        }
+        expected.add(new DomainEvent.RoundStarted(1));
+        assertEquals(expected, accepted.events());
     }
 
     @Test

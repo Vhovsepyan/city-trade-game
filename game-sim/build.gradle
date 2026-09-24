@@ -1,5 +1,24 @@
+plugins {
+    id 'application'
+}
+
 dependencies {
     implementation project(':game-engine')
     implementation project(':game-bots')
     implementation project(':game-ruleset-json')
+    implementation platform('com.fasterxml.jackson:jackson-bom:2.22.3')
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+}
+
+application {
+    mainClass = 'citytrade.sim.SimulationMain'
+}
+
+tasks.named('run') {
+    // Relative paths (rulesets/, build/sim/) are resolved from the repository root.
+    workingDir = rootProject.projectDir
+}
+
+tasks.named('test') {
+    systemProperty 'rulesets.dir', rootProject.file('rulesets').absolutePath
 }

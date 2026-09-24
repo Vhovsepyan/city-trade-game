@@ -18,6 +18,13 @@ public sealed interface DomainEvent {
     record UpkeepPrioritySet(int seat) implements DomainEvent {
     }
 
+    /**
+     * Step 1.3: the city received {@code produced} (resources and Money), the round's event included.
+     * Resources are private (D6); the view layer shows this event to its seat only.
+     */
+    record ResourcesProduced(int seat, ResourceBundle produced) implements DomainEvent {
+    }
+
     /** Step 1.4: the city paid {@code paid} as upkeep; {@code missing} resources could not be paid. */
     record UpkeepPaid(int seat, ResourceBundle paid, int missing) implements DomainEvent {
     }

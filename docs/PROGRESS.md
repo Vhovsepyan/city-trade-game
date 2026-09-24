@@ -4,8 +4,8 @@ Short log for the next session. Newest entry on top. Max ~10 lines per entry.
 Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
-- Milestone: M1 complete (engine); next is M2
-- Next task: T17
+- Milestone: M1 complete (engine); M2 in progress
+- Next task: T18
 - Target ruleset: prototype-001 (`rulesets/prototype-001.json`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -45,6 +45,19 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T17 - Simulation runner + metrics - DONE (review round 1)
+- What: `game-sim` CLI `SimulationMain` (`./gradlew :game-sim:run --args="--ruleset prototype-001 --games 1000
+  --seed 1 --bots baseline,trader,baseline,trader"`; also `--rulesets-dir`, `--out` (default `build/sim`)).
+  Game i uses seed + i. Writes `<ruleset>_<bots>_seed<S>_games<N>.json` (summary) and `.csv` (one row per city per game).
+- Metrics: Arch 8.2 (Prestige by city, level 2/3 reach rate + round, produced/traded/discarded, market use,
+  resource demand early/mid/late, contracts, project completion, Strained rounds, holdings + market steps by round)
+  + win rate by city and bot (shared victory = 1/winners), Prestige distribution (all, per city, winner).
+- Engine: new event `ResourcesProduced(seat, produced)` in step 1.3 (needed for "produced"); `BotGame.Observer`.
+- Choice (metrics only): early/mid/late = rounds 1-5 / 6-10 / 11-14 (`GamePart`). Demand = resources paid for
+  levels, buildings, upkeep, crises, projects, event options.
+- Tests: sim (Options, Distribution, GamePart, Collector vs real game events, Report by hand, Main end-to-end +
+  same args = same files); ProductionTest, BotGameTest observer; 3 event-list tests updated for the new event.
 
 ### T16 - Trader bot - DONE (review round 2)
 - What: `TraderBot` (Arch 8.1 B): answers every offer to it (accept if value received >= threshold x value given at
@@ -142,41 +155,12 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Review: R1-P1-2 (compensation overflow) fixed with checked arithmetic; R1-P1-1 / R1-P2-1 resolved by D15 / D16.
 - Tests: ContractsTest (incl. Numbers Sheet 13 example, D15 order), ContractStatusTest, ResourceBundleTest (overflow).
 
-### T08 - Instant trades and offers - DONE (review round 1)
-- What: package `trade`: `Trading` (commands `ProposeTrade`, `AcceptTrade`, `RejectTrade`, `CancelTrade`,
-  `CounterTrade`, WINDOW only; step 4.1 `expireOpenOffers`). State: `TradeOffer`, `TradeOfferStatus`
-  (only OPEN -> closed), `OfferCloseReason.COUNTEROFFER`; `GameState.tradeOffers` (kept as history) + `nextOfferId`.
-- Choices: proposer must own the offered bundle when proposing (not reserved; checked again on accept).
-  Accept with missing resources = Accepted result with offer INVALID + `TradeInvalidated` event (a Rejected
-  result may not change state). Role is checked before status (D7: others learn nothing).
-- Codes: `TRADE_WITH_SELF`, `EMPTY_TRADE`, `UNKNOWN_OFFER`, `OFFER_NOT_OPEN`, `NOT_OFFER_RECIPIENT`, `NOT_OFFER_PROPOSER`.
-- For later: T12 must check FREE Money (minus bid reservations) in `Trading.accept`/`checkNewOffer`.
-- Tests: TradingTest (34), TradeOfferStatusTest (12), ResourceBundleTest (isEmpty/hasNegativeAmount/covers).
-
-### T07 - City levels and buildings - DONE (review round 1)
-- What: package `city`: `CityDevelopment` (commands `UpgradeCity`, `BuildBuilding`, WINDOW only; step 4.4
-  `awardPrestige`), `BuildingEffects` (production / storage / upkeep bonuses of ACTIVE buildings only).
-- `PlayerState` new fields: `lastUpgradeRound` (one level per round), `buildings` (`BuiltBuilding`: id,
-  roundBuilt, D4 chosenResource), `prestige` (visible). Effects start when `roundBuilt < round`.
-- Level counts at once (unlocks buildings in the same window); production/upkeep change next round.
-  Transit reduction only when city level == effect `cityLevel` (3). Prestige for level + buildings of this round in 4.4.
-- Codes: `MAX_LEVEL_REACHED`, `ALREADY_UPGRADED_THIS_ROUND`, `UNKNOWN_BUILDING`, `BUILDING_ALREADY_BUILT`,
-  `LEVEL_TOO_LOW`, `INVALID_BUILDING_CHOICE`. Events: `CityUpgraded`, `BuildingBuilt`, `PrestigeGained`.
-- `Production.productionOf` now takes the round. Strained penalty on total production (see Questions).
-- For later: T10 building cost discount event goes into `CityDevelopment.build`; T11+ add their Prestige in 4.4.
-- Tests: CityUpgradeTest (9), BuildingTest (27 incl. parameterized); TestRulesets now has the 8 buildings.
-
-### T06 - Global market - DONE (review round 1)
-- What: package `market`: `Market` (buy/sell handlers, `buyCost`/`sellValue` at current step, step 4.6
-  `movePrices`). Commands `BuyFromMarket`, `SellToMarket` (WINDOW only). Prices never change in the window.
-- `PlayerState.marketThisRound` (`MarketActivity`: bought/sold units) for the per-round buy limit and the
-  net count; cleared in 4.6. Codes: `INVALID_QUANTITY`, `INSUFFICIENT_MONEY`, `INSUFFICIENT_RESOURCES`,
-  `MARKET_BUY_LIMIT_EXCEEDED`. Events: `MarketBought`, `MarketSold`, `MarketPriceMoved`.
-- For later: T10 adds event price modifiers inside `Market.buyCost/sellValue`; T12 must check FREE Money
-  (minus bid reservations) in `Market.buy`. Objective "Market Independence" (T13) needs a game-long count.
-- Tests: MarketTest (22 tests: prices per step, limit, atomic rejections, phases, thresholds, min/max, per resource).
-
 ## Earlier
+- T08 DONE: package `trade`: `Trading` (propose/accept/reject/cancel/counter, 4.1 expiry), `TradeOffer` history;
+  accept with missing resources = Accepted + offer INVALID (`TradeInvalidated`).
+- T07 DONE: package `city`: `CityDevelopment` (`UpgradeCity`, `BuildBuilding`, 4.4 Prestige), `BuildingEffects`
+  (effects from the round after building).
+- T06 DONE: package `market`: `Market` (buy/sell at current step, 4.6 `movePrices`), per-round `MarketActivity`.
 - T05 DONE: package `economy`: `Production`, `Upkeep` (D1), `Storage`, command `SetUpkeepPriority`, Strained flag;
   with prototype values an L2+ city never fails upkeep in practice.
 - T04 DONE: `GameEngine.apply`, `GamePhase`, `StartRound`/`ResolveRound`; round order in ONE place: enum

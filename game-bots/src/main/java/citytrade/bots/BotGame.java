@@ -1,6 +1,7 @@
 package citytrade.bots;
 
 import citytrade.engine.GameEngine;
+import citytrade.engine.command.DomainEvent;
 import citytrade.engine.command.GameCommand;
 import citytrade.engine.command.GameResult;
 import citytrade.engine.command.RejectionCode;
@@ -28,6 +29,16 @@ public final class BotGame {
     public record Rejection(int round, GameCommand command, RejectionCode code, String detail) {
     }
 
+    /** Sees every accepted command with the state after it and its events, for example to collect metrics. */
+    @FunctionalInterface
+    public interface Observer {
+
+        Observer NONE = (command, stateAfter, events) -> {
+        };
+
+        void accepted(GameCommand command, GameState stateAfter, List<DomainEvent> events);
+    }
+
     /** The finished game: the final state, every accepted command in order, and the rejected ones. */
     public record Result(GameState finalState, List<GameCommand> commands, List<Rejection> rejections) {
 
@@ -39,23 +50,30 @@ public final class BotGame {
 
     private final Ruleset ruleset;
     private final List<Bot> bots;
+    private final Observer observer;
     private GameState state;
     private final List<GameCommand> commands = new ArrayList<>();
     private final List<Rejection> rejections = new ArrayList<>();
 
-    private BotGame(long seed, Ruleset ruleset, List<Bot> bots) {
+    private BotGame(long seed, Ruleset ruleset, List<Bot> bots, Observer observer) {
         if (bots.size() != ruleset.playerCount()) {
             throw new IllegalArgumentException(
                     "need " + ruleset.playerCount() + " bots, one per seat, but got " + bots.size());
         }
         this.ruleset = ruleset;
         this.bots = List.copyOf(bots);
+        this.observer = observer;
         this.state = GameSetup.create(seed, ruleset);
     }
 
     /** Plays a new game with {@code seed}; {@code bots.get(seat)} plays that seat. */
     public static Result play(long seed, Ruleset ruleset, List<Bot> bots) {
-        BotGame game = new BotGame(seed, ruleset, bots);
+        return play(seed, ruleset, bots, Observer.NONE);
+    }
+
+    /** Like {@link #play(long, Ruleset, List)}; {@code observer} sees every accepted command as it happens. */
+    public static Result play(long seed, Ruleset ruleset, List<Bot> bots, Observer observer) {
+        BotGame game = new BotGame(seed, ruleset, bots, observer);
         game.playAll();
         return new Result(game.state, game.commands, game.rejections);
     }
@@ -104,6 +122,7 @@ public final class BotGame {
             case GameResult.Accepted accepted -> {
                 state = accepted.state();
                 commands.add(command);
+                observer.accepted(command, state, accepted.events());
                 return true;
             }
             case GameResult.Rejected rejected -> {

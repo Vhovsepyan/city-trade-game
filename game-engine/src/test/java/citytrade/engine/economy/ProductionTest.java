@@ -9,11 +9,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import citytrade.engine.CityType;
 import citytrade.engine.ResourceBundle;
 import citytrade.engine.TestRulesets;
+import citytrade.engine.command.DomainEvent;
+import citytrade.engine.command.GameResult;
 import citytrade.engine.command.StartRound;
 import citytrade.engine.ruleset.Ruleset;
 import citytrade.engine.ruleset.StrainedRules;
 import citytrade.engine.state.GameState;
 import citytrade.engine.state.PlayerState;
+import java.util.List;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.api.Test;
@@ -44,6 +47,24 @@ class ProductionTest {
             assertEquals(money, player.holdings().money());
             int othersHeld = Upkeep.allowedResources(player).stream().mapToInt(player.holdings()::amountOf).sum();
             assertEquals(3 * (1 + other) - upkeep, othersHeld, player.city().toString());
+        }
+    }
+
+    @Test
+    void productionStepReportsWhatEveryCityReceived() {
+        GameState state = readyForRoundOne(SEED, ruleset);
+
+        GameResult.Accepted started = accept(state, new StartRound(), ruleset);
+
+        List<DomainEvent.ResourcesProduced> produced = started.events().stream()
+                .filter(DomainEvent.ResourcesProduced.class::isInstance)
+                .map(DomainEvent.ResourcesProduced.class::cast)
+                .toList();
+        assertEquals(List.of(0, 1, 2, 3), produced.stream().map(DomainEvent.ResourcesProduced::seat).toList());
+        for (DomainEvent.ResourcesProduced event : produced) {
+            // Level 1 has no upkeep, so the whole difference in holdings is the production.
+            ResourceBundle before = state.player(event.seat()).holdings();
+            assertEquals(started.state().player(event.seat()).holdings().minus(before), event.produced());
         }
     }
 

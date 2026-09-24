@@ -185,7 +185,7 @@ Accept: deterministic; never sends invalid commands in normal play (test: 100 ga
 Depends on: T15
 Accept: proposes/accepts simple trades by a value threshold based on market prices; prepares for warned crises; bounded bids; deterministic.
 
-### T17 - Simulation runner + metrics  `TODO`
+### T17 - Simulation runner + metrics  `DONE`
 Depends on: T16
 Docs: Architecture 8.2.
 Accept: CLI args (ruleset, games, seed, bot mix); JSON + CSV output; metrics from Architecture 8.2 plus win rate by city and Prestige distribution.
