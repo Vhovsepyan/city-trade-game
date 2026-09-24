@@ -4,10 +4,10 @@ Short log for the next session. Newest entry on top. Max ~10 lines per entry.
 Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
-- Milestone: M1 complete (engine); M2 complete (bots, simulation, first balance report)
-- Next task: T18a implementation is ready for review; after review, T18b is next. Owner: read
-  `docs/balance-report-prototype-001.md` section 4 and decide which values go into `prototype-002`.
-- Target ruleset: prototype-001 (`rulesets/prototype-001.json`)
+- Milestone: M1 complete (engine); M2 complete (bots, simulation, two balance reports)
+- Next task: T18b implementation is ready for review. Owner: review
+  `docs/balance-report-prototype-002.md` before deciding the next balance test.
+- Target rulesets: prototype-001 and prototype-002 (`rulesets/`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
 
@@ -47,6 +47,16 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T18b - prototype-002 and second balance report - READY (review pending)
+- What: Added `rulesets/prototype-002.json` with only S1 Level 2 cost 4, S2 Grand Landmark Money 10,
+  and S3 Research Lab F1 E2 M1 T1. Added `docs/balance-report-prototype-002.md` with the three 1000-game
+  comparisons and three follow-up suggestions.
+- Files: prototype-002 ruleset, loader regression test for exact approved changes, second balance report.
+- Tests: prototype-002 loaded in all three simulation runs; all had 0 rejected commands. Standard Gradle build
+  is blocked in this sandbox by the known Java 25 `java.security` access error; source compilation and simulation
+  runs completed with the temporary external-JDK workaround.
+- Notes / P3 items: none.
 
 ### T18a - Ruleset upper bounds - READY (review pending)
 - What: `RulesetValidator` rejects every ruleset integer above 100000 with a path-specific error;

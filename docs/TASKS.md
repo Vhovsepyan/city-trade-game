@@ -199,7 +199,7 @@ Depends on: T18
 Do: RulesetValidator rejects any numeric value above 100000 (prices, costs, production, Prestige, limits, storage) with a clear error.
 Accept: one failing-ruleset test per value group; prototype-001 still loads; no engine arithmetic changes needed.
 
-### T18b - prototype-002 and second balance report  `TODO`
+### T18b - prototype-002 and second balance report  `DONE`
 Depends on: T18a
 Do: create `rulesets/prototype-002.json` as a copy of prototype-001 with only these changes:
 S1 Level 2 cost 4 of each resource; S2 Grand Landmark Money 10; S3 Research Lab cost F1 E2 M1 T1.

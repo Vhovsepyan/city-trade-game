@@ -9,6 +9,7 @@ import java.nio.file.Path;
 final class TestRulesets {
 
     static final Path PROTOTYPE_001 = rulesetsDir().resolve("prototype-001.json");
+    static final Path PROTOTYPE_002 = rulesetsDir().resolve("prototype-002.json");
 
     private TestRulesets() {
     }
@@ -25,6 +26,14 @@ final class TestRulesets {
     static ObjectNode prototypeJson() {
         try {
             return (ObjectNode) new ObjectMapper().readTree(PROTOTYPE_001.toFile());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    static ObjectNode prototype002Json() {
+        try {
+            return (ObjectNode) new ObjectMapper().readTree(PROTOTYPE_002.toFile());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

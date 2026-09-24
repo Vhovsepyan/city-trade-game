@@ -1,0 +1,210 @@
+{
+  "version": "prototype-002",
+  "roundCount": 14,
+  "playerCount": 4,
+  "starting": { "specialtyResource": 4, "otherResource": 1, "money": 6 },
+  "levels": [
+    {
+      "level": 1,
+      "specialtyProduction": 3,
+      "otherResourceProduction": 1,
+      "moneyProduction": 2,
+      "upgradeCost": { "food": 0, "energy": 0, "materials": 0, "technology": 0, "money": 0 },
+      "upkeepResources": 0,
+      "reachPrestige": 0
+    },
+    {
+      "level": 2,
+      "specialtyProduction": 4,
+      "otherResourceProduction": 1,
+      "moneyProduction": 3,
+      "upgradeCost": { "food": 4, "energy": 4, "materials": 4, "technology": 4, "money": 0 },
+      "upkeepResources": 1,
+      "reachPrestige": 1
+    },
+    {
+      "level": 3,
+      "specialtyProduction": 5,
+      "otherResourceProduction": 1,
+      "moneyProduction": 4,
+      "upgradeCost": { "food": 4, "energy": 4, "materials": 4, "technology": 4, "money": 4 },
+      "upkeepResources": 2,
+      "reachPrestige": 2
+    }
+  ],
+  "storage": { "resourceLimit": 10 },
+  "strained": { "specialtyProductionPenalty": 2, "moneyIncomePenalty": 1 },
+  "buildings": [
+    {
+      "id": "WAREHOUSE",
+      "requiredLevel": 1,
+      "cost": { "food": 0, "energy": 1, "materials": 1, "technology": 1, "money": 0 },
+      "prestige": 0,
+      "effect": { "type": "STORAGE_BONUS", "amount": 4 }
+    },
+    {
+      "id": "WORKSHOP",
+      "requiredLevel": 1,
+      "cost": { "food": 1, "energy": 0, "materials": 1, "technology": 1, "money": 0 },
+      "prestige": 0,
+      "effect": { "type": "CHOSEN_NON_SPECIALTY_PRODUCTION", "amount": 1 }
+    },
+    {
+      "id": "MARKET_HALL",
+      "requiredLevel": 1,
+      "cost": { "food": 1, "energy": 1, "materials": 0, "technology": 1, "money": 2 },
+      "prestige": 0,
+      "effect": {
+        "type": "PRODUCTION_BONUS",
+        "production": { "food": 0, "energy": 0, "materials": 0, "technology": 0, "money": 1 }
+      }
+    },
+    {
+      "id": "SPECIALTY_COMPLEX",
+      "requiredLevel": 2,
+      "cost": { "food": 1, "energy": 1, "materials": 2, "technology": 2, "money": 0 },
+      "prestige": 1,
+      "effect": { "type": "SPECIALTY_PRODUCTION", "amount": 1 }
+    },
+    {
+      "id": "RESEARCH_LAB",
+      "requiredLevel": 2,
+      "cost": { "food": 1, "energy": 2, "materials": 1, "technology": 1, "money": 0 },
+      "prestige": 1,
+      "effect": {
+        "type": "PRODUCTION_BONUS",
+        "production": { "food": 0, "energy": 0, "materials": 0, "technology": 1, "money": 0 }
+      }
+    },
+    {
+      "id": "TRANSIT_NETWORK",
+      "requiredLevel": 2,
+      "cost": { "food": 0, "energy": 2, "materials": 2, "technology": 1, "money": 0 },
+      "prestige": 0,
+      "effect": { "type": "UPKEEP_REDUCTION", "cityLevel": 3, "amount": 1 }
+    },
+    {
+      "id": "CIVIC_CENTER",
+      "requiredLevel": 2,
+      "cost": { "food": 2, "energy": 2, "materials": 2, "technology": 2, "money": 0 },
+      "prestige": 2,
+      "effect": { "type": "NO_EFFECT" }
+    },
+    {
+      "id": "GRAND_LANDMARK",
+      "requiredLevel": 3,
+      "cost": { "food": 3, "energy": 3, "materials": 3, "technology": 3, "money": 10 },
+      "prestige": 3,
+      "effect": { "type": "NO_EFFECT" }
+    }
+  ],
+  "market": {
+    "steps": [
+      { "name": "A", "buyCost": 3, "sellValue": 1 },
+      { "name": "B", "buyCost": 4, "sellValue": 1 },
+      { "name": "C", "buyCost": 5, "sellValue": 2 },
+      { "name": "D", "buyCost": 6, "sellValue": 3 }
+    ],
+    "startStep": "B",
+    "priceMoveThreshold": 3,
+    "maxBuyPerResourcePerRound": 4
+  },
+  "contracts": {
+    "maxDurationRounds": 3,
+    "compensationPerUnpaidResource": 2,
+    "compensationPerUnpaidMoney": 2,
+    "unpaidCompensationMoneyPerPrestige": 2,
+    "breakPrestigePenalty": 1
+  },
+  "events": {
+    "eventRounds": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+    "crisisMinLevel": 2,
+    "crisisPrestige": 1,
+    "deck": [
+      { "type": "RESOURCE_CRISIS", "id": "DROUGHT", "resource": "FOOD", "amount": 2, "marketStepChange": 1 },
+      { "type": "RESOURCE_CRISIS", "id": "ENERGY_SHORTAGE", "resource": "ENERGY", "amount": 2, "marketStepChange": 1 },
+      { "type": "RESOURCE_CRISIS", "id": "SUPPLY_SHOCK", "resource": "MATERIALS", "amount": 2, "marketStepChange": 1 },
+      { "type": "RESOURCE_CRISIS", "id": "EPIDEMIC", "resource": "TECHNOLOGY", "amount": 2, "marketStepChange": 1 },
+      { "type": "NON_SPECIALTY_CRISIS", "id": "INFRASTRUCTURE_FAILURE", "differentResources": 2 },
+      { "type": "BUILDING_COST_DISCOUNT", "id": "CONSTRUCTION_BOOM", "resource": "MATERIALS", "discount": 1, "marketStepChange": -1 },
+      { "type": "UPGRADE_COST_DISCOUNT", "id": "TECHNOLOGY_BOOM", "resource": "TECHNOLOGY", "discount": 2 },
+      { "type": "NO_MONEY_INCOME", "id": "RECESSION" },
+      { "type": "MARKET_PRICE_SHIFT", "id": "TRADE_DISRUPTION", "buyCostChange": 2, "sellValueChange": -1, "minSellValue": 1 },
+      {
+        "type": "PRESTIGE_PURCHASE",
+        "id": "PUBLIC_FESTIVAL",
+        "cost": { "food": 2, "energy": 0, "materials": 0, "technology": 0, "money": 2 },
+        "prestige": 1
+      },
+      {
+        "type": "PRODUCTION_PURCHASE",
+        "id": "RESEARCH_BREAKTHROUGH",
+        "cost": { "food": 0, "energy": 0, "materials": 0, "technology": 3, "money": 0 },
+        "chosenNonSpecialtyProduction": 1
+      },
+      {
+        "type": "PRODUCTION_BOOST",
+        "id": "GOOD_HARVEST_YEAR",
+        "production": { "food": 1, "energy": 1, "materials": 0, "technology": 0, "money": 0 }
+      }
+    ]
+  },
+  "objectives": {
+    "dealtPerPlayer": 3,
+    "keptPerPlayer": 2,
+    "completedPrestige": 2,
+    "deck": [
+      { "type": "ACTIVE_TRADER", "id": "ACTIVE_TRADER" },
+      { "type": "DIVERSIFIED_ECONOMY", "id": "DIVERSIFIED_ECONOMY", "minBuildings": 4 },
+      { "type": "PROJECT_PARTNER", "id": "PROJECT_PARTNER" },
+      { "type": "CONTRACT_PLAYER", "id": "CONTRACT_PLAYER", "minCompletedContracts": 2 },
+      { "type": "MARKET_INDEPENDENCE", "id": "MARKET_INDEPENDENCE", "maxBuyRounds": 3 },
+      { "type": "RAPID_DEVELOPMENT", "id": "RAPID_DEVELOPMENT", "level": 3, "byRound": 7 },
+      { "type": "STEADY_CITY", "id": "STEADY_CITY" },
+      { "type": "OPPORTUNITY_WINNER", "id": "OPPORTUNITY_WINNER", "minWins": 1 },
+      { "type": "CRISIS_RESPONDER", "id": "CRISIS_RESPONDER", "minCrisesPaid": 3 },
+      { "type": "BALANCED_STOCK", "id": "BALANCED_STOCK", "minEachResource": 5 },
+      { "type": "PATIENT_INVESTOR", "id": "PATIENT_INVESTOR", "minContributionRounds": 3 },
+      { "type": "BIG_DEAL", "id": "BIG_DEAL", "minResourcesGiven": 5 }
+    ]
+  },
+  "projects": {
+    "windows": [
+      { "openRound": 3, "deadlineRound": 6 },
+      { "openRound": 7, "deadlineRound": 10 }
+    ],
+    "pointsPerResource": 2,
+    "pointsPerMoney": 1,
+    "minQualifyingPoints": 6,
+    "largestContributorPrestige": 3,
+    "tiedLargestPrestige": 2,
+    "otherQualifyingPrestige": 1,
+    "cards": [
+      {
+        "id": "REGIONAL_POWER_GRID",
+        "needs": { "food": 0, "energy": 6, "materials": 6, "technology": 0, "money": 6 },
+        "productionReward": { "food": 0, "energy": 1, "materials": 0, "technology": 0, "money": 0 }
+      },
+      {
+        "id": "REGIONAL_RESEARCH_INITIATIVE",
+        "needs": { "food": 0, "energy": 0, "materials": 4, "technology": 6, "money": 6 },
+        "productionReward": { "food": 0, "energy": 0, "materials": 0, "technology": 1, "money": 0 }
+      },
+      {
+        "id": "FOOD_SECURITY_PROGRAM",
+        "needs": { "food": 6, "energy": 4, "materials": 0, "technology": 0, "money": 6 },
+        "productionReward": { "food": 1, "energy": 0, "materials": 0, "technology": 0, "money": 0 }
+      }
+    ]
+  },
+  "opportunities": {
+    "appearanceRounds": [3, 5, 7, 9, 11],
+    "cards": [
+      { "id": "SOLAR_FIELD", "productionReward": { "food": 0, "energy": 1, "materials": 0, "technology": 0, "money": 0 } },
+      { "id": "FERTILE_VALLEY", "productionReward": { "food": 1, "energy": 0, "materials": 0, "technology": 0, "money": 0 } },
+      { "id": "INDUSTRIAL_ZONE", "productionReward": { "food": 0, "energy": 0, "materials": 1, "technology": 0, "money": 0 } },
+      { "id": "RESEARCH_CAMPUS", "productionReward": { "food": 0, "energy": 0, "materials": 0, "technology": 1, "money": 0 } },
+      { "id": "COMMERCIAL_HUB", "productionReward": { "food": 0, "energy": 0, "materials": 0, "technology": 0, "money": 2 } }
+    ]
+  }
+}

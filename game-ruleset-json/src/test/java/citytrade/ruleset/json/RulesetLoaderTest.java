@@ -31,6 +31,26 @@ class RulesetLoaderTest {
     }
 
     @Test
+    void prototype002LoadsAndOnlyContainsApprovedBalanceChanges() {
+        RulesetLoader.load(TestRulesets.PROTOTYPE_002);
+
+        ObjectNode prototype001 = TestRulesets.prototypeJson();
+        ObjectNode expectedPrototype002 = prototype001.deepCopy();
+        expectedPrototype002.put("version", "prototype-002");
+        ((ObjectNode) expectedPrototype002.withArray("levels").get(1).get("upgradeCost"))
+                .put("food", 4).put("energy", 4).put("materials", 4).put("technology", 4);
+        ((ObjectNode) expectedPrototype002.withArray("buildings").get(7).get("cost")).put("money", 10);
+        ((ObjectNode) expectedPrototype002.withArray("buildings").get(4).get("cost"))
+                .put("food", 1).put("energy", 2).put("materials", 1).put("technology", 1);
+
+        assertEquals("prototype-001", prototype001.get("version").asText());
+        assertEquals(3, prototype001.withArray("levels").get(1).get("upgradeCost").get("food").asInt());
+        assertEquals(5, prototype001.withArray("buildings").get(7).get("cost").get("money").asInt());
+        assertEquals(2, prototype001.withArray("buildings").get(4).get("cost").get("food").asInt());
+        assertEquals(expectedPrototype002, TestRulesets.prototype002Json());
+    }
+
+    @Test
     void rejectsVersionThatDoesNotMatchFileName() throws IOException {
         Path file = tempDir.resolve("prototype-999.json");
         Files.writeString(file, TestRulesets.prototypeJson().toString(), StandardCharsets.UTF_8);
