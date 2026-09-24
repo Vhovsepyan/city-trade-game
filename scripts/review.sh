@@ -9,7 +9,9 @@ cd "$(git rev-parse --show-toplevel)" || exit 2
 source scripts/lib-agents.sh
 
 [[ "$ROUND" =~ ^[0-9]+$ ]] && (( ROUND >= 1 )) || { echo "ROUND must be >= 1"; exit 2; }
-(( ROUND <= MAX_REVIEW_ROUNDS )) || { echo "Review safety limit ($MAX_REVIEW_ROUNDS) reached"; exit 2; }
+if (( MAX_REVIEW_ROUNDS > 0 && ROUND > MAX_REVIEW_ROUNDS )); then
+  echo "Review safety limit ($MAX_REVIEW_ROUNDS) reached"; exit 2
+fi
 
 OUT=".review/${TASK_ID}-round${ROUND}.md"
 PREV="none"; (( ROUND > 1 )) && PREV=".review/${TASK_ID}-round$((ROUND - 1)).md"

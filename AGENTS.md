@@ -17,7 +17,7 @@ The owner does not write code. Agents do not change the game design on their own
 
 | File | What it is |
 |------|------------|
-| `docs/TASKS.md` | Ordered task list + approved product decisions (D1-D12). **Start here.** |
+| `docs/TASKS.md` | Ordered task list + approved product decisions (the Product decisions table). **Start here.** |
 | `docs/PROGRESS.md` | Short log: what is done, what is next. Read it at the start of every session. |
 | `docs/IMPLEMENTER.md` | How the implementer works (implement / fix modes). |
 | `docs/REVIEW.md` | Review rules and output format (for the reviewer). |
@@ -50,7 +50,7 @@ The owner does not write code. Agents do not change the game design on their own
 
 **Priority when sources conflict:**
 1. Latest explicit instruction from the owner.
-2. Product decisions D1-D12 in `docs/TASKS.md`.
+2. Approved product decisions in the Product decisions table of `docs/TASKS.md`.
 3. `rulesets/*.json` for numbers (after T02), otherwise the Numbers Sheet.
 4. Numbers Sheet for exact values and round order.
 5. Architecture for technical design.

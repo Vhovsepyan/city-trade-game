@@ -2,7 +2,6 @@
   "permissions": {
     "allow": [
       "Bash(./gradlew:*)",
-      "Bash(scripts/codex-review.sh:*)",
       "Bash(git status:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
@@ -37,7 +36,8 @@
       "Bash(curl:*)",
       "Bash(unzip:*)",
       "Bash(export:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(scripts/review.sh:*)"
     ],
     "deny": [
       "Bash(git push:*)",

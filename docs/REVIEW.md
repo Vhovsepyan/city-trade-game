@@ -18,7 +18,7 @@ Never review only a summary. Check the actual code.
 ## What to check (in this order)
 
 1. Task correctness: acceptance criteria met?
-2. Game-rule correctness vs spec (Numbers Sheet / Concept / TASKS.md decisions D1-D12).
+2. Game-rule correctness vs spec (Numbers Sheet / Concept / approved product decisions in docs/TASKS.md).
 3. Architecture: module boundaries, pure engine, atomic commands, sealed result.
 4. Determinism: seeded random only, no wall clock, no unordered iteration effects.
 5. Hardcoded balance numbers (must come from `Ruleset`).

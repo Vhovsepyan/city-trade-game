@@ -46,7 +46,7 @@ rulesets/.gitkeep
 
 ## 3. Product decisions
 
-D1-D12 in `docs/TASKS.md` are already approved. Nothing to do.
+All product decisions in `docs/TASKS.md` are approved. Nothing to do.
 If you change your mind later, edit the table; agents follow it from the next task.
 
 ## 4. Roles and running

@@ -9,7 +9,7 @@ You only implement and fix. You never review and never commit.
 1. Read `docs/PROGRESS.md`, then the task in `docs/TASKS.md`. Run `git status`.
 2. Read only the doc sections listed in the task and in the AGENTS.md index.
 3. Plan briefly: files, rules, tests, open questions.
-   Product decision not covered by D1-Dxx in TASKS.md: write a question in
+   Product decision not covered by the Product decisions table in TASKS.md: write a question in
    PROGRESS.md "Questions for owner" and continue with the parts that do not depend on it.
 4. Implement only what the task needs.
 5. Write tests for every rule and edge case in the task's "Accept" list.
