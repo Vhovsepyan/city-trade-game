@@ -136,6 +136,12 @@ public final class RoundFlowDriver {
         return ready[seat];
     }
 
+    /** D23: whether {@code seat} is currently disconnected (server metadata; T22's views need this). */
+    public synchronized boolean isDisconnected(int seat) {
+        validateSeat(seat);
+        return disconnected[seat];
+    }
+
     /** D23: a disconnected human counts as ready immediately, until it reconnects. */
     public synchronized void setDisconnected(int seat, boolean isDisconnected) {
         validateSeat(seat);

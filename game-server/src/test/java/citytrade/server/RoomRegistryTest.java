@@ -73,6 +73,42 @@ class RoomRegistryTest {
     }
 
     @Test
+    void findByTokenResolvesTheOwningRoomAndSeat() {
+        MutableClock clock = new MutableClock(START);
+        AtomicLong counter = new AtomicLong();
+        RoomRegistry registry = new RoomRegistry(ruleset(), clock, () -> "ABCDEF",
+                () -> "seat-token-" + counter.getAndIncrement(), () -> 1L, Duration.ofMinutes(30), Duration.ofHours(2));
+        RoomCreation host = registry.create("host");
+        RoomCreation second = registry.join(host.roomCode(), "second");
+
+        RoomRegistry.SeatToken hostSeat = registry.findByToken(host.token()).orElseThrow();
+        assertEquals(0, hostSeat.seat());
+        assertEquals(host.roomCode(), hostSeat.room().roomCode());
+
+        RoomRegistry.SeatToken secondSeat = registry.findByToken(second.token()).orElseThrow();
+        assertEquals(1, secondSeat.seat());
+
+        assertTrue(registry.findByToken("not-a-real-token").isEmpty());
+        assertTrue(registry.findByToken(null).isEmpty());
+    }
+
+    @Test
+    void findByTokenIgnoresAClosedRoomsToken() {
+        MutableClock clock = new MutableClock(START);
+        AtomicLong counter = new AtomicLong();
+        RoomRegistry registry = new RoomRegistry(ruleset(), clock, () -> "ABCDEF",
+                () -> "seat-token-" + counter.getAndIncrement(), () -> 1L, Duration.ofMinutes(30), Duration.ofHours(2));
+        RoomCreation host = registry.create("host");
+        assertTrue(registry.findByToken(host.token()).isPresent());
+
+        // A room can be CLOSED while still present in the registry's map (e.g. cleanup's own two-step
+        // close-then-remove, mid-way) - findByToken must not resolve a token for it either way.
+        registry.require(host.roomCode()).close();
+
+        assertTrue(registry.findByToken(host.token()).isEmpty());
+    }
+
+    @Test
     void startRequiresFourSeatsAndCreatesSeededEngineState() {
         MutableClock clock = new MutableClock(START);
         AtomicLong seeds = new AtomicLong(99);

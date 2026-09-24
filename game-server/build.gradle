@@ -8,6 +8,7 @@ dependencies {
     implementation project(':game-ruleset-json')
     implementation project(':game-bots')
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
@@ -20,4 +21,6 @@ springBoot {
 tasks.named('test') {
     // Tests load the real ruleset files from the repository root.
     systemProperty 'rulesets.dir', rootProject.file('rulesets').absolutePath
+    // T22: a test parses the JSON examples in docs/PROTOCOL.md.
+    systemProperty 'docs.dir', rootProject.file('docs').absolutePath
 }

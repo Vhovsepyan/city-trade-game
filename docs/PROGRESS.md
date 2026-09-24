@@ -5,8 +5,8 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
 - Milestone: M3 server started (T19 room/lobby REST; T20 GameRoom serial queue; T20b round flow;
-  T21 PlayerGameView + privacy projector added)
-- Next task: T21 review; then T22 WebSocket protocol
+  T21 PlayerGameView + privacy projector; T22 WebSocket protocol added)
+- Next task: T22 review; then T23 commandId idempotency + reconnect
 - Target rulesets: prototype-001 and prototype-002 (`rulesets/`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -47,6 +47,62 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T22 - WebSocket protocol - READY (review pending)
+- What: new `citytrade.server.ws` package + `/ws` endpoint (plain `TextWebSocketHandler`, no STOMP).
+  `GameWebSocketHandler`: HELLO {protocolVersion, token} identifies room+seat from the token alone
+  (Architecture 6.6, new `RoomRegistry.findByToken` scanning open rooms' seats); wrong version ->
+  PROTOCOL_UNSUPPORTED + close; bad token or no live `GameRoom` for that room -> close. Every later message
+  is a `ClientEnvelope` {commandId, commandType, payload}; `commandType` READY/SNAPSHOT_REQUEST/a player
+  command (`ClientCommands` maps 18 player commandTypes -> engine `GameCommand`, always with a placeholder
+  seat - `GameRoom.submitPlayerCommand` already replaces it with the caller's real seat, per T20 - so a
+  payload can never claim another seat; a strict Jackson mapper, `FAIL_ON_UNKNOWN_PROPERTIES` on, rejects any
+  extra field, in particular a "seat" field in a payload). `RoomBroadcaster` (one per room, registered as a
+  `GameRoom` listener on first HELLO into it): STATE_UPDATE to every connected seat when `stateVersion`
+  actually changed, plus one `NoticeEvent` per event to the seat(s) `NoticeProjector` says may see it -
+  ROUND_WARNING/ROUND_RESOLVED/GAME_FINISHED for `EventWarned`/`RoundResolved`/`GameFinished`, NOTICE for
+  everything else. `ServerMessage` carries a new `eventKind` (the event record's simple name): `NoticeEvent`
+  itself has no Jackson type discriminator (T21 only ever wrote it), so this is how the client tells one
+  event shape from another without touching that already-reviewed T21 file.
+- READY is server-level, not an engine command: calls `RoundFlowDriver.setReady` directly and broadcasts
+  ROOM_UPDATE (not COMMAND_ACCEPTED) only if `roomVersion` actually changed. Added
+  `RoundFlowDriver.isDisconnected(seat)` (mirrors the existing `isReady`): views need it and there was no
+  getter yet.
+- Files: `game-server/.../ws/{ProtocolVersion,ClientHello,ClientEnvelope,ServerMessageType,ServerMessage,
+  ProtocolErrorCode,CommandPayloads,ClientCommands,UnsupportedCommandTypeException,InvalidPayloadException,
+  RoomConnections,RoomBroadcaster,GameWebSocketHandler}.java`, `config/WebSocketConfig.java`,
+  `RoomRegistry.findByToken` + `SeatToken`, `docs/PROTOCOL.md` (every message type, JSON examples, all 18
+  command payload shapes).
+- Tests: `GameWebSocketProtocolTest` (8, real `StandardWebSocketClient` against a real `RANDOM_PORT` server:
+  HELLO required/wrong version/bad token refused; an accepted state-changing command gets COMMAND_ACCEPTED
+  to the sender and STATE_UPDATE to every connected seat with its own view; a rejected command gets the
+  engine's `RejectionCode`; READY gets ROOM_UPDATE to all with `stateVersion` unchanged and never a
+  COMMAND_ACCEPTED; a payload with a "seat" field is rejected; a seat's STATE_UPDATE never structurally
+  carries another seat's private data), `ClientCommandsTest` (7: payload mapping, unknown command type,
+  unknown/seat field rejected), `RoomBroadcasterTest` (2: a genuine accepted-no-op, via a test-double engine
+  as T20 did, broadcasts nothing; a real state-changing command reaches every connected seat, including the
+  seat's own private NOTICE), `ProtocolDocumentationTest` (every JSON example in `docs/PROTOCOL.md` parses;
+  no example payload has a "seat" field), `RoomRegistryTest`/`RoundFlowDriverTest` additions for
+  `findByToken`/`isDisconnected`.
+- Round 1 fix (own, before review): the WS test's own `awaitMessage` helper first drained/discarded messages
+  while scanning a `BlockingQueue`, which could silently eat a STATE_UPDATE while looking for the
+  COMMAND_ACCEPTED that (correctly) arrives after it - `RoomBroadcaster` runs synchronously inside
+  `GameRoom`'s queue, before the direct ack is sent. Rewrote the client-side log as an append-only list
+  scanned from a per-call starting index, so nothing already delivered is ever lost from under a later
+  assertion.
+- Round 1 fix (review R1-P1-1): `UPGRADE_CITY` (in `ClientCommands`) and `SNAPSHOT_REQUEST` (in
+  `GameWebSocketHandler`) had no payload type to validate against, so `FAIL_ON_UNKNOWN_PROPERTIES` never
+  triggered for them - a payload with a "seat" field (or any other field) went through silently. Added
+  `CommandPayloads.EmptyPayload` (no fields) and validate both against it before proceeding.
+- Round 1 fix (review R1-P2-1): post-HELLO envelopes never checked `ClientEnvelope.protocolVersion`, so a
+  missing/unsupported version still routed the command. `handleEnvelope` now checks it first (same
+  PROTOCOL_UNSUPPORTED + close as HELLO) before routing to SNAPSHOT_REQUEST/READY/a player command.
+- Tests: `ClientCommandsTest` (+1: UPGRADE_CITY with an unknown field rejected), `GameWebSocketProtocolTest`
+  (+4: UPGRADE_CITY/SNAPSHOT_REQUEST unknown-field rejection, unsupported/missing post-HELLO protocolVersion
+  refused and closes).
+- Verification: `./gradlew build` green (all modules); `GameWebSocketProtocolTest` run 3x in a row clean.
+- Notes / P3 items: reconnect (same token -> same seat, old connection replaced) and `commandId` idempotency
+  are explicitly T23's job; T22 only requires an ACTIVE room's `GameRoom` to exist for HELLO to succeed.
 
 ### T21 - PlayerGameView + privacy projector - READY (review pending)
 - What: new `citytrade.server.view` package. `ViewProjector.project(GameState, RoomViewContext, seat)` builds a
@@ -244,83 +300,14 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: TraderBotTest (18), BotGameTest (+5: 100 trader games / 100 mixed games without rejections, traders pay more
   crises than baseline, determinism, passed seat answers a later offer).
 
-### T15 - Baseline bot - DONE (review round 1)
-- What: `game-bots`: `Bot` interface (pure function of state), `BaselineBot` (Arch 8.1 A: next level first, buys
-  missing units from the market only if the whole upgrade fits this round; buildings in ruleset order only when no
-  upgrade is possible this round, without market; sells units above the storage limit; keeps first dealt objectives;
-  no trades/contracts/bids/projects/event options), `BotGame` (plays a full game, seats in order, records rejections).
-- Tests: BaselineBotTest (13), BotGameTest (4: 100 games 0 rejections + every city upgrades, same seed = same game).
-- Notes: game-bots tests use `game-ruleset-json` (testImplementation) for the real prototype-001 file.
-
-### T14a - Apply D18 - DONE (review round 1)
-- What: `Contracts.breakVoluntarily` rejects with new `INSUFFICIENT_FREE_MONEY` when the debtor has reserved
-  Money (active bids) and free Money < full compensation. No bids = Numbers Sheet 13 as before; step 1.5 unchanged.
-- Tests: OpportunitiesTest: old `reservedMoneyIsNotPaidAsBreakCompensation` (pre-D18 behavior) replaced by 5 D18
-  tests (rejected with bids, allowed after lowering / withdrawing, no bids = partial pay + Prestige, 1.5 unchanged).
-
-### T14 - Full-game and determinism tests - DONE (review round 1)
-- What: tests only, in `game-ruleset-json` (they need the real prototype-001 file). `ScriptedGame`: fixed 14-round
-  script for seed 2026 that uses every command; every command must be accepted; logs commands, events, states.
-- Tests: `FullGameTest` (8: all offer/contract/project/opportunity end states, storage + non-negative holdings after
-  every command, final = visible + hidden, winners; snapshot 15/15/11/7, tie decided by level), `ReplayTest` (3),
-  `RoundOrderTest` (3: events of every StartRound/ResolveRound in Numbers Sheet step order), `RulesetSensitivityTest`
-  (6: one changed JSON value -> exactly the predicted change; objective, level, building, break penalty, market, start Money).
-- Notes: no engine code changed.
-
-### T13 - Hidden objectives, final scoring, tiebreakers - DONE (review round 1)
-- What: package `objective`: `Objectives` (completion check per card; step 4.8 of EVERY round records level and
-  smallest F/E/M/T amount), `FinalScoring` (step 4.8 of the last round: hidden = completed kept cards x
-  `completedPrestige`, final = visible + hidden, ranking Prestige > level > completed objectives > fewer broken
-  contracts, still equal = shared victory; Money never compared).
-- State: `PlayerState.objectiveProgress` (`ObjectiveProgress`: market buy rounds from `Market.buy`, everStrained from
-  `withStrained`, level after each round, best minimum stock); `GameState.finalResult` (`FinalResult`/`FinalScore`).
-  Visible `prestige` is not changed by the hidden score. Events: `ObjectivesRevealed`, `FinalScoresRevealed`.
-- Choices: see Questions (Project Partner, Contract Player, Patient Investor readings).
-- Tests: ObjectivesTest (pass + fail for all 12, tracking through real commands), FinalScoringTest (8).
-- Note: Codex review left a temp folder `%LOCALAPPDATA%\Temp\codex-t13-jdk25` (its delete was blocked). Safe to delete.
-
-### T12 - Opportunities and secret bids - DONE (review round 2)
-- What: package `opportunity`: `Opportunities` (step 2.3 `reveal`, command `PlaceBid`, step 4.2 `resolveBids`).
-  State: `GameState.opportunities` (`RegionalOpportunity`: card, appearedRound, `OpportunityStatus` OPEN/WON/REMOVED,
-  winnerSeat, `SecretBid`s sorted by seat, so arrival order never changes the state).
-- Rules: `PlaceBid` replaces the old bid, 0 = pass/withdraw; total bids <= Money. `GameState.spendableHoldings`
-  (holdings minus reserved Money) is now used by market buy, trades (propose + accept), contracts (propose, sign,
-  break compensation), projects, levels, buildings, event options. Single highest bid wins, pays, gets the reward
-  as `extraProduction` (next round); tie or no bid = card stays OPEN; unwon cards become REMOVED in Round 14.
-- Codes: `UNKNOWN_OPPORTUNITY`, `OPPORTUNITY_NOT_OPEN`. Events: `OpportunityRevealed`, `BidPlaced` (no amount),
-  `OpportunityWon` (with price), `OpportunityNotWon(tied)`, `OpportunityRemoved`.
-- Review: R1-P2-1 (unwon cards not removed after Round 14) fixed. Owner question added (break compensation).
-- For later: T13 Opportunity Winner objective can use `opportunities()` `winnerSeat`.
-- Tests: OpportunitiesTest (28, incl. all 720 orders of 6 bids), EventOptionsTest (Festival with reserved Money).
-
-### T11 - Public projects - DONE (review round 1)
-- What: package `project`: `Projects` (step 2.3 `open`, command `ContributeToProject`, step 4.3 `resolveDeadline`,
-  Prestige in 4.4 after buildings, before crises). State: `GameState.projects` is now `List<PublicProject>`
-  (card, window, `ProjectStatus` UPCOMING/OPEN/SUCCEEDED/FAILED, public `ProjectContribution` log with round).
-- Rules: points from ruleset (D9); only card types, never more than still needed; contributions add up over
-  rounds; complete project stays OPEN until its deadline; failure keeps nothing. Reward goes into
-  `extraProduction` of qualifying contributors at 4.3, so it is first produced next round.
-- Choice: Prestige only for qualifying contributors; "largest" is ranked among them (with prototype values the
-  largest always qualifies). Codes: `UNKNOWN_PROJECT`, `PROJECT_NOT_OPEN`, `EMPTY_CONTRIBUTION`,
-  `RESOURCE_NOT_NEEDED`, `CONTRIBUTION_EXCEEDS_NEED`.
-- For later: T12 must check FREE Money in `Projects.contribute`; T13 objectives can use `contributions()` rounds.
-- Tests: ProjectsTest (16); GameSetupTest checks windows/status of drawn projects.
-
-### T10 - Events and crises - DONE (review round 1)
-- What: package `event`: `EventSchedule` (1.1 activate warned card, 2.2 warn next event round, 4.7 end),
-  `Crises` (2.1 pay-in-full or Strained, command `SetCrisisPolicy`, Crisis Prestige in 4.4), `EventOptions`
-  (command `UseEventOption` for Festival/Breakthrough, once per player; Festival Prestige in 4.4),
-  `EventEffects` (market step/price shift, building/upgrade discounts, Recession, Good Harvest). Shared `Payments`.
-- State: `GameState.activeEvent`; `PlayerState.eventParticipation` (policy, paid crisis rounds, used options)
-  and `extraProduction` (Breakthrough, permanent from next round). Policy is back to PAY after the event round's 2.1.
-- Choices: `SetCrisisPolicy` only when the warned event is a crisis (`NO_CRISIS_WARNED`); Infrastructure Failure
-  uses the D1 order (`Upkeep.payment`). Watch List 3 (upkeep fail + SKIP = Strained once) recorded in a test.
-- Test ruleset: placeholder events are now `ProductionBoost(NOTHING)` (no effect) instead of `NoMoneyIncome`,
-  so older tests are not changed by Recession; `TestRulesets.prototypeEvents()` has the real 12 cards.
-- Tests: CrisesTest (20), EconomyEventsTest (11), EventOptionsTest (11), EventScheduleTest (4).
-- For later: T13 Crisis Responder can count `eventParticipation().crisisPaidRounds()`.
-
 ## Earlier
+- T15 DONE: `game-bots` `Bot`/`BaselineBot` (Arch 8.1 A, market fallback, no negotiation), `BotGame` runner.
+- T14a DONE: D18 - `Contracts.breakVoluntarily` rejects `INSUFFICIENT_FREE_MONEY` with active bids and free Money short.
+- T14 DONE: `ScriptedGame`/`FullGameTest`/`ReplayTest`/`RoundOrderTest`/`RulesetSensitivityTest` (M1 acceptance, no engine change).
+- T13 DONE: package `objective`: `Objectives`, `FinalScoring` (hidden score, final ranking, tiebreakers).
+- T12 DONE: package `opportunity`: `Opportunities` (secret bids, `PlaceBid`, `GameState.spendableHoldings`).
+- T11 DONE: package `project`: `Projects` (contribution points, deadline success/failure, Prestige reward).
+- T10 DONE: package `event`: `EventSchedule`, `Crises` (D2), `EventOptions`, `EventEffects`.
 - T09 DONE: package `contract`: `Contracts` (propose/sign/break/mutual cancel, 1.5 settle, 4.1 expiry),
   `PlayerState.contractsBroken`; D13-D16 applied.
 - T08 DONE: package `trade`: `Trading` (propose/accept/reject/cancel/counter, 4.1 expiry), `TradeOffer` history;

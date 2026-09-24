@@ -299,10 +299,12 @@ class RoundFlowDriverTest {
         driver.setReady(1, true);
         driver.setReady(2, true);
         assertFalse(hasResolveRound(room));
+        assertFalse(driver.isDisconnected(3));
 
         driver.setDisconnected(3, true);
         settle(room);
         assertTrue(hasResolveRound(room), "a disconnected seat counts as READY (D23)");
+        assertTrue(driver.isDisconnected(3));
         room.shutdown();
     }
 

@@ -350,7 +350,7 @@ Accept (tests):
 - notices: a private event never reaches an uninvolved seat
 - the projector never mutates its inputs; same inputs -> same view
 
-### T22 - WebSocket protocol  `TODO`
+### T22 - WebSocket protocol  `DONE`
 Depends on: T21
 Docs: Architecture 6.6, 6.9; `docs/VIEW.md`.
 Do:

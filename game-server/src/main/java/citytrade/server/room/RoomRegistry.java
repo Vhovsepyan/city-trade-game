@@ -9,6 +9,7 @@ import java.util.Base64;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -110,6 +111,35 @@ public final class RoomRegistry {
         requireHost(room, hostToken);
         room.start(seedGenerator);
         return room.snapshot();
+    }
+
+    /**
+     * Finds the room and seat that own {@code token} (Architecture 6.6: identity comes only from the
+     * connection). Scans every non-closed room's seats; {@code T22}'s WebSocket HELLO is the only caller,
+     * since the reconnect token - not a room code - is all a client sends to open the session.
+     */
+    public Optional<SeatToken> findByToken(String token) {
+        if (token == null || token.isBlank()) {
+            return Optional.empty();
+        }
+        for (Room room : rooms.values()) {
+            if (room.status() == RoomStatus.CLOSED) {
+                continue;
+            }
+            for (int seat = 0; seat < Room.SEAT_COUNT; seat++) {
+                if (room.tokenMatches(seat, token)) {
+                    return Optional.of(new SeatToken(room, seat));
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    /** One seat's identity, resolved from a bearer token by {@link #findByToken}. */
+    public record SeatToken(Room room, int seat) {
+        public SeatToken {
+            Objects.requireNonNull(room);
+        }
     }
 
     public Room require(String code) {
