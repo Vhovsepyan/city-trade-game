@@ -267,7 +267,7 @@ Accept (tests):
 - GET never contains tokens or seed; token hash stored, not the token
 - start creates a GameState with 4 players and the configured ruleset version
 
-### T20 - GameRoom: serial command queue, commandSequence, stateVersion  `TODO`
+### T20 - GameRoom: serial command queue, commandSequence, stateVersion  `DONE`
 Depends on: T19
 Docs: Architecture 6.2, 6.3, 6.9 (stateVersion), 4.3-4.5.
 Do:

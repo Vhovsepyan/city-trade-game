@@ -4,8 +4,8 @@ Short log for the next session. Newest entry on top. Max ~10 lines per entry.
 Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
-- Milestone: M3 server started (T19 room/lobby REST, round 1 findings fixed, ready for review round 2)
-- Next task: T19 review round 2; then T20 serial command queue
+- Milestone: M3 server started (T19 room/lobby REST done; T20 GameRoom serial command queue added)
+- Next task: T20 review; then T20b round flow (timer, READY, objective timeout, bots in rooms)
 - Target rulesets: prototype-001 and prototype-002 (`rulesets/`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -46,6 +46,42 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T20 - GameRoom: serial command queue, commandSequence, stateVersion - READY (review pending)
+- What: new `citytrade.server.game` package: `GameRoom` (one per ACTIVE room, one single-thread
+  `ExecutorService` so all state changes for a game are strictly serial), `CommandOrigin`
+  (PLAYER/BOT/SYSTEM), `CommandOutcome` (`Applied(GameResult)` or `Refused(reason)` for commands that
+  never reach the engine), `ProcessedCommand` (sequence, origin, actorSeat, command, outcome,
+  resultingStateVersion) - the shape T24 will persist.
+- Rules: `commandSequence` assigned inside the executor task in processing order (1, 2, 3, ...), so it
+  is always gap-free even under concurrent callers. `stateVersion` increases by exactly 1 only when the
+  engine returns `Accepted` with a state not `.equals()` the previous one. `submitPlayerCommand` /
+  `submitBotCommand` take the caller's seat explicitly; `GameRoom` refuses (never calls the engine) when
+  the command is `StartRound`/`ResolveRound` from a non-SYSTEM origin. For PLAYER/BOT origin, `GameRoom`
+  rebuilds the submitted command with the caller's seat injected into its `seat` component before it is
+  checked or sent to the engine (an exhaustive switch over the sealed `GameCommand` types, so a new
+  command type without a case fails to compile) - a command whose embedded seat disagrees with the
+  caller is corrected, never refused, per T20's "seat is injected from the caller identity" rule.
+  `submitSystemCommand` has no seat and may submit internal commands unchanged. `GameEngine::apply` is
+  the default engine; a 3-arg constructor accepts a test double (`GameRoom.Engine`) for the no-op-result
+  rule, since no real engine command is a no-op today.
+- Not wired yet: `Room`/`RoomRegistry` still stop at `start()`; T20b (timer, READY, bot coordinator)
+  is what will create a `GameRoom` per ACTIVE room and drive it. Idempotent `commandId` replay
+  (Architecture 6.7) is a later, separate concern - no accept test asked for it here.
+- Files: `game-server/.../game/{CommandOrigin,CommandOutcome,ProcessedCommand,GameRoom}.java`,
+  `GameRoomTest`.
+- Tests: `GameRoomTest` (7): 4 threads x 250 commands concurrently -> 1000 unique gap-free sequence
+  numbers and final state equals a single-threaded replay of the recorded history in sequence order;
+  rejected command keeps state/stateVersion but gets a sequence; no-op `Accepted` (test double engine)
+  leaves stateVersion unchanged; origin recorded for PLAYER/BOT/SYSTEM; client-submitted
+  `StartRound`/`ResolveRound` refused before the engine is called (poison-engine double asserts it is
+  never invoked); a command whose embedded seat disagrees with the caller reaches the engine with the
+  caller's seat injected (recording-engine double asserts what the engine actually saw); SYSTEM may
+  submit `StartRound` and it reaches the engine normally.
+- Verification: `./gradlew build` green (all modules).
+- Round 1 review fix: R1-P1-1 - the caller's seat is now injected into the command (rebuilt via
+  `GameRoom.withSeat`) instead of refusing on a seat mismatch, matching T20's "application layer
+  injects the seat" rule.
 
 ### T18b - prototype-002 and second balance report - READY (review pending)
 - What: Added `rulesets/prototype-002.json` with only S1 Level 2 cost 4, S2 Grand Landmark Money 10,
