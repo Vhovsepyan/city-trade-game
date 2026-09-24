@@ -159,7 +159,7 @@ Depends on: T09, T10, T11, T12
 Docs: Numbers Sheet 15, 18, 20; Concept 26-31, 40.
 Accept: each of the 12 objectives has a pass and a fail test; final score = visible + hidden; tiebreakers in order; Money never a tiebreaker.
 
-### T14 - Full-game and determinism tests  `TODO`
+### T14 - Full-game and determinism tests  `DONE`
 Depends on: T13
 Do: scripted full 14-round game test; replay test (same seed + commands -> same final state); `ResolveRound` order test; no-hardcoded-balance check (for example: a test ruleset with changed values changes the results).
 Accept: all green; engine milestone M1 complete.

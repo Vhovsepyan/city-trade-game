@@ -4,8 +4,8 @@ Short log for the next session. Newest entry on top. Max ~10 lines per entry.
 Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
-- Milestone: M0
-- Next task: T14
+- Milestone: M1 complete (engine); next is M2
+- Next task: T15
 - Target ruleset: prototype-001 (`rulesets/prototype-001.json`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -59,6 +59,15 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T14 - Full-game and determinism tests - DONE (review round 1)
+- What: tests only, in `game-ruleset-json` (they need the real prototype-001 file). `ScriptedGame`: fixed 14-round
+  script for seed 2026 that uses every command; every command must be accepted; logs commands, events, states.
+- Tests: `FullGameTest` (8: all offer/contract/project/opportunity end states, storage + non-negative holdings after
+  every command, final = visible + hidden, winners; snapshot 15/15/11/7, tie decided by level), `ReplayTest` (3),
+  `RoundOrderTest` (3: events of every StartRound/ResolveRound in Numbers Sheet step order), `RulesetSensitivityTest`
+  (6: one changed JSON value -> exactly the predicted change; objective, level, building, break penalty, market, start Money).
+- Notes: no engine code changed.
 
 ### T13 - Hidden objectives, final scoring, tiebreakers - DONE (review round 1)
 - What: package `objective`: `Objectives` (completion check per card; step 4.8 of EVERY round records level and
@@ -168,18 +177,9 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
   upkeep never fails in practice (tests use a ruleset with 0 other production to test Strained).
 - Tests: ProductionTest, UpkeepTest, StrainedRoundsTest, StorageTest, SetUpkeepPriorityTest; helper `TestGames`.
 
-### T04 - Command/result framework and round phases - DONE (review round 1)
-- What: `GameEngine.apply(state, command, ruleset)` (switch over sealed `GameCommand`), `GamePhase`
-  enum, `GameState` now has `round` + `phase`, internal commands `StartRound` / `ResolveRound`.
-- Round order lives in ONE place: enum `round.RoundStep` (declaration order = Numbers Sheet order,
-  1.1-2.3, 4.1-4.8). `round.RoundFlow` runs them; `round.RoundSteps` has the (still empty) step
-  bodies - T05+ fill in the matching `case`. StartRound: SETUP/RESOLUTION -> AUTOMATIC -> WORLD -> WINDOW.
-  ResolveRound: WINDOW -> RESOLUTION, after the last round -> FINISHED (+ `GameFinished`).
-- New codes: `INVALID_PHASE`, `OBJECTIVES_NOT_CHOSEN`. Events: `RoundStarted`, `RoundResolved`, `GameFinished`.
-- Tests: GameEngineTest (phases, wrong-phase rejections, state unchanged, full 14 rounds, determinism),
-  RoundFlowTest (recording handler: exact step order, phase, round, state threaded), RoundStepTest.
-
 ## Earlier
+- T04 DONE: `GameEngine.apply`, `GamePhase`, `StartRound`/`ResolveRound`; round order in ONE place: enum
+  `round.RoundStep` (declaration order = Numbers Sheet order), run by `round.RoundFlow`, bodies in `round.RoundSteps`.
 - T03 DONE: core state, `GameRandom` (SplitMix64), `GameSetup.create` (Numbers Sheet 21 draw order),
   `ChooseObjectives` (`setup.ObjectiveChoice`).
 - T00 DONE: environment checked (Java, git, node, codex, scripts executable, Codex smoke test OK).
