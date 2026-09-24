@@ -15,8 +15,9 @@ import java.util.Optional;
 
 /**
  * Plays one whole game with one bot per seat. In each window the seats act in seat order, one command per
- * turn, until a full pass over all seats sends nothing. A rejected command is recorded and ends that seat's
- * window, so a bot cannot loop on the same invalid command.
+ * turn, until a full pass over all seats sends nothing. A seat that passes is asked again in the next pass,
+ * because another seat may have changed the state since (for example with a trade offer to it). A rejected
+ * command is recorded and ends that seat's window, so a bot cannot loop on the same invalid command.
  */
 public final class BotGame {
 
@@ -71,18 +72,17 @@ public final class BotGame {
     }
 
     private void window() {
-        boolean[] done = new boolean[bots.size()];
+        boolean[] rejected = new boolean[bots.size()];
         int sent = 0;
         boolean anySent = true;
         while (anySent) {
             anySent = false;
             for (int seat = 0; seat < bots.size(); seat++) {
-                if (done[seat]) {
+                if (rejected[seat]) {
                     continue;
                 }
                 Optional<GameCommand> command = bots.get(seat).nextWindowCommand(state, seat, ruleset);
                 if (command.isEmpty()) {
-                    done[seat] = true;
                     continue;
                 }
                 if (++sent > MAX_COMMANDS_PER_WINDOW) {
@@ -91,7 +91,7 @@ public final class BotGame {
                 }
                 anySent = true;
                 if (!submit(command.get())) {
-                    done[seat] = true;
+                    rejected[seat] = true;
                 }
             }
         }

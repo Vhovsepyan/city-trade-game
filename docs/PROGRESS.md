@@ -5,7 +5,7 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
 - Milestone: M1 complete (engine); next is M2
-- Next task: T16
+- Next task: T17
 - Target ruleset: prototype-001 (`rulesets/prototype-001.json`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -45,6 +45,17 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T16 - Trader bot - DONE (review round 2)
+- What: `TraderBot` (Arch 8.1 B): answers every offer to it (accept if value received >= threshold x value given at
+  market buy costs, and it gives only resources above its needs = next level cost + crisis reserve); offers spare
+  resources (specialty first) at equal value for a missing resource, specialty city first, max N per round, one per
+  seat per round, cancels its own offer still open at its next turn; market fallback like baseline; warned crisis:
+  keeps cost (+1 for upkeep) and buys it if missing, policy stays PAY; bounded bids (share of reward value over rounds
+  left, share of unneeded Money). Bot settings in `TraderBot.Settings` (bot profile, not game rules).
+- Shared bot helpers moved to `BotActions`. Review R1-P1-1: `BotGame` now asks a passed seat again in the next pass.
+- Tests: TraderBotTest (18), BotGameTest (+5: 100 trader games / 100 mixed games without rejections, traders pay more
+  crises than baseline, determinism, passed seat answers a later offer).
 
 ### T15 - Baseline bot - DONE (review round 1)
 - What: `game-bots`: `Bot` interface (pure function of state), `BaselineBot` (Arch 8.1 A: next level first, buys

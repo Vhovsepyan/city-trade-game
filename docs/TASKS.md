@@ -181,7 +181,7 @@ Depends on: T14a
 Docs: Architecture 8.1.
 Accept: deterministic; never sends invalid commands in normal play (test: 100 games with 4 baseline bots finish without rejections except expected ones).
 
-### T16 - Trader bot  `TODO`
+### T16 - Trader bot  `DONE`
 Depends on: T15
 Accept: proposes/accepts simple trades by a value threshold based on market prices; prepares for warned crises; bounded bids; deterministic.
 
