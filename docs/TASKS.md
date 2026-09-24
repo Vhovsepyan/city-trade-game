@@ -194,6 +194,19 @@ Accept: CLI args (ruleset, games, seed, bot mix); JSON + CSV output; metrics fro
 Depends on: T17
 Do: run 1000+ games (baseline-only and trader mix) on prototype-001. Write `docs/balance-report-prototype-001.md`: key numbers, problems found, 3-5 suggested value changes with reasons. **Do not change the ruleset.** The owner decides.
 
+### T18a - Ruleset upper bounds  `TODO`
+Depends on: T18
+Do: RulesetValidator rejects any numeric value above 100000 (prices, costs, production, Prestige, limits, storage) with a clear error.
+Accept: one failing-ruleset test per value group; prototype-001 still loads; no engine arithmetic changes needed.
+
+### T18b - prototype-002 and second balance report  `TODO`
+Depends on: T18a
+Do: create `rulesets/prototype-002.json` as a copy of prototype-001 with only these changes:
+S1 Level 2 cost 4 of each resource; S2 Grand Landmark Money 10; S3 Research Lab cost F1 E2 M1 T1.
+Set "version": "prototype-002". Do NOT change prototype-001.
+Run the same 3 simulations as T18 for prototype-002.
+Write `docs/balance-report-prototype-002.md`: a side-by-side table prototype-001 vs prototype-002, what improved, new problems, max 3 new suggestions. Do not change any ruleset.
+Accept: prototype-002 loads and passes validation; prototype-001 is unchanged (test); the report has the comparison table.
 ---
 
 ## Milestone M3 - Server (tasks will be detailed when M2 is done)
