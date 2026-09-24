@@ -31,21 +31,7 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
   change was needed. Foojay resolver downloads JDK 25 if it is missing.
 
 ## Questions for owner
-- T07 (please confirm, not blocking): Numbers Sheet 9 says Strained = "specialty production -2 and
-  Money income -1". The engine applies this to the TOTAL specialty production and Money income,
-  building bonuses included (e.g. L2 + Specialty Complex: 5 - 2 = 3 specialty; L1 + Market Hall:
-  3 - 1 = 2 Money). Alternative: only reduce the level values. Current choice follows the literal text.
-- T12 (please confirm, not blocking): Numbers Sheet 17 says reserved Money "cannot be spent on anything else".
-  The engine also keeps it out of the Money compensation of a VOLUNTARY contract break in the window: the
-  unpaid part costs Prestige as usual (Numbers Sheet 13). So a player could bid high, break a contract and pay
-  less compensation. Alternative: compensation may use reserved Money and the player's bids are lowered.
-  Current choice follows the literal text (reserved Money is never spent before step 4.2).
-
-- T13 (please confirm, not blocking): objective readings chosen from the literal Numbers Sheet 15 text:
-  PROJECT PARTNER = at least the qualifying minimum (6 points) in both projects, even if a project fails
-  ("qualify as a contributor" is about the amount; success is not named). CONTRACT PLAYER = 2 FULFILLED contracts
-  as either party (creditor or debtor) and a Contracts Broken counter of 0. PATIENT INVESTOR counts contributions
-  to failed projects too. Alternative for the first: count only projects that succeeded.
+- (none)
 
 ## Suggestions (not built)
 - (none)

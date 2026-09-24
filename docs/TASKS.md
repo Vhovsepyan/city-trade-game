@@ -29,6 +29,9 @@ these decisions apply. All are approved by the owner. Agents follow them without
 | D14 | Voluntary contract break | Nothing is delivered. Compensation is paid for the whole obligation. (The automatic break in step 1.5 delivers what the debtor has.) |
 | D15 | Several contracts due, debtor cannot pay all | Settled in creation order (oldest first). Each one is paid in full if possible; the rest break with what is left. |
 | D16 | Unsigned contract proposals | Expire at step 4.1, like trade offers (D8). "Now" and the max duration count from the signing round. |
+| D17 | Strained penalty base | Applied to the TOTAL specialty production and Money income, bonuses included (min 0). |
+| D18 | Voluntary break with active bids | Rejected (`INSUFFICIENT_FREE_MONEY`) if free Money does not cover the full compensation while the player has active bids. The player must withdraw or lower bids first. Without active bids, Numbers Sheet 13 applies as written. Automatic breaks (step 1.5) are unchanged. |
+| D19 | Objective readings | PROJECT PARTNER = 6+ points in both projects, success not required. CONTRACT PLAYER = 2 fulfilled contracts as either party and Contracts Broken = 0. PATIENT INVESTOR = contributions to failed projects count. |
 
 New product decisions are added here by the owner only.
 Agents write open questions in `docs/PROGRESS.md`.
@@ -168,8 +171,13 @@ Accept: all green; engine milestone M1 complete.
 
 ## Milestone M2 - Bots and simulation
 
-### T15 - Baseline bot  `TODO`
+### T14a - Apply D18  `TODO`
 Depends on: T14
+Docs: Numbers Sheet 13, 17; decisions D14, D18.
+Accept: voluntary break rejected when free Money < compensation and the player has active bids; allowed after bids are withdrawn or lowered; no change without active bids; step 1.5 automatic break unchanged.
+
+### T15 - Baseline bot  `TODO`
+Depends on: T14a
 Docs: Architecture 8.1.
 Accept: deterministic; never sends invalid commands in normal play (test: 100 games with 4 baseline bots finish without rejections except expected ones).
 
