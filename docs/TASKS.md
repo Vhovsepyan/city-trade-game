@@ -326,7 +326,7 @@ Accept (tests, with an injected clock):
 - objective timeout keeps the first 2 dealt cards; game then starts Round 1
 - after Round 14 resolution no StartRound is enqueued and the room is FINISHED
 
-### T21 - PlayerGameView + privacy projector  `TODO`
+### T21 - PlayerGameView + privacy projector  `DONE`
 Depends on: T20b
 Docs: Architecture 6.5; decisions D6, D7; Concept section 37 (information rules).
 Do:

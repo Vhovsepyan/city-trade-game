@@ -4,8 +4,9 @@ Short log for the next session. Newest entry on top. Max ~10 lines per entry.
 Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
-- Milestone: M3 server started (T19 room/lobby REST; T20 GameRoom serial queue; T20b round flow added)
-- Next task: T20b review; then T21 PlayerGameView + privacy projector
+- Milestone: M3 server started (T19 room/lobby REST; T20 GameRoom serial queue; T20b round flow;
+  T21 PlayerGameView + privacy projector added)
+- Next task: T21 review; then T22 WebSocket protocol
 - Target rulesets: prototype-001 and prototype-002 (`rulesets/`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -46,6 +47,48 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T21 - PlayerGameView + privacy projector - READY (review pending)
+- What: new `citytrade.server.view` package. `ViewProjector.project(GameState, RoomViewContext, seat)` builds a
+  `PlayerGameView` (own resources/Money/reserved Money/objectives/crisis policy/upkeep priority; public
+  players/market/event/projects/opportunities(no other bids)/contracts; trade offers filtered to the viewing
+  seat's own, D7). `RoomViewContext` (server metadata: room status, phaseEndsAt, READY/disconnected seats,
+  roomVersion) stays out of the engine `GameState`, per Architecture 6.4/6.5. `NoticeProjector.project` turns
+  domain events into per-seat `Notice`s: private events (resource amounts, bids, own choices, direct trade
+  events) to the seat(s) involved only, everything else (contracts, projects, opportunities minus bid amounts,
+  market, round/game progress) to every seat, via an exhaustive switch over every `DomainEvent` kind.
+- Formal contracts are fully public (Architecture 6.5 "public contracts"), and hidden objectives are
+  intentionally revealed to every seat in `finalResult` only, once the game ends (Numbers Sheet 15/18) - both
+  match the task's explicit "(as Architecture 6.5)" / accept-list wording despite the shorthand "own contracts"
+  earlier in the same task bullet.
+- Files: `game-server/.../view/{PlayerGameView,OwnView,PlayerPublicView,OpportunityView,RoomViewContext,
+  ViewProjector,Notice,NoticeEvent,NoticeProjector}.java`, `docs/VIEW.md` (every field, who sees it).
+- Tests: `ViewProjectorTest` (11: own data correct per seat; other seats' holdings/Money/objectives
+  structurally absent from JSON before the reveal; other seats' objective ids absent from JSON before the
+  reveal, then present for everyone in `finalResult`; a trade offer visible only to its two parties; a bid
+  visible only to its own seat, other bids structurally absent; contracts and project contributions public;
+  UPCOMING projects not announced; `finalResult` null until FINISHED then public; same inputs -> equal view),
+  `NoticeProjectorTest` (6: every private `DomainEvent` kind reaches only the seat(s) involved, every public
+  kind reaches everyone, an uninvolved seat never receives a trade event, a trade event for an offer no longer
+  in state reaches nobody, the projector never mutates its input state, `OpportunityWon`'s JSON never carries
+  `pricePaid` for any seat including the winner). Real 14-round games played through `GameEngine.apply`
+  directly (not mocked), scripted to hit every private-data category (trade, formal contract, secret bids, a
+  project contribution) since baseline/trader bots do not use contracts or projects (see T18 balance report).
+- Round 1 fix (own, before review): `otherPlayersObjectiveIdsNeverAppearInAnotherSeatsJson` originally checked
+  ALL states including the final one, which correctly fails once hidden objectives are revealed in
+  `finalResult` - split into a before-reveal test and an explicit after-reveal test instead of weakening the
+  assertion.
+- Round 1 fix (review R1-P0-1): `Notice` wrapped the raw `DomainEvent`, so broadcasting `OpportunityWon` to
+  every seat exposed the winning secret bid (`pricePaid`) to everyone, not just the winner - itself not
+  supposed to see it either, since `OpportunityView` never carries it. Added `NoticeEvent`, a client-safe
+  sealed DTO mirroring `DomainEvent` one-for-one, with `NoticeProjector.sanitize(DomainEvent)` translating
+  every kind through an exhaustive switch (new kind -> compile error here, same pattern as `recipients`); only
+  `NoticeEvent.OpportunityWon` differs from its `DomainEvent` counterpart, by omitting `pricePaid` entirely.
+  `Notice.event()` is now `NoticeEvent`, never `DomainEvent` - raw domain events can no longer reach `Notice`
+  at all, enforced by the type system, not just convention. Added serialization coverage (JSON string does not
+  contain `"pricePaid"` or the secret value, for every recipient seat).
+- Verification: `./gradlew build` green (all modules).
+- Notes / P3 items: none.
 
 ### T20b - Round flow: timer, READY, objective timeout, bots in rooms - READY (round 2 pending)
 - Round 1 fixes: bot maps are now `TreeMap`s (ascending seat order, not `HashMap`/`Map.of`'s unspecified
