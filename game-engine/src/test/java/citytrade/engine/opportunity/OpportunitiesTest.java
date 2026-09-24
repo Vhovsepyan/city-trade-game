@@ -440,21 +440,84 @@ class OpportunitiesTest {
         assertEquals(bundle(2, 2, 2, 2, 6), signed.state().player(0).holdings());
     }
 
-    @Test
-    void reservedMoneyIsNotPaidAsBreakCompensation() {
-        GameState window = windowWith(3, bundle(2, 2, 2, 2, 6));
-        GameState proposed = accept(window, new ProposeContract(0, 0, 1, bundle(1, 0, 0, 0, 0), money(2), 4),
-                ruleset).state();
-        GameState active = bid(accept(proposed, new SignContract(1, 1), ruleset).state(), 1, SOLAR, 5);
+    // --- D18: voluntary contract break while bids reserve Money ---
 
-        GameResult.Accepted broken = accept(active, new BreakContract(1, 1), ruleset);
-        DomainEvent.ContractBroken event = broken.events().stream()
+    /** Round 3 window: seat 1 owes seat 0 {@code owed} in Round 4 (contract 1) and holds {@code debtorMoney}. */
+    private GameState activeContract(int debtorMoney, ResourceBundle owed) {
+        GameState window = withCity(windowWith(3, bundle(2, 2, 2, 2, 6)), 1, 1, bundle(2, 2, 2, 2, debtorMoney));
+        GameState proposed = accept(window, new ProposeContract(0, 0, 1, bundle(1, 0, 0, 0, 0), owed, 4),
+                ruleset).state();
+        return accept(proposed, new SignContract(1, 1), ruleset).state();
+    }
+
+    private static DomainEvent.ContractBroken brokenEvent(List<DomainEvent> events) {
+        return events.stream()
                 .filter(e -> e instanceof DomainEvent.ContractBroken)
                 .map(DomainEvent.ContractBroken.class::cast)
                 .findFirst().orElseThrow();
-        assertEquals(1, event.compensationPaid(), "only the 1 unreserved Money is paid");
-        assertEquals(5, broken.state().player(1).holdings().money(), "the reserved bid stays payable");
-        assertEquals(5, broken.state().reservedMoney(1));
+    }
+
+    @Test
+    void d18VoluntaryBreakIsRejectedWhenBidsLeaveTooLittleFreeMoney() {
+        // Owed 2 Money -> compensation 2 x 2 = 4 Money. Seat 1 holds 6 Money.
+        GameState active = activeContract(6, money(2));
+        assertRejected(bid(active, 1, SOLAR, 5), new BreakContract(1, 1), ruleset,
+                RejectionCode.INSUFFICIENT_FREE_MONEY);
+        assertRejected(bid(active, 1, SOLAR, 3), new BreakContract(1, 1), ruleset,
+                RejectionCode.INSUFFICIENT_FREE_MONEY);
+    }
+
+    @Test
+    void d18VoluntaryBreakIsAllowedAfterLoweringTheBid() {
+        GameState lowered = bid(bid(activeContract(6, money(2)), 1, SOLAR, 5), 1, SOLAR, 2);
+
+        GameResult.Accepted broken = accept(lowered, new BreakContract(1, 1), ruleset);
+        DomainEvent.ContractBroken event = brokenEvent(broken.events());
+        assertEquals(4, event.compensationOwed());
+        assertEquals(4, event.compensationPaid(), "free Money covers the whole compensation");
+        assertEquals(1, event.prestigeLost(), "only the fixed break penalty");
+        assertEquals(ContractStatus.BROKEN, broken.state().contract(1).orElseThrow().status());
+        assertEquals(2, broken.state().player(1).holdings().money(), "the bid stays reserved and payable");
+        assertEquals(2, broken.state().reservedMoney(1));
+    }
+
+    @Test
+    void d18VoluntaryBreakIsAllowedAfterWithdrawingTheBid() {
+        GameState withdrawn = bid(bid(activeContract(6, money(2)), 1, SOLAR, 5), 1, SOLAR, 0);
+
+        GameResult.Accepted broken = accept(withdrawn, new BreakContract(1, 1), ruleset);
+        assertEquals(4, brokenEvent(broken.events()).compensationPaid());
+        assertEquals(2, broken.state().player(1).holdings().money());
+    }
+
+    @Test
+    void d18WithoutBidsABreakWithTooLittleMoneyIsStillAllowed() {
+        // Numbers Sheet 13 as written: 1 Money paid, the unpaid 3 cost ceil(3 / 2) = 2 Prestige, plus the penalty 1.
+        GameState active = activeContract(1, money(2));
+        int prestigeBefore = active.player(1).prestige();
+
+        GameResult.Accepted broken = accept(active, new BreakContract(1, 1), ruleset);
+        DomainEvent.ContractBroken event = brokenEvent(broken.events());
+        assertEquals(4, event.compensationOwed());
+        assertEquals(1, event.compensationPaid());
+        assertEquals(3, event.prestigeLost());
+        assertEquals(prestigeBefore - 3, broken.state().player(1).prestige());
+        assertEquals(0, broken.state().player(1).holdings().money());
+    }
+
+    @Test
+    void d18DoesNotChangeTheAutomaticBreakInStepOneFive() {
+        // 20 Food owed -> compensation 40, far more than seat 1 can pay; the voluntary break is blocked by the bid.
+        GameState active = bid(activeContract(6, bundle(20, 0, 0, 0, 0)), 1, SOLAR, 5);
+        assertRejected(active, new BreakContract(1, 1), ruleset, RejectionCode.INSUFFICIENT_FREE_MONEY);
+
+        GameResult.Accepted round4 = accept(resolve(active).state(), new StartRound(), ruleset);
+        DomainEvent.ContractBroken event = brokenEvent(round4.events());
+        assertFalse(event.voluntary());
+        assertTrue(event.delivered().food() > 0, "the automatic break delivers what the debtor has (D3)");
+        assertEquals(2 * (20 - event.delivered().food()), event.compensationOwed());
+        assertTrue(event.compensationPaid() < event.compensationOwed(), "the debtor pays what it can, no rejection");
+        assertEquals(ContractStatus.BROKEN, round4.state().contract(1).orElseThrow().status());
     }
 
     @Test

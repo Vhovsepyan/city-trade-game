@@ -171,7 +171,7 @@ Accept: all green; engine milestone M1 complete.
 
 ## Milestone M2 - Bots and simulation
 
-### T14a - Apply D18  `TODO`
+### T14a - Apply D18  `DONE`
 Depends on: T14
 Docs: Numbers Sheet 13, 17; decisions D14, D18.
 Accept: voluntary break rejected when free Money < compensation and the player has active bids; allowed after bids are withdrawn or lowered; no change without active bids; step 1.5 automatic break unchanged.

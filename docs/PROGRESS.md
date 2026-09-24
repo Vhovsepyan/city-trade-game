@@ -46,6 +46,12 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Notes / P3 items: ...
 -->
 
+### T14a - Apply D18 - DONE (review round 1)
+- What: `Contracts.breakVoluntarily` rejects with new `INSUFFICIENT_FREE_MONEY` when the debtor has reserved
+  Money (active bids) and free Money < full compensation. No bids = Numbers Sheet 13 as before; step 1.5 unchanged.
+- Tests: OpportunitiesTest: old `reservedMoneyIsNotPaidAsBreakCompensation` (pre-D18 behavior) replaced by 5 D18
+  tests (rejected with bids, allowed after lowering / withdrawing, no bids = partial pay + Prestige, 1.5 unchanged).
+
 ### T14 - Full-game and determinism tests - DONE (review round 1)
 - What: tests only, in `game-ruleset-json` (they need the real prototype-001 file). `ScriptedGame`: fixed 14-round
   script for seed 2026 that uses every command; every command must be accepted; logs commands, events, states.
@@ -151,19 +157,9 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
   (minus bid reservations) in `Market.buy`. Objective "Market Independence" (T13) needs a game-long count.
 - Tests: MarketTest (22 tests: prices per step, limit, atomic rejections, phases, thresholds, min/max, per resource).
 
-### T05 - Production, upkeep, Strained, storage - DONE (review round 1)
-- What: package `economy`: `Production` (1.2 Strained penalty, 1.3 production), `Upkeep` (1.4, D1),
-  `Storage` (4.5), `UpkeepPriorityChoice` (command `SetUpkeepPriority`, allowed in SETUP and WINDOW,
-  must list each non-specialty resource once, stays until changed). Wired into `RoundSteps`.
-- `PlayerState` new fields: `strained` (penalty next round, a flag = no stacking), `strainedPenaltyActive`
-  (set in 1.2 from `strained`, used by 1.3), `upkeepPriority`. T07 must add Warehouse/Transit/production
-  bonuses to `Storage`/`Upkeep`/`Production`; T10 sets `strained` for crises.
-- Events: `UpkeepPrioritySet`, `UpkeepPaid(paid, missing)`, `CityStrained`, `ExcessDiscarded`.
-- Note: with prototype values an L2+ city always produces 1 of each other resource before upkeep, so
-  upkeep never fails in practice (tests use a ruleset with 0 other production to test Strained).
-- Tests: ProductionTest, UpkeepTest, StrainedRoundsTest, StorageTest, SetUpkeepPriorityTest; helper `TestGames`.
-
 ## Earlier
+- T05 DONE: package `economy`: `Production`, `Upkeep` (D1), `Storage`, command `SetUpkeepPriority`, Strained flag;
+  with prototype values an L2+ city never fails upkeep in practice.
 - T04 DONE: `GameEngine.apply`, `GamePhase`, `StartRound`/`ResolveRound`; round order in ONE place: enum
   `round.RoundStep` (declaration order = Numbers Sheet order), run by `round.RoundFlow`, bodies in `round.RoundSteps`.
 - T03 DONE: core state, `GameRandom` (SplitMix64), `GameSetup.create` (Numbers Sheet 21 draw order),

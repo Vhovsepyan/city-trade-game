@@ -88,6 +88,15 @@ public final class Contracts {
             return new GameResult.Rejected(RejectionCode.CONTRACT_NOT_ACTIVE,
                     "contract " + contract.id() + " is " + contract.status());
         }
+        // D18: while bids reserve Money, free Money must cover the full compensation, so reserved Money is never
+        // kept at the cost of unpaid compensation. Without bids, Numbers Sheet 13 applies (unpaid part costs Prestige).
+        int reserved = state.reservedMoney(command.seat());
+        int compensation = compensationFor(contract.owed(), ruleset.contracts());
+        int freeMoney = state.spendableHoldings(command.seat()).money();
+        if (reserved > 0 && freeMoney < compensation) {
+            return new GameResult.Rejected(RejectionCode.INSUFFICIENT_FREE_MONEY, "compensation " + compensation
+                    + ", free Money " + freeMoney + " (" + reserved + " reserved by bids)");
+        }
         List<DomainEvent> events = new ArrayList<>();
         GameState next = settleBreak(state, contract, ResourceBundle.EMPTY, true, ruleset.contracts(), events);
         return new GameResult.Accepted(next, events);
