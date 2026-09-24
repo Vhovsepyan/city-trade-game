@@ -72,6 +72,48 @@ class RulesetValidationTest {
         assertSingleError(json, "market.priceMoveThreshold: must be at least 1");
     }
 
+    @Test
+    void rejectsPriceAboveMaximum() {
+        ObjectNode json = TestRulesets.prototypeJson();
+        element(json, "market", "steps", 0).put("buyCost", 100_001);
+        assertSingleError(json, "market.steps[0] (A).buyCost: must be at most 100000, but is 100001");
+    }
+
+    @Test
+    void rejectsCostAboveMaximum() {
+        ObjectNode json = TestRulesets.prototypeJson();
+        ((ObjectNode) element(json, "levels", 1).get("upgradeCost")).put("food", 100_001);
+        assertSingleError(json, "levels[1].upgradeCost.food: must be at most 100000, but is 100001");
+    }
+
+    @Test
+    void rejectsProductionAboveMaximum() {
+        ObjectNode json = TestRulesets.prototypeJson();
+        element(json, "levels", 0).put("specialtyProduction", 100_001);
+        assertSingleError(json, "levels[0].specialtyProduction: must be at most 100000, but is 100001");
+    }
+
+    @Test
+    void rejectsPrestigeAboveMaximum() {
+        ObjectNode json = TestRulesets.prototypeJson();
+        section(json, "objectives").put("completedPrestige", 100_001);
+        assertSingleError(json, "objectives.completedPrestige: must be at most 100000, but is 100001");
+    }
+
+    @Test
+    void rejectsLimitAboveMaximum() {
+        ObjectNode json = TestRulesets.prototypeJson();
+        section(json, "market").put("maxBuyPerResourcePerRound", 100_001);
+        assertSingleError(json, "market.maxBuyPerResourcePerRound: must be at most 100000, but is 100001");
+    }
+
+    @Test
+    void rejectsStorageAboveMaximum() {
+        ObjectNode json = TestRulesets.prototypeJson();
+        section(json, "storage").put("resourceLimit", 100_001);
+        assertSingleError(json, "storage.resourceLimit: must be at most 100000, but is 100001");
+    }
+
     // --- objectives: count >= dealt per player x player count ---
 
     @Test

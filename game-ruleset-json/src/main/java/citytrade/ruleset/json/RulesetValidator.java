@@ -28,6 +28,7 @@ final class RulesetValidator {
     // Product decision D5 (docs/TASKS.md): deal 3 hidden objectives, keep 2. Not a tunable balance value.
     static final int D5_OBJECTIVES_DEALT = 3;
     static final int D5_OBJECTIVES_KEPT = 2;
+    private static final int MAX_NUMERIC_VALUE = 100_000;
 
     private final Ruleset ruleset;
     private final List<String> errors = new ArrayList<>();
@@ -74,6 +75,7 @@ final class RulesetValidator {
         for (int i = 0; i < levels.size(); i++) {
             LevelRules level = levels.get(i);
             String path = "levels[" + i + "]";
+            atMost(path + ".level", level.level());
             if (level.level() != i + 1) {
                 error(path + ".level", "must be " + (i + 1) + " (levels are listed in order from 1), but is " + level.level());
             }
@@ -121,6 +123,7 @@ final class RulesetValidator {
         for (int i = 0; i < steps.size(); i++) {
             MarketRules.PriceStep step = steps.get(i);
             String path = "market.steps[" + i + "] (" + step.name() + ")";
+            atMost(path + ".buyCost", step.buyCost());
             nonNegative(path + ".sellValue", step.sellValue());
             // The market must never buy for as much as it sells, or players could create Money for free.
             if (step.sellValue() >= step.buyCost()) {
@@ -159,13 +162,23 @@ final class RulesetValidator {
             EventCard card = events.deck().get(i);
             String path = "events.deck[" + i + "] (" + card.id() + ")";
             switch (card) {
-                case EventCard.ResourceCrisis c -> nonNegative(path + ".amount", c.amount());
+                case EventCard.ResourceCrisis c -> {
+                    nonNegative(path + ".amount", c.amount());
+                    atMost(path + ".marketStepChange", c.marketStepChange());
+                }
                 case EventCard.NonSpecialtyCrisis c -> nonNegative(path + ".differentResources", c.differentResources());
-                case EventCard.BuildingCostDiscount c -> nonNegative(path + ".discount", c.discount());
+                case EventCard.BuildingCostDiscount c -> {
+                    nonNegative(path + ".discount", c.discount());
+                    atMost(path + ".marketStepChange", c.marketStepChange());
+                }
                 case EventCard.UpgradeCostDiscount c -> nonNegative(path + ".discount", c.discount());
                 case EventCard.NoMoneyIncome c -> {
                 }
-                case EventCard.MarketPriceShift c -> nonNegative(path + ".minSellValue", c.minSellValue());
+                case EventCard.MarketPriceShift c -> {
+                    atMost(path + ".buyCostChange", c.buyCostChange());
+                    atMost(path + ".sellValueChange", c.sellValueChange());
+                    nonNegative(path + ".minSellValue", c.minSellValue());
+                }
                 case EventCard.PrestigePurchase c -> {
                     nonNegative(path + ".cost", c.cost());
                     nonNegative(path + ".prestige", c.prestige());
@@ -181,6 +194,8 @@ final class RulesetValidator {
 
     private void validateObjectives() {
         ObjectiveRules objectives = ruleset.objectives();
+        atMost("objectives.dealtPerPlayer", objectives.dealtPerPlayer());
+        atMost("objectives.keptPerPlayer", objectives.keptPerPlayer());
         if (objectives.dealtPerPlayer() != D5_OBJECTIVES_DEALT) {
             error("objectives.dealtPerPlayer", "must be " + D5_OBJECTIVES_DEALT + " (decision D5), but is "
                     + objectives.dealtPerPlayer());
@@ -281,12 +296,14 @@ final class RulesetValidator {
     }
 
     private void round(String path, int round) {
+        atMost(path, round);
         if (round < 1 || round > ruleset.roundCount()) {
             error(path, "round " + round + " is outside the game (1-" + ruleset.roundCount() + ")");
         }
     }
 
     private void existingLevel(String path, int level) {
+        atMost(path, level);
         if (level < 1 || level > ruleset.levels().size()) {
             error(path, "level " + level + " does not exist (1-" + ruleset.levels().size() + ")");
         }
@@ -317,8 +334,15 @@ final class RulesetValidator {
     }
 
     private void atLeast(String path, int value, int minimum) {
+        atMost(path, value);
         if (value < minimum) {
             error(path, "must be at least " + minimum + ", but is " + value);
+        }
+    }
+
+    private void atMost(String path, int value) {
+        if (value > MAX_NUMERIC_VALUE) {
+            error(path, "must be at most " + MAX_NUMERIC_VALUE + ", but is " + value);
         }
     }
 

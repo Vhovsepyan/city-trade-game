@@ -5,8 +5,8 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
 - Milestone: M1 complete (engine); M2 complete (bots, simulation, first balance report)
-- Next task: T19 (M3 tasks not detailed yet). Owner: read `docs/balance-report-prototype-001.md`
-  section 4 and decide which values go into `prototype-002`.
+- Next task: T18a implementation is ready for review; after review, T18b is next. Owner: read
+  `docs/balance-report-prototype-001.md` section 4 and decide which values go into `prototype-002`.
 - Target ruleset: prototype-001 (`rulesets/prototype-001.json`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -47,6 +47,15 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T18a - Ruleset upper bounds - READY (review pending)
+- What: `RulesetValidator` rejects every ruleset integer above 100000 with a path-specific error;
+  signed market/event deltas and direct objective counts are covered too. No engine arithmetic changed.
+- Files: `game-ruleset-json` validator and `RulesetValidationTest`.
+- Tests: six failing-ruleset tests for prices, costs, production, Prestige, limits, and storage;
+  existing prototype-load coverage remains in place.
+- Verification: Gradle test/build attempts were blocked in this sandbox by the JDK 25 worker's
+  `java.security` access error; no source/test failure was reached.
 
 ### T18 - First balance report - DONE (review round 1)
 - What: 3 x 1000 games (baseline x4, baseline/trader mix, trader x4), seed 1. `docs/balance-report-prototype-001.md`.

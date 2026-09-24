@@ -194,7 +194,7 @@ Accept: CLI args (ruleset, games, seed, bot mix); JSON + CSV output; metrics fro
 Depends on: T17
 Do: run 1000+ games (baseline-only and trader mix) on prototype-001. Write `docs/balance-report-prototype-001.md`: key numbers, problems found, 3-5 suggested value changes with reasons. **Do not change the ruleset.** The owner decides.
 
-### T18a - Ruleset upper bounds  `TODO`
+### T18a - Ruleset upper bounds  `DONE`
 Depends on: T18
 Do: RulesetValidator rejects any numeric value above 100000 (prices, costs, production, Prestige, limits, storage) with a clear error.
 Accept: one failing-ruleset test per value group; prototype-001 still loads; no engine arithmetic changes needed.
