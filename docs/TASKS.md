@@ -190,7 +190,7 @@ Depends on: T16
 Docs: Architecture 8.2.
 Accept: CLI args (ruleset, games, seed, bot mix); JSON + CSV output; metrics from Architecture 8.2 plus win rate by city and Prestige distribution.
 
-### T18 - First balance report  `TODO`
+### T18 - First balance report  `DONE`
 Depends on: T17
 Do: run 1000+ games (baseline-only and trader mix) on prototype-001. Write `docs/balance-report-prototype-001.md`: key numbers, problems found, 3-5 suggested value changes with reasons. **Do not change the ruleset.** The owner decides.
 

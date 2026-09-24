@@ -4,8 +4,9 @@ Short log for the next session. Newest entry on top. Max ~10 lines per entry.
 Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
-- Milestone: M1 complete (engine); M2 in progress
-- Next task: T18
+- Milestone: M1 complete (engine); M2 complete (bots, simulation, first balance report)
+- Next task: T19 (M3 tasks not detailed yet). Owner: read `docs/balance-report-prototype-001.md`
+  section 4 and decide which values go into `prototype-002`.
 - Target ruleset: prototype-001 (`rulesets/prototype-001.json`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -34,7 +35,8 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - (none)
 
 ## Suggestions (not built)
-- (none)
+- Sim metrics (T18 report section 5): opportunity results, per-objective and per-building rates,
+  upkeep/crisis payments per resource; a bot that uses projects and contracts.
 
 ## Log
 
@@ -45,6 +47,14 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T18 - First balance report - DONE (review round 1)
+- What: 3 x 1000 games (baseline x4, baseline/trader mix, trader x4), seed 1. `docs/balance-report-prototype-001.md`.
+- Findings: "do everything" wins (57.5% of trader winners at max 19, 34.6% shared victories); Level 2 in Round 1,
+  Level 3 by Round 4.4; trading stops after Round 11; 50-65 unspent Money; Agricultural strongest (39% baseline),
+  Technology weakest (19.7% trader). Bots do not use projects/contracts, so those are not judged.
+- Suggested (owner decides): Level 2 cost 4; Grand Landmark 10 Money; Research Lab F1 E2 M1 T1; later Money -1/level.
+- Ruleset not changed. No code changed.
 
 ### T17 - Simulation runner + metrics - DONE (review round 1)
 - What: `game-sim` CLI `SimulationMain` (`./gradlew :game-sim:run --args="--ruleset prototype-001 --games 1000
@@ -146,16 +156,9 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: CrisesTest (20), EconomyEventsTest (11), EventOptionsTest (11), EventScheduleTest (4).
 - For later: T13 Crisis Responder can count `eventParticipation().crisisPaidRounds()`.
 
-### T09 - Formal contracts - DONE (review round 3)
-- What: package `contract`: `Contracts` (commands `ProposeContract`, `SignContract`, `BreakContract`,
-  `CancelContractMutually`; step 1.5 `settleDueObligations`; step 4.1 `expireProposals`), `FormalContract`,
-  `ContractStatus`. `PlayerState.contractsBroken` (public counter).
-- Owner decisions D13-D16 applied: negative Prestige allowed; voluntary break delivers nothing; due contracts
-  settled oldest first, each in full if possible; unsigned proposals expire at 4.1.
-- Review: R1-P1-2 (compensation overflow) fixed with checked arithmetic; R1-P1-1 / R1-P2-1 resolved by D15 / D16.
-- Tests: ContractsTest (incl. Numbers Sheet 13 example, D15 order), ContractStatusTest, ResourceBundleTest (overflow).
-
 ## Earlier
+- T09 DONE: package `contract`: `Contracts` (propose/sign/break/mutual cancel, 1.5 settle, 4.1 expiry),
+  `PlayerState.contractsBroken`; D13-D16 applied.
 - T08 DONE: package `trade`: `Trading` (propose/accept/reject/cancel/counter, 4.1 expiry), `TradeOffer` history;
   accept with missing resources = Accepted + offer INVALID (`TradeInvalidated`).
 - T07 DONE: package `city`: `CityDevelopment` (`UpgradeCity`, `BuildBuilding`, 4.4 Prestige), `BuildingEffects`
