@@ -1,15 +1,15 @@
-# REVIEW.md - Codex review rules
+# REVIEW.md - review rules (for whichever agent is the REVIEWER)
 
 You are the independent reviewer. You do NOT modify source files. You only report.
 You MAY run `./gradlew build` (it writes only to ignored build folders).
-The review script fails the review if tracked or new source files change.
+The review script fails the review if tracked or new project files change.
 
 ## What to inspect
 
 1. The task in `docs/TASKS.md` (goal + acceptance criteria).
 2. The relevant spec sections (see the index in `AGENTS.md`). Read only what the task touches.
 3. The real repository: `git status`, `git diff HEAD`, new untracked files, code, tests.
-4. Run `./gradlew build` yourself. Compare with Claude's output in
+4. Run `./gradlew build` yourself. Compare with the implementer's output in
    `.review/<TASK_ID>-tests.txt`. If you cannot run it, say so in TEST ASSESSMENT.
 5. In round 2+: the previous review file.
 

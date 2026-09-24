@@ -5,8 +5,11 @@ Shared rules for all AI agents. Keep this file short; details live in `docs/`.
 ## 1. Roles
 
 - **Human owner** makes product decisions (rules, scoring, balance values, scope, platforms).
-- **Claude** (Claude Code) = implementation agent. Writes code, tests, fixes.
-- **Codex** = independent review agent. Reviews the real repository, never only a summary.
+- **Implementer** = writes code, tests, fixes. Rules: `docs/IMPLEMENTER.md`.
+- **Reviewer** = independent review of the real repository, never edits. Rules: `docs/REVIEW.md`.
+- Which AI has which role (Claude Code or Codex) is set in `scripts/agents.conf`.
+  The prompt always tells you your role.
+- `scripts/run-until.sh` (not the agents) runs the build, the review and the commit.
 
 The owner does not write code. Agents do not change the game design on their own.
 
@@ -16,8 +19,9 @@ The owner does not write code. Agents do not change the game design on their own
 |------|------------|
 | `docs/TASKS.md` | Ordered task list + approved product decisions (D1-D12). **Start here.** |
 | `docs/PROGRESS.md` | Short log: what is done, what is next. Read it at the start of every session. |
-| `docs/REVIEW.md` | Review rules and output format (for Codex). |
-| `scripts/` | `codex-review.sh` (review), `run-until.sh` (autonomous loop), `usage-report.sh` (tokens). |
+| `docs/IMPLEMENTER.md` | How the implementer works (implement / fix modes). |
+| `docs/REVIEW.md` | Review rules and output format (for the reviewer). |
+| `scripts/` | `agents.conf` (roles), `run-until.sh` (orchestrator), `review.sh` (one review round), `usage-report.sh` (tokens). |
 | `docs/last_city_standing_game_idea_GPT_4-final.txt` | Game concept (behavior and intent). |
 | `docs/city_trade_game_architecture_planning_claude_v3-final.txt` | Architecture. |
 | `docs/city_trade_game_numbers_sheet_claude_v2-final.txt` | Numbers Sheet v2 (prototype-001 values). |
@@ -149,17 +153,16 @@ and keep equal or stronger coverage.
 ./gradlew :game-engine:test          # engine tests only
 ./gradlew :game-engine:test --tests "*BidResolutionTest"   # one test class
 ./gradlew :game-sim:run --args="--ruleset prototype-001 --games 1000 --seed 1"   # after T17
-scripts/codex-review.sh <TASK_ID> <ROUND>   # Codex review, ROUND = 1, 2, 3, ... until PASS
-scripts/run-until.sh M1                      # owner: run tasks automatically until M1 is done
+scripts/run-until.sh M2                      # owner: run tasks automatically until M2 is done
+scripts/review.sh <TASK_ID> <ROUND>          # one review round (normally called by run-until)
 scripts/usage-report.sh [TASK_ID]            # token usage totals from .review/usage.csv
 ```
 
 ## 10. Git
 
 - Inspect `git status` before and after work. Do not touch unrelated changes.
-- After a task passes review: `git add` the task files and commit with a
-  **short single-line message** (e.g. `T05 add production and upkeep`).
-  No multi-line commit messages.
+- Agents do NOT commit. The implementer writes a **short single-line** commit
+  message to `.review/<TASK_ID>-commit.txt`; the script commits after PASS.
 - Never: push, force push, rewrite history, delete branches, change remotes.
 - Never commit secrets, tokens, passwords. `.review/` stays uncommitted.
 

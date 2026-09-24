@@ -1,4 +1,4 @@
-# Project setup (one time, about 20 minutes)
+# Project setup and running
 
 ## 1. Install tools (once per computer)
 
@@ -7,8 +7,8 @@
 | Any JDK 17+ | runs Gradle (JDK 25 is downloaded automatically by the Gradle toolchain) | `java -version` |
 | Git | version control | `git --version` |
 | Node.js (LTS) | needed by Claude Code and Codex CLI | `node --version` |
-| Claude Code CLI | implementation agent | `claude --version` |
-| Codex CLI | review agent | `codex --version` |
+| Claude Code CLI | agent (role in scripts/agents.conf) | `claude --version` |
+| Codex CLI | agent (role in scripts/agents.conf) | `codex --version` |
 | IntelliJ IDEA (optional) | to look at the code | - |
 
 Gradle does NOT need to be installed: task T01 creates the Gradle wrapper
@@ -35,7 +35,7 @@ Files after unzip:
 
 ```
 AGENTS.md, CLAUDE.md, .gitignore, .claude/settings.json
-scripts/codex-review.sh, scripts/run-until.sh
+scripts/agents.conf, scripts/lib-agents.sh, scripts/run-until.sh, scripts/review.sh
 scripts/lib-usage.sh, scripts/usage-report.sh
 docs/TASKS.md, docs/PROGRESS.md, docs/REVIEW.md
 docs/last_city_standing_game_idea_GPT_4-final.txt         (concept v4)
@@ -49,35 +49,46 @@ rulesets/.gitkeep
 D1-D12 in `docs/TASKS.md` are already approved. Nothing to do.
 If you change your mind later, edit the table; agents follow it from the next task.
 
-## 4. Run until M1 is done
+## 4. Roles and running
+
+Roles are set in `scripts/agents.conf`:
 
 ```
-scripts/run-until.sh M1
+IMPLEMENTER=codex      # writes code
+REVIEWER=claude        # reviews, never edits
+CLAUDE_MODEL=sonnet
 ```
 
-What happens:
-- One fresh Claude Code session per task (T00, T01, ... T14).
-- Each session: implement -> test -> Codex review -> fix -> review ... until PASS -> commit.
-- The loop stops only when:
-  - all tasks up to M1 are `DONE` (success), or
-  - a task is `BLOCKED` (read `docs/PROGRESS.md` -> "Questions for owner"), or
-  - the same task did not finish in 3 sessions, or
-  - runaway limits are reached (60 sessions, 10 review rounds per task).
-- Full log: `.review/run-until-M1.log`. Reviews: `.review/T05-round2.md`, etc.
+Switch roles any time by editing these two lines (e.g. when one tool's limit is low).
+Nothing else changes.
 
-After fixing a blocker (answer the question in PROGRESS.md, set the task back to
-`TODO` in TASKS.md), just run `scripts/run-until.sh M1` again. It continues
-where it stopped.
+Run:
 
-Tip: start it in the evening and check the log in the morning.
-To keep the computer awake: macOS `caffeinate -i scripts/run-until.sh M1`,
-Linux `systemd-inhibit scripts/run-until.sh M1`.
+```
+scripts/run-until.sh M2
+```
+
+For every task the SCRIPT does:
+implementer session -> `./gradlew build` -> review -> (fix session -> build -> review)*
+-> mark DONE -> commit (message written by the implementer).
+Agents never call each other and never commit.
+
+The loop stops only when:
+- all tasks up to the milestone are `DONE`, or
+- a task is `BLOCKED` (read `docs/PROGRESS.md` -> "Questions for owner"), or
+- safety limits are reached (see `scripts/agents.conf`).
+
+Usage limits: if an agent reports a usage/rate limit, the script waits
+`LIMIT_WAIT_MINUTES` and retries the same step (up to `LIMIT_MAX_WAITS` times).
+
+Rerun the same command after a stop; it continues where it stopped
+(it reuses existing review rounds in `.review/`).
 
 ## 5. Token usage
 
 Every agent run adds one line to `.review/usage.csv`:
-- Claude: one line per task session (tokens + cost in USD + minutes).
-- Codex: one line per review round (tokens + minutes; Codex reports no cost).
+- One line per agent session (implement, fix, review), for both Claude and Codex.
+- Claude lines include cost in USD; Codex reports tokens only.
 
 See totals any time:
 
@@ -105,11 +116,11 @@ Notes:
 
 ## 7. Check once (tool versions differ)
 
-- `codex exec --help`: the scripts use `--json`, `--sandbox workspace-write` and
-  `-o <file>` (write the final message to a file). If a flag has another name,
-  change it in `scripts/codex-review.sh` (1 line) and in task T00.
-- `claude --help`: the loop uses
-  `claude -p "<prompt>" --permission-mode acceptEdits --output-format json`.
+- `codex exec --help`: `scripts/lib-agents.sh` uses `--json`, `--sandbox workspace-write`,
+  `-c sandbox_workspace_write.network_access=true` (Gradle needs network) and `-o <file>`.
+- `claude --help`: it uses `-p`, `--output-format json`, `--model`, `--permission-mode acceptEdits`
+  (implementer) and `--allowedTools` / `--disallowedTools` (reviewer, read-only).
+- If a flag has another name, change it in `scripts/lib-agents.sh` only.
 - If Claude stops long commands too early, check the timeout setting names in
   `.claude/settings.json` against the current Claude Code docs.
 
@@ -117,7 +128,7 @@ Notes:
 
 - `.claude/settings.json` allows gradle, git add/commit, codex and the review script
   without asking, and blocks push / hard reset / rebase / `rm -rf`.
-- Codex may run Gradle during review, but the script fails the review if Codex
+- The reviewer may run Gradle, but the script fails the review if the reviewer
   changes any project file.
 - Tokens: AGENTS.md + CLAUDE.md load every session (~2.5k tokens). A fresh session
   per task keeps each context small. Codex reads REVIEW.md only.

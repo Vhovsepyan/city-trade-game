@@ -27,7 +27,17 @@
       "Glob",
       "Grep",
       "Bash(scripts/usage-report.sh:*)",
-      "Bash(jq:*)"
+      "Bash(java:*)",
+      "Bash(node:*)",
+      "Bash(which:*)",
+      "Bash(where:*)",
+      "Bash(winget install:*)",
+      "Bash(winget list:*)",
+      "Bash(setx:*)",
+      "Bash(curl:*)",
+      "Bash(unzip:*)",
+      "Bash(export:*)",
+      "Bash(echo:*)"
     ],
     "deny": [
       "Bash(git push:*)",
