@@ -1,5 +1,6 @@
 package citytrade.server.rest;
 
+import citytrade.server.game.ActiveGameCoordinator;
 import citytrade.server.rest.RoomRequests.Bot;
 import citytrade.server.rest.RoomRequests.Nickname;
 import citytrade.server.room.BotType;
@@ -24,9 +25,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class RoomController {
 
     private final RoomRegistry rooms;
+    private final ActiveGameCoordinator activeGames;
 
-    public RoomController(RoomRegistry rooms) {
+    public RoomController(RoomRegistry rooms, ActiveGameCoordinator activeGames) {
         this.rooms = rooms;
+        this.activeGames = activeGames;
     }
 
     @PostMapping
@@ -63,7 +66,9 @@ public class RoomController {
     @PostMapping("/{code}/start")
     public RoomSnapshot start(@PathVariable String code,
             @RequestHeader(value = "Authorization", required = false) String authorization) {
-        return rooms.start(code, bearerToken(authorization));
+        RoomSnapshot snapshot = rooms.start(code, bearerToken(authorization));
+        activeGames.start(rooms.require(code));
+        return snapshot;
     }
 
     private static String bearerToken(String authorization) {

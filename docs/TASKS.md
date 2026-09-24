@@ -292,7 +292,7 @@ Accept (tests):
 - a client command with an internal type is refused before reaching the engine
 - the seat in the engine command is always the caller's seat
 
-### T20b - Round flow: timer, READY, objective timeout, bots in rooms  `TODO`
+### T20b - Round flow: timer, READY, objective timeout, bots in rooms  `DONE`
 Depends on: T20
 Docs: Architecture 6.4; decisions D20, D21, D22, D23, D24; Numbers Sheet "ROUND ORDER".
 Do:

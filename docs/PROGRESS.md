@@ -4,8 +4,8 @@ Short log for the next session. Newest entry on top. Max ~10 lines per entry.
 Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
-- Milestone: M3 server started (T19 room/lobby REST done; T20 GameRoom serial command queue added)
-- Next task: T20 review; then T20b round flow (timer, READY, objective timeout, bots in rooms)
+- Milestone: M3 server started (T19 room/lobby REST; T20 GameRoom serial queue; T20b round flow added)
+- Next task: T20b review; then T21 PlayerGameView + privacy projector
 - Target rulesets: prototype-001 and prototype-002 (`rulesets/`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -46,6 +46,51 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T20b - Round flow: timer, READY, objective timeout, bots in rooms - READY (round 2 pending)
+- Round 1 fixes: bot maps are now `TreeMap`s (ascending seat order, not `HashMap`/`Map.of`'s unspecified
+  order) so bot command submission stays deterministic; `setReady` is a no-op outside WINDOW (phase guard);
+  `onProcessed` now rechecks all-READY right after a rejected/no-op bot command clears its pending flag
+  instead of only on state-changing commands, so a quiescent-by-rejection bot no longer stalls a
+  ready round until the timer; `ActiveGameCoordinator`'s `onFinished` now shuts the `GameRoom` down and
+  unregisters its driver, instead of leaking a worker thread + map entry per finished room.
+- New tests: `RoundFlowDriverTest` (+3: READY ignored outside WINDOW, a rejected bot command still lets
+  an all-READY round resolve, ascending bot evaluation order survives a randomized input map),
+  `ActiveGameCoordinatorTest` (new file: a finished room's driver is unregistered and its `GameRoom`
+  executor rejects further submissions).
+- Fixing R1-P2-2 (more work per processed bot command) exposed a pre-existing race in the test helper
+  `settle()`: comparing a barrier's own sequence number against `room.commandSequence()` read from the test
+  thread can race the room's single worker thread finishing a still-pending cascading command. Rewrote
+  `settle()` in both test files to compare two *consecutively submitted* barriers' sequence numbers instead
+  (self-correcting: a false "settled" reading just makes the loop try again, never returns a stale answer).
+  `./gradlew :game-server:test --rerun` clean on 6+ repeated runs after the fix (was flaky ~1-in-6 before).
+- What: new `RoundFlowDriver` (one per ACTIVE room) drives the automatic flow entirely through its
+  `GameRoom`'s own serial queue: objective choice (asks every bot at once, schedules the D22 timeout) ->
+  StartRound once `state.allObjectivesChosen()` -> WINDOW (schedules the D20 window timer, asks every bot
+  again) -> ResolveRound (timer OR all-READY, guarded so it is enqueued exactly once per round) -> next
+  StartRound, until Round 14 resolves -> `onFinished` runs once. `GameRoom` gained `addListener`: called with
+  every `ProcessedCommand`, still on the room's own worker thread, so the driver reacts to state changes
+  (Architecture 6.4) without polling; a listener must never block (would deadlock the room's own queue) and a
+  throwing listener is caught so it can never break command processing.
+- Bot coordinator (D24): after every state-changing command, every bot seat not already "pending" or capped
+  is asked again (`Bot.nextWindowCommand`); an action is submitted with origin BOT and the seat is "pending"
+  until that command is processed. A bot seat counts as READY only while it has no pending action. A per-seat
+  cap (`maxActionsPerBotPerRound`, default 1000 - same order of magnitude as `BotGame.MAX_COMMANDS_PER_WINDOW`)
+  stops a broken bot; a package-private constructor lets tests use a small cap.
+- Timing: `RoundScheduler` interface + `ScheduledExecutorRoundScheduler` (production, delay computed from the
+  injected `Clock`). New `ActiveGameCoordinator` builds the `GameRoom` + bots (`Room.botSeats()`, D24) + driver
+  for a room and calls `driver.start()`; wired from `RoomController.start()` right after `RoomRegistry.start()`
+  and from new `ServerConfiguration` beans.
+- Files: `game-server/.../game/{RoundScheduler,ScheduledExecutorRoundScheduler,RoundFlowDriver,BotFactory,
+  ActiveGameCoordinator}.java`, `GameRoom` (+listener), `Room` (+`botSeats()`), `RoomController`,
+  `ServerConfiguration`; tests `RoundFlowDriverTest` (9, with test double `ManualRoundScheduler`: full 14-round
+  game with 1 human + 3 bots driven only by timers; a quiescent bot reacting to a later trade offer; READY
+  cannot overtake a pending bot action; the runaway cap; all-READY resolves before the timer, READY cancel and
+  reset; a genuine concurrent race between the timer and the last READY resolves exactly once; the D22 timeout;
+  a disconnected seat counting as READY; queue order around ResolveRound), `GameRoomTest` (+1: listener).
+- Verification: `./gradlew build` green (all modules).
+- Notes / P3 items: connection status (D23) is currently only `setDisconnected`/`setReady` on the driver
+  itself, called directly (as tests do); wiring it to real WebSocket session state is T22/T23's job.
 
 ### T20 - GameRoom: serial command queue, commandSequence, stateVersion - READY (review pending)
 - What: new `citytrade.server.game` package: `GameRoom` (one per ACTIVE room, one single-thread

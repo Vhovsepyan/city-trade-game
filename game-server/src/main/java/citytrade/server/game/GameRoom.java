@@ -35,6 +35,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 /**
  * One serial command queue for an ACTIVE room (Architecture 4.10, 6.2). All state changes for the
@@ -54,6 +55,7 @@ public final class GameRoom {
     private final Engine engine;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final List<ProcessedCommand> history = new CopyOnWriteArrayList<>();
+    private final List<Consumer<ProcessedCommand>> listeners = new CopyOnWriteArrayList<>();
     private final AtomicLong commandSequence = new AtomicLong();
     private final AtomicLong stateVersion = new AtomicLong();
 
@@ -84,6 +86,18 @@ public final class GameRoom {
         return submit(CommandOrigin.SYSTEM, OptionalInt.empty(), command);
     }
 
+    /**
+     * Called with every {@link ProcessedCommand}, right after it is appended to {@link #history()}, still on
+     * this room's own worker thread. {@code T20b}'s round-flow driver uses this to react to state changes
+     * (schedule the next timer, ask bots again, check READY) without polling. A listener must never block:
+     * it runs inside the single worker that also processes every future command, so calling {@code .get()} on
+     * a {@link Future} returned by this room from within a listener would deadlock. A listener that throws is
+     * caught and ignored, so a driver bug can never corrupt command processing for the room.
+     */
+    public void addListener(Consumer<ProcessedCommand> listener) {
+        listeners.add(Objects.requireNonNull(listener));
+    }
+
     private Future<ProcessedCommand> submit(CommandOrigin origin, OptionalInt actorSeat, GameCommand command) {
         Objects.requireNonNull(command);
         return executor.submit(() -> process(origin, actorSeat, command));
@@ -98,6 +112,13 @@ public final class GameRoom {
         ProcessedCommand record =
                 new ProcessedCommand(sequence, origin, actorSeat, effectiveCommand, outcome, stateVersion.get());
         history.add(record);
+        for (Consumer<ProcessedCommand> listener : listeners) {
+            try {
+                listener.accept(record);
+            } catch (RuntimeException e) {
+                // A listener must never break the room's own command processing; see addListener's contract.
+            }
+        }
         return record;
     }
 

@@ -2,6 +2,9 @@ package citytrade.server.config;
 
 import citytrade.engine.ruleset.Ruleset;
 import citytrade.ruleset.json.RulesetLoader;
+import citytrade.server.game.ActiveGameCoordinator;
+import citytrade.server.game.RoundScheduler;
+import citytrade.server.game.ScheduledExecutorRoundScheduler;
 import citytrade.server.room.RoomRegistry;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -56,6 +59,18 @@ public class ServerConfiguration {
             SecureRandom secureRandom) {
         return RoomRegistry.secure(ruleset, gameClock, secureRandom, properties.getFinishedRoomTtl(),
                 properties.getLobbyIdleTtl());
+    }
+
+    @Bean(destroyMethod = "shutdown")
+    public ScheduledExecutorRoundScheduler roundScheduler(Clock gameClock) {
+        return new ScheduledExecutorRoundScheduler(gameClock);
+    }
+
+    @Bean
+    public ActiveGameCoordinator activeGameCoordinator(Ruleset ruleset, GameServerProperties properties,
+            Clock gameClock, RoundScheduler roundScheduler) {
+        return new ActiveGameCoordinator(ruleset, gameClock, roundScheduler, properties.getWindowDuration(),
+                properties.getObjectiveChoiceTimeout());
     }
 
     private static String requireText(String value, String name) {

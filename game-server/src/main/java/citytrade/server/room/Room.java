@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -85,6 +86,18 @@ public final class Room {
 
     public synchronized Optional<GameState> gameState() {
         return Optional.ofNullable(gameState);
+    }
+
+    /** Seat -> bot type, for the seats currently occupied by a bot; used to build the bots that play them. */
+    public synchronized Map<Integer, BotType> botSeats() {
+        Map<Integer, BotType> result = new LinkedHashMap<>();
+        for (int seat = 0; seat < SEAT_COUNT; seat++) {
+            Seat value = seats.get(seat);
+            if (value != null && value.botType != null) {
+                result.put(seat, value.botType);
+            }
+        }
+        return result;
     }
 
     public synchronized boolean isFull() {
