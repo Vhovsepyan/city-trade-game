@@ -1,0 +1,10 @@
+game:
+  ruleset: prototype-002
+  window-duration: 120s
+  objective-choice-timeout: 60s
+  finished-room-ttl: 30m
+  lobby-idle-ttl: 2h
+  rulesets-directory: rulesets
+
+server:
+  port: 8080

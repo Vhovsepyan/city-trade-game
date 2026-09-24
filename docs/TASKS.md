@@ -237,7 +237,7 @@ Technical choices for all M3 tasks (not product decisions):
 - Server error format for REST: `{ "code": "ROOM_FULL", "message": "..." }` with stable codes.
 - Tokens, seeds of active games, hidden objectives and private resources are NEVER logged.
 
-### T19 - Spring Boot module + rooms and lobby REST  `TODO`
+### T19 - Spring Boot module + rooms and lobby REST  `DONE`
 Depends on: T18b
 Docs: Architecture 6.1, 6.8, 6.10; decisions D11, D24.
 Do:

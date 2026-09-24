@@ -4,9 +4,8 @@ Short log for the next session. Newest entry on top. Max ~10 lines per entry.
 Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
-- Milestone: M1 complete (engine); M2 complete (bots, simulation, two balance reports)
-- Next task: T18b implementation is ready for review. Owner: review
-  `docs/balance-report-prototype-002.md` before deciding the next balance test.
+- Milestone: M3 server started (T19 room/lobby REST, round 1 findings fixed, ready for review round 2)
+- Next task: T19 review round 2; then T20 serial command queue
 - Target rulesets: prototype-001 and prototype-002 (`rulesets/`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -57,6 +56,28 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
   is blocked in this sandbox by the known Java 25 `java.security` access error; source compilation and simulation
   runs completed with the temporary external-JDK workaround.
 - Notes / P3 items: none.
+
+### T19 - Spring Boot module + rooms and lobby REST - READY (review round 2)
+- What: Added pinned Spring Boot 4.1.1 `game-server` module with startup ruleset validation, in-memory room registry,
+  LOBBY/ACTIVE/FINISHED/CLOSED lifecycle, collision-safe six-character room codes, hashed 32-byte seat tokens,
+  host-only bot/add-remove/start REST actions, public lobby snapshots, and injected-clock cleanup.
+- Round 1 fixes: `Room.close()` now rejects transitions from ACTIVE or already-CLOSED (new `ROOM_NOT_CLOSABLE`
+  code, mapped to 409). `RoomRegistry.cleanup()` no longer does a check-then-close in two steps; it calls a new
+  atomic `Room.closeIfExpired(now, ttl, ttl)` (single `synchronized` method) so a concurrent `start()` can no
+  longer race with cleanup and close an ACTIVE room. Added MockMvc coverage of the full REST contract
+  (`RoomControllerTest`) and a startup-validation test for missing/blank ruleset config (`ServerConfigurationTest`).
+- Files: `game-server` (`Room`, `RoomRegistry`, `RoomErrorCode`, `RestErrorHandler`, `build.gradle`),
+  `RoomRegistryTest`, new `RoomControllerTest`, new `ServerConfigurationTest`.
+- Tests: `RoomRegistryTest` (11, incl. invalid-close-transition and a 200-iteration concurrent
+  start-vs-cleanup race test), `RoomControllerTest` (MockMvc: create/join/full/not-found/not-joinable/
+  not-host/not-full/not-in-lobby/no-token-or-seed-in-GET), `ServerConfigurationTest` (context fails to start on
+  missing or blank `game.ruleset`, succeeds with a valid one).
+- Build note: Spring Boot 4.1.1 moved `@AutoConfigureMockMvc` out of `spring-boot-test-autoconfigure` into a new
+  `org.springframework.boot:spring-boot-starter-webmvc-test` artifact (package
+  `org.springframework.boot.webmvc.test.autoconfigure`); added that test dependency. Jackson 3 also moved
+  `ObjectMapper` to `tools.jackson.databind`.
+- Verification: `./gradlew build` green (all modules, including `game-server`).
+- Notes / P3 items: R1-P2-1 (REST/config test coverage) addressed above; no remaining P3 items.
 
 ### T18a - Ruleset upper bounds - READY (review pending)
 - What: `RulesetValidator` rejects every ruleset integer above 100000 with a path-specific error;

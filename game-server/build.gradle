@@ -1,0 +1,23 @@
+plugins {
+    id 'org.springframework.boot' version '4.1.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+dependencies {
+    implementation project(':game-engine')
+    implementation project(':game-ruleset-json')
+    implementation project(':game-bots')
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+}
+
+springBoot {
+    mainClass = 'citytrade.server.GameServerApplication'
+}
+
+tasks.named('test') {
+    // Tests load the real ruleset files from the repository root.
+    systemProperty 'rulesets.dir', rootProject.file('rulesets').absolutePath
+}
