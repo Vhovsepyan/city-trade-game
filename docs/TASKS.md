@@ -176,7 +176,7 @@ Depends on: T14
 Docs: Numbers Sheet 13, 17; decisions D14, D18.
 Accept: voluntary break rejected when free Money < compensation and the player has active bids; allowed after bids are withdrawn or lowered; no change without active bids; step 1.5 automatic break unchanged.
 
-### T15 - Baseline bot  `TODO`
+### T15 - Baseline bot  `DONE`
 Depends on: T14a
 Docs: Architecture 8.1.
 Accept: deterministic; never sends invalid commands in normal play (test: 100 games with 4 baseline bots finish without rejections except expected ones).

@@ -5,7 +5,7 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
 - Milestone: M1 complete (engine); next is M2
-- Next task: T15
+- Next task: T16
 - Target ruleset: prototype-001 (`rulesets/prototype-001.json`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -45,6 +45,14 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T15 - Baseline bot - DONE (review round 1)
+- What: `game-bots`: `Bot` interface (pure function of state), `BaselineBot` (Arch 8.1 A: next level first, buys
+  missing units from the market only if the whole upgrade fits this round; buildings in ruleset order only when no
+  upgrade is possible this round, without market; sells units above the storage limit; keeps first dealt objectives;
+  no trades/contracts/bids/projects/event options), `BotGame` (plays a full game, seats in order, records rejections).
+- Tests: BaselineBotTest (13), BotGameTest (4: 100 games 0 rejections + every city upgrades, same seed = same game).
+- Notes: game-bots tests use `game-ruleset-json` (testImplementation) for the real prototype-001 file.
 
 ### T14a - Apply D18 - DONE (review round 1)
 - What: `Contracts.breakVoluntarily` rejects with new `INSUFFICIENT_FREE_MONEY` when the debtor has reserved

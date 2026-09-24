@@ -1,3 +1,9 @@
 dependencies {
     implementation project(':game-engine')
+    // Tests play whole games with the real prototype ruleset file.
+    testImplementation project(':game-ruleset-json')
+}
+
+tasks.named('test') {
+    systemProperty 'rulesets.dir', rootProject.file('rulesets').absolutePath
 }
