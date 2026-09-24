@@ -32,7 +32,7 @@ agent_run() {
       usage_log_claude "$task" "$label" "$raw" "exit$rc"
       ;;
     codex)
-      local args=(exec --json --sandbox workspace-write -c sandbox_workspace_write.network_access=true -o "$out")
+      local args=(exec --json --sandbox danger-full-access -c approval_policy=never -o "$out")
       [[ -n "${CODEX_MODEL:-}" ]] && args+=(-m "$CODEX_MODEL")
       codex "${args[@]}" "$prompt" > "$raw" 2> "$err"; rc=$?
       dur=$(( $(date +%s) - start ))
