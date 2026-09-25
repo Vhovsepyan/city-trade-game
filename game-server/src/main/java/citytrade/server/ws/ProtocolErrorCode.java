@@ -8,5 +8,7 @@ enum ProtocolErrorCode {
     /** {@code commandType} is not READY, SNAPSHOT_REQUEST, or a known player command. */
     UNSUPPORTED_COMMAND_TYPE,
     /** The payload could not be parsed into that command type's shape, e.g. an extra "seat" field. */
-    INVALID_PAYLOAD
+    INVALID_PAYLOAD,
+    /** {@code commandId} was already used by a different seat (Architecture 6.7). */
+    COMMAND_ID_REUSED
 }

@@ -26,10 +26,13 @@ import citytrade.engine.command.UpgradeCity;
 import citytrade.engine.command.UseEventOption;
 import citytrade.engine.ruleset.Ruleset;
 import citytrade.engine.state.GameState;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -58,6 +61,9 @@ public final class GameRoom {
     private final List<Consumer<ProcessedCommand>> listeners = new CopyOnWriteArrayList<>();
     private final AtomicLong commandSequence = new AtomicLong();
     private final AtomicLong stateVersion = new AtomicLong();
+    // Only ever read/written from process(), which always runs on this room's single executor thread
+    // (Architecture 6.7): a plain HashMap needs no extra synchronization.
+    private final Map<String, ProcessedCommand> outcomesByCommandId = new HashMap<>();
 
     private volatile GameState state;
 
@@ -71,19 +77,37 @@ public final class GameRoom {
         this.engine = Objects.requireNonNull(engine);
     }
 
-    /** A command from a connected player; {@code seat} is the caller's own seat, injected into the command. */
+    /**
+     * A command from a connected player, without idempotency tracking; {@code seat} is the caller's own seat,
+     * injected into the command. Used only where no client {@code commandId} exists (tests, and callers
+     * outside the WebSocket protocol). Every submission gets its own internal, never-reused id, so it never
+     * collides with - or is deduplicated against - a real client {@code commandId}.
+     */
     public Future<ProcessedCommand> submitPlayerCommand(int seat, GameCommand command) {
-        return submit(CommandOrigin.PLAYER, OptionalInt.of(seat), command);
+        return submit(CommandOrigin.PLAYER, OptionalInt.of(seat), Optional.of(UUID.randomUUID().toString()),
+                command);
+    }
+
+    /**
+     * A command from a connected player (Architecture 6.6, 6.7); {@code seat} is the caller's own seat,
+     * injected into the command. {@code commandId} is the client's idempotency key: a duplicate {@code
+     * commandId} from the SAME seat returns the exact same {@link ProcessedCommand} again - no new sequence
+     * number, no engine call, no {@code stateVersion} change. The same {@code commandId} from a DIFFERENT seat
+     * is refused before reaching the engine.
+     */
+    public Future<ProcessedCommand> submitPlayerCommand(int seat, String commandId, GameCommand command) {
+        Objects.requireNonNull(commandId);
+        return submit(CommandOrigin.PLAYER, OptionalInt.of(seat), Optional.of(commandId), command);
     }
 
     /** A command chosen by a bot coordinator acting for {@code seat}; {@code seat} is injected into the command. */
     public Future<ProcessedCommand> submitBotCommand(int seat, GameCommand command) {
-        return submit(CommandOrigin.BOT, OptionalInt.of(seat), command);
+        return submit(CommandOrigin.BOT, OptionalInt.of(seat), Optional.empty(), command);
     }
 
     /** An internal command (StartRound/ResolveRound) or a server-side fallback; never from a client. */
     public Future<ProcessedCommand> submitSystemCommand(GameCommand command) {
-        return submit(CommandOrigin.SYSTEM, OptionalInt.empty(), command);
+        return submit(CommandOrigin.SYSTEM, OptionalInt.empty(), Optional.empty(), command);
     }
 
     /**
@@ -98,20 +122,53 @@ public final class GameRoom {
         listeners.add(Objects.requireNonNull(listener));
     }
 
-    private Future<ProcessedCommand> submit(CommandOrigin origin, OptionalInt actorSeat, GameCommand command) {
+    private Future<ProcessedCommand> submit(CommandOrigin origin, OptionalInt actorSeat, Optional<String> commandId,
+            GameCommand command) {
         Objects.requireNonNull(command);
-        return executor.submit(() -> process(origin, actorSeat, command));
+        return executor.submit(() -> process(origin, actorSeat, commandId, command));
     }
 
-    private ProcessedCommand process(CommandOrigin origin, OptionalInt actorSeat, GameCommand command) {
+    private ProcessedCommand process(CommandOrigin origin, OptionalInt actorSeat, Optional<String> commandId,
+            GameCommand command) {
+        if (origin == CommandOrigin.PLAYER && commandId.isPresent()) {
+            ProcessedCommand existing = outcomesByCommandId.get(commandId.get());
+            if (existing != null) {
+                if (existing.actorSeat().equals(actorSeat)) {
+                    // Duplicate commandId from the SAME seat (Architecture 6.7): the exact same outcome again,
+                    // no engine call, no new sequence number, no stateVersion change.
+                    return existing;
+                }
+                return refuse(origin, actorSeat, commandId, command,
+                        "commandId " + commandId.get() + " was already used by a different seat");
+            }
+        }
         long sequence = commandSequence.incrementAndGet();
         GameCommand effectiveCommand = actorSeat.isPresent() ? withSeat(command, actorSeat.getAsInt()) : command;
         CommandOutcome outcome = refusalReason(origin, effectiveCommand)
                 .<CommandOutcome>map(CommandOutcome.Refused::new)
                 .orElseGet(() -> applyToEngine(effectiveCommand));
-        ProcessedCommand record =
-                new ProcessedCommand(sequence, origin, actorSeat, effectiveCommand, outcome, stateVersion.get());
+        ProcessedCommand record = new ProcessedCommand(sequence, origin, actorSeat, commandId, effectiveCommand,
+                outcome, stateVersion.get());
         history.add(record);
+        if (origin == CommandOrigin.PLAYER) {
+            commandId.ifPresent(id -> outcomesByCommandId.put(id, record));
+        }
+        notifyListeners(record);
+        return record;
+    }
+
+    /** A commandId reused by a different seat than the one that first used it: refused before the engine. */
+    private ProcessedCommand refuse(CommandOrigin origin, OptionalInt actorSeat, Optional<String> commandId,
+            GameCommand command, String reason) {
+        long sequence = commandSequence.incrementAndGet();
+        ProcessedCommand record = new ProcessedCommand(sequence, origin, actorSeat, commandId, command,
+                new CommandOutcome.Refused(reason), stateVersion.get());
+        history.add(record);
+        notifyListeners(record);
+        return record;
+    }
+
+    private void notifyListeners(ProcessedCommand record) {
         for (Consumer<ProcessedCommand> listener : listeners) {
             try {
                 listener.accept(record);
@@ -119,7 +176,6 @@ public final class GameRoom {
                 // A listener must never break the room's own command processing; see addListener's contract.
             }
         }
-        return record;
     }
 
     private CommandOutcome applyToEngine(GameCommand command) {

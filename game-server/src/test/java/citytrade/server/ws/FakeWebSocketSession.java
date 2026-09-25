@@ -21,6 +21,10 @@ final class FakeWebSocketSession implements WebSocketSession {
     private final List<String> sentMessages = new ArrayList<>();
     private final Map<String, Object> attributes = new HashMap<>();
     private boolean open = true;
+    // Runs synchronously inside sendMessage, before the payload is recorded: lets a test pause a send in
+    // progress (e.g. to prove another operation is locked out while it runs) without any production hook.
+    private Runnable beforeSend = () -> {
+    };
 
     FakeWebSocketSession() {
         this("fake-session-" + System.nanoTime());
@@ -32,6 +36,10 @@ final class FakeWebSocketSession implements WebSocketSession {
 
     List<String> sentMessages() {
         return List.copyOf(sentMessages);
+    }
+
+    void beforeSend(Runnable action) {
+        this.beforeSend = action;
     }
 
     @Override
@@ -104,6 +112,7 @@ final class FakeWebSocketSession implements WebSocketSession {
 
     @Override
     public void sendMessage(WebSocketMessage<?> message) {
+        beforeSend.run();
         if (message instanceof TextMessage text) {
             sentMessages.add(text.getPayload());
         }

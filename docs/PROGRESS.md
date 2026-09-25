@@ -5,8 +5,8 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
 - Milestone: M3 server started (T19 room/lobby REST; T20 GameRoom serial queue; T20b round flow;
-  T21 PlayerGameView + privacy projector; T22 WebSocket protocol added)
-- Next task: T22 review; then T23 commandId idempotency + reconnect
+  T21 PlayerGameView + privacy projector; T22 WebSocket protocol; T23 commandId idempotency + reconnect added)
+- Next task: T22/T23 review; then T24 command log persistence + replay
 - Target rulesets: prototype-001 and prototype-002 (`rulesets/`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -47,6 +47,165 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T23 - commandId idempotency + reconnect and session identity - READY (review pending)
+- What: `GameRoom` now stores an outcome per `commandId` (Architecture 6.7): a new
+  `submitPlayerCommand(seat, commandId, command)` overload; a duplicate `commandId` from the SAME seat returns
+  the exact same `ProcessedCommand` again (no new sequence, no engine call, no `stateVersion` change - checked
+  inside `process()`, which already runs single-threaded, so a plain `HashMap` needs no locking); the same
+  `commandId` from a DIFFERENT seat is refused (new `CommandOutcome.Refused` path, new `ProtocolErrorCode.
+  COMMAND_ID_REUSED`) without touching the original seat's stored outcome. The old 2-arg
+  `submitPlayerCommand(seat, command)` (used by tests and non-WS callers) now delegates with a fresh random
+  id per call, so it is never deduplicated - existing T20/T20b tests needed no changes. `ProcessedCommand`
+  gained a `commandId` component (empty for BOT/SYSTEM).
+- `GameWebSocketHandler`: a player command with a missing/blank `commandId` -> `INVALID_PAYLOAD`; replies now
+  echo `processed.resultingStateVersion()` (this command's own outcome), not the room's live `stateVersion()`,
+  so a duplicate's reply is byte-for-byte identical to the original even if the room moved on since then.
+- Reconnect (Architecture 6.10): HELLO with a token whose seat already has a live connection replaces it - the
+  previous `established` entry is evicted and the old session closed (`CloseStatus.NORMAL`) BEFORE its own
+  `afterConnectionClosed` callback can run, so that callback finds nothing and never marks the seat
+  disconnected right after it just reconnected. Genuine disconnects call `RoundFlowDriver.setDisconnected`
+  (D23; the driver already had this method from T20b, just never wired to anything) and, like `READY`,
+  broadcast `ROOM_UPDATE` to the room when `roomVersion` actually changed.
+- Tokens invalid after CLOSED already worked (T22's `findByToken` skips CLOSED rooms); added end-to-end
+  coverage of it here.
+- Files: `GameRoom`, `ProcessedCommand`, `GameWebSocketHandler`, `ProtocolErrorCode`, `RoomConnections` (doc
+  only), `docs/PROTOCOL.md` (commandId requirement/dedup, reconnect, `COMMAND_ID_REUSED`).
+- Tests: `GameRoomCommandIdTest` (3, GameRoom-only: duplicate same-seat commandId calls the engine once and
+  returns the same instance incl. for a Rejected outcome; a different-seat reuse is refused and does not
+  disturb the original), `GameWebSocketReconnectAndIdempotencyTest` (7, real WebSocket client: duplicate
+  commandId bought once with identical replies; cross-seat reuse rejected; a new connection for the same seat
+  closes the old one; disconnect+reconnect gets the same seat and the CURRENT stateVersion; a disconnected
+  seat does not block an all-READY early round end; a CLOSED room's token is refused; a Logback `ListAppender`
+  capture at DEBUG across HELLO/reconnect never contains either seat's token).
+- Verification: `./gradlew build` green (all modules); `:game-server:test` rerun clean twice in a row.
+- Round 1 fix (review R1-P2-1): `handleHello` registered the reconnecting session and broadcast `ROOM_UPDATE`
+  (disconnected-status change) before sending that same session its `FULL_SNAPSHOT`, so a reconnecting client
+  could receive `ROOM_UPDATE` first. Reordered so `sendRaw(session, snapshotFor(seat))` happens before the
+  `broadcastRoomUpdate()` call.
+- Round 2 fix (review R2-P1-1): a duplicate `commandId`'s reply reused `processed.resultingStateVersion()`
+  (correctly cached at the original processing) but still re-read `ctx.driver().roomVersion()` live, so a
+  READY/disconnect/round-metadata change between the original call and the retry made the two replies differ -
+  `roomVersion` is `RoundFlowDriver` state, not part of `ProcessedCommand`. Added a
+  `GameWebSocketHandler`-local cache, `Map<CommandReplyKey(roomCode, seat, commandId), CommandReply(sequence,
+  ServerMessage)>`: the first reply for a `commandId` is cached together with its `ProcessedCommand.sequence()`;
+  a later call whose `ProcessedCommand` has that same `sequence()` (i.e. GameRoom's own dedup returned the
+  identical record) replays the cached `ServerMessage` byte-for-byte instead of recomputing `roomVersion`.
+  A different seat reusing the `commandId` gets its own cache key, so the existing `COMMAND_ID_REUSED` refusal
+  path is unaffected.
+- Tests (+1): `GameWebSocketReconnectAndIdempotencyTest.duplicateCommandIdReplyStaysIdenticalEvenAfterRoomVersionChanges`
+  - bumps `roomVersion` via seat 1's READY in between two identical submissions from seat 0, asserts the
+  second reply's `roomVersion` still equals the first's.
+- Round 3 fixes (review R3-P1-1/2/3): three concurrency/identity gaps that only reproduce under real races
+  (existing tests are sequential, so none caught them):
+  - R3-P1-1: `handleHello`'s reconnect swap (evict previous session, register the new one,
+    `setDisconnected(false)`) and `afterConnectionClosed`'s own "mark seat disconnected" path were not
+    atomic with each other. A genuine close of the JUST-REPLACED old session, landing between the new
+    session's registration and its eviction, could run `setDisconnected(seat, true)` right after the
+    reconnect had set it `false`. Fixed by adding a per-`(roomCode, seat)` lock (`seatLocks` +
+    `seatLock()`); both `handleHello`'s swap and `afterConnectionClosed`'s check-and-mark now run inside
+    that lock, so one always completes in full before the other starts. `afterConnectionClosed` also now
+    checks `RoomConnections.unregister`'s return value (changed from `void` to `boolean`: true only if the
+    closing session was still the one currently registered for the seat) instead of ignoring it, and skips
+    `setDisconnected(true)` entirely when a reconnect already replaced it.
+  - R3-P1-2: two concurrent duplicate submissions of the same `commandId` could both miss the (then-empty)
+    `commandReplies` cache and independently read `ctx.driver().roomVersion()`, producing two different
+    "canonical" replies for what must be one identical outcome, with the later `.put()` silently winning.
+    Fixed by installing the reply with `commandReplies.computeIfAbsent(replyKey, ...)`: only the winning
+    thread's mapping function runs, so exactly one `roomVersion` read is ever cached, and every caller
+    (winner and duplicates) gets that same `ServerMessage` back.
+  - R3-P1-3: `commandReplies` (and `CommandReplyKey`) was keyed by `roomCode`, but `RoomRegistry.create`
+    reuses a CLOSED room's code for a brand-new room. A stale reply could theoretically resurface if a new
+    room happened to reuse a code together with a colliding seat+commandId. Switched the key to `Room`'s
+    stable `roomId` (`UUID`, already existed, never reused) instead of `roomCode`.
+  - Files: `GameWebSocketHandler`, `RoomConnections`.
+  - Verification: `./gradlew build` green; `GameWebSocketReconnectAndIdempotencyTest` +
+    `GameRoomCommandIdTest` + `GameWebSocketProtocolTest` rerun clean.
+  - Note: none of the three races have a deterministic regression test (they need genuine thread
+    interleaving, which the existing single-threaded-per-session WebSocket test harness cannot force); the
+    fixes were verified by code inspection of the now-atomic critical sections instead, per the reviewer's
+    own TEST ASSESSMENT ("tests do not cover concurrent reconnect/duplicate requests or room-code reuse").
+- Round 4 fix (review R4-P1-1): `GameWebSocketHandler`'s `broadcasters` map and `RoomConnections` (both new
+  in T22) were still keyed by `roomCode`, unlike `commandReplies` (already fixed to `roomId` in round 3 -
+  R3-P1-3). Since `RoomRegistry.create` reuses a CLOSED room's code for a brand-new room, a HELLO into that
+  new room's `computeIfAbsent` found the OLD room's `RoomBroadcaster` still there (never removed) and reused
+  it unchanged: the new room's clients would get the old, finished game's stale/private state from
+  `snapshotFor`, and would never see their own game's updates at all, since the old broadcaster was never
+  wired as a listener on the new `GameRoom`. Fixed by keying both `broadcasters` and `RoomConnections` by
+  `Room.roomId()` (`UUID`, stable, never reused) instead of `roomCode`, the same pattern R3-P1-3 already
+  established for `commandReplies`.
+  - Files: `GameWebSocketHandler`, `RoomConnections`, `RoomBroadcaster`.
+  - Tests: `RoomBroadcasterTest.connectionsOfARoomWithAReusedCodeStayIsolatedFromTheOldRoomsSessions` - a
+    `RoomRegistry` built with a fixed `RoomCodeGenerator` forces the real `create()` reuse path (close one
+    room, create another with the same generator), producing two `Room`s with the same `roomCode` but
+    different `roomId`s; asserts `RoomConnections` keeps their registered sessions fully separate.
+  - Verification: `./gradlew build` green (all modules); `game-server:test` rerun clean.
+- Round 5 fix (review R5-P1-1): `handleHello` registered the reconnecting session in `RoomConnections`
+  (making it visible to `RoomBroadcaster`, which reads live from that registry) BEFORE sending it its own
+  `FULL_SNAPSHOT`. A concurrent broadcast triggered by another seat's command in between - `onProcessed`'s
+  `STATE_UPDATE`, or another READY's `ROOM_UPDATE` - could reach the just-registered session first, violating
+  the reconnect protocol (snapshot must always be the first message a reconnecting client sees). Fixed by
+  moving `connections.register(...)` to run AFTER `sendRaw(session, broadcaster.snapshotFor(seat))`: the new
+  session stays completely absent from `RoomConnections` - and so invisible to every broadcast path - until
+  its `FULL_SNAPSHOT` has already been sent directly to it. No extra locking needed: this is plain sequential
+  ordering within `handleHello`'s own thread, and `RoomConnections` is a `ConcurrentHashMap` already safe for
+  another thread to read mid-update. `established.remove(previous.getId())` (which is what actually protects
+  against R3-P1-1) already happens earlier, under `seatLock`, so this reordering does not touch that
+  guarantee.
+  - Files: `GameWebSocketHandler`.
+  - Verification: `./gradlew build` green (all modules); `GameWebSocketReconnectAndIdempotencyTest` rerun
+    clean. No new deterministic regression test added: like the round-3 races, this needs genuine thread
+    interleaving between `handleHello` and a concurrent `GameRoom` worker-thread broadcast, which the existing
+    single-threaded-per-session WebSocket test harness cannot force; verified by code inspection of the now
+    strictly-ordered `sendRaw` / `connections.register` calls instead.
+- Round 6 fix (review R6-P1-1): round 5's fix removed the "registered before snapshot sent" ordering bug but
+  left the reconnecting session absent from `RoomConnections` for a real gap between `sendRaw(snapshot)` and
+  `connections.register(...)`. Two problems in that gap: (1) a state change processed concurrently on the
+  room's worker thread would call `RoomBroadcaster.broadcast()`, which reads sessions live from
+  `RoomConnections` - since the reconnecting session was not yet registered, it would miss that broadcast
+  entirely, leaving its just-sent snapshot stale with no way to catch up; (2) if the brand-new session itself
+  closed during that same gap, `afterConnectionClosed` would call `RoomConnections.unregister(...)`, which is
+  a no-op for a session not yet registered, so it would return early WITHOUT calling `setDisconnected(true)` -
+  and `handleHello` would then go on to register the already-closed session anyway, leaving the seat marked
+  connected while genuinely closed. Fixed both gaps with one change: `RoomBroadcaster` gained a
+  `deliverSnapshotAndRegister(seat, session)` method that sends the snapshot and registers the session
+  atomically under a new per-room `broadcastLock`, which every `broadcast()`/`broadcastNotices()` call now also
+  holds - so a concurrent broadcast and a snapshot-delivery-plus-registration can never interleave (whichever
+  finishes first, the other sees a fully consistent, non-stale state). `handleHello` now calls this new method
+  from INSIDE its existing per-`(roomCode, seat)` `seatLock` block (previously that block ended before the
+  snapshot/registration step), so a concurrent close of the same brand-new session - `afterConnectionClosed`
+  also takes that lock - can no longer interleave with registration either: it now always sees the session
+  already registered by the time it runs, so `unregister()` correctly returns true and `setDisconnected(true)`
+  fires.
+  - Files: `RoomBroadcaster`, `GameWebSocketHandler`.
+  - Tests (+1): `RoomBroadcasterTest.deliverSnapshotAndRegisterBlocksAConcurrentBroadcastUntilItCompletes` -
+    blocks a snapshot delivery for seat 0 mid-send (via a new `FakeWebSocketSession.beforeSend` test hook),
+    submits a state-changing command for seat 1 while that's in flight, and asserts the command's processing
+    (which broadcasts on the room's worker thread) stays blocked and seat 1 receives nothing until the
+    snapshot delivery is released - proving the two are now mutually exclusive. The second gap (own-session
+    close during registration) is closed by construction (same `seatLock` now spans the whole critical
+    section, matching the existing R3-P1-1 pattern) but is not separately regression-tested: forcing that exact
+    interleaving would need a production-code test hook inside `handleHello` itself, which seemed like more
+    risk than value given the fix is a straightforward lock-scope widening.
+  - Verification: `./gradlew build` green (all modules); `RoomBroadcasterTest` rerun clean 3x in a row (new
+    test uses real thread blocking/latches, not sleeps-as-synchronization, so it is not timing-flaky).
+- Round 7 fix (review R7-P2-1): two round-6/T23 tests used a fixed `Thread.sleep(...)` to give a race a window
+  before sampling state, which the project rule bans (tests must not sleep) and which is inherently flaky - too
+  short under CI load gives a false pass, too long just wastes time.
+  - `RoomBroadcasterTest.deliverSnapshotAndRegisterBlocksAConcurrentBroadcastUntilItCompletes`: replaced
+    `Thread.sleep(300)` + `commandFuture.isDone()` with a `CountDownLatch` (`seat1BroadcastAttempted`) armed via
+    `FakeWebSocketSession.beforeSend` on seat 1 - it can only fire once `broadcast()` acquires the lock seat 0's
+    snapshot delivery holds, so `latch.await(300, MILLISECONDS)` returning `false` proves the block by
+    construction (and returns immediately once the lock frees, instead of always waiting the full window).
+  - `GameWebSocketReconnectAndIdempotencyTest`'s `awaitMessage` polled `Thread.sleep(50)` between checks.
+    Replaced with an `Object lock` on `RecordingClientHandler`, notified from `handleTextMessage` right after
+    each message is recorded; `awaitMessage` now does its check-then-wait inside `synchronized (handler.lock)`
+    so a message arriving between a failed check and the wait call is never missed, and returns as soon as a
+    matching message is recorded instead of up to 50ms late.
+  - Files: `RoomBroadcasterTest`, `GameWebSocketReconnectAndIdempotencyTest` (test-only; no production code
+    changed).
+  - Verification: `./gradlew build` green (all modules); both test classes rerun clean.
+- Notes / P3 items: none.
 
 ### T22 - WebSocket protocol - READY (review pending)
 - What: new `citytrade.server.ws` package + `/ws` endpoint (plain `TextWebSocketHandler`, no STOMP).
@@ -289,18 +448,9 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: sim (Options, Distribution, GamePart, Collector vs real game events, Report by hand, Main end-to-end +
   same args = same files); ProductionTest, BotGameTest observer; 3 event-list tests updated for the new event.
 
-### T16 - Trader bot - DONE (review round 2)
-- What: `TraderBot` (Arch 8.1 B): answers every offer to it (accept if value received >= threshold x value given at
-  market buy costs, and it gives only resources above its needs = next level cost + crisis reserve); offers spare
-  resources (specialty first) at equal value for a missing resource, specialty city first, max N per round, one per
-  seat per round, cancels its own offer still open at its next turn; market fallback like baseline; warned crisis:
-  keeps cost (+1 for upkeep) and buys it if missing, policy stays PAY; bounded bids (share of reward value over rounds
-  left, share of unneeded Money). Bot settings in `TraderBot.Settings` (bot profile, not game rules).
-- Shared bot helpers moved to `BotActions`. Review R1-P1-1: `BotGame` now asks a passed seat again in the next pass.
-- Tests: TraderBotTest (18), BotGameTest (+5: 100 trader games / 100 mixed games without rejections, traders pay more
-  crises than baseline, determinism, passed seat answers a later offer).
-
 ## Earlier
+- T16 DONE: `TraderBot` (Arch 8.1 B) - value-threshold trading, spare-resource offers, warned-crisis prep,
+  bounded bids; shared helpers in `BotActions`.
 - T15 DONE: `game-bots` `Bot`/`BaselineBot` (Arch 8.1 A, market fallback, no negotiation), `BotGame` runner.
 - T14a DONE: D18 - `Contracts.breakVoluntarily` rejects `INSUFFICIENT_FREE_MONEY` with active bids and free Money short.
 - T14 DONE: `ScriptedGame`/`FullGameTest`/`ReplayTest`/`RoundOrderTest`/`RulesetSensitivityTest` (M1 acceptance, no engine change).

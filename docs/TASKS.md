@@ -375,7 +375,7 @@ Accept (tests with a real WebSocket client):
 - a payload with a "seat" field is rejected
 - PROTOCOL.md examples are valid (parsed in a test)
 
-### T23 - commandId idempotency + reconnect and session identity  `TODO`
+### T23 - commandId idempotency + reconnect and session identity  `DONE`
 Depends on: T22
 Docs: Architecture 6.6, 6.7, 6.10; decision D23.
 Do:

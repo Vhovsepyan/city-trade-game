@@ -42,6 +42,13 @@ final class RoomBroadcaster {
     private final Room room;
     private final RoomConnections connections;
     private final ObjectMapper json;
+    // Guards every broadcast (this room's worker thread, via onProcessed/broadcastRoomUpdate) against the
+    // WebSocket handler's snapshot-delivery-plus-registration for a reconnecting seat (a different thread), so
+    // the two can never interleave (R6-P1-1): either the registration completes first, so the broadcast that
+    // follows reaches the new session too (at worst a harmless duplicate of what the snapshot already had), or
+    // the broadcast completes first (without the not-yet-registered session), and the snapshot taken right
+    // after is already current - so no concurrent state change is ever missed by a reconnecting client.
+    private final Object broadcastLock = new Object();
 
     private long lastBroadcastStateVersion;
 
@@ -79,15 +86,31 @@ final class RoomBroadcaster {
         return ServerMessage.snapshot(gameRoom.stateVersion(), driver.roomVersion(), viewFor(seat));
     }
 
+    /**
+     * Sends {@code session} its FULL_SNAPSHOT and only then registers it in {@link RoomConnections}, atomically
+     * with respect to every {@link #broadcast} - so a state change processed concurrently on the room's worker
+     * thread can never be sent to every other seat while being missed by this reconnecting one (R6-P1-1). The
+     * caller (the WebSocket handler's HELLO handling) additionally holds this seat's own lock for the whole
+     * call, so a concurrent close of this same session is serialized against registration too.
+     */
+    void deliverSnapshotAndRegister(int seat, WebSocketSession session) {
+        synchronized (broadcastLock) {
+            send(session, snapshotFor(seat));
+            connections.register(room.roomId(), seat, session);
+        }
+    }
+
     private void broadcast(ServerMessageType type) {
-        long stateVersion = gameRoom.stateVersion();
-        long roomVersion = driver.roomVersion();
-        for (Map.Entry<Integer, WebSocketSession> entry : connections.sessionsOf(room.roomCode()).entrySet()) {
-            PlayerGameView view = viewFor(entry.getKey());
-            ServerMessage message = type == ServerMessageType.ROOM_UPDATE
-                    ? ServerMessage.roomUpdate(stateVersion, roomVersion, view)
-                    : ServerMessage.stateUpdate(stateVersion, roomVersion, view);
-            send(entry.getValue(), message);
+        synchronized (broadcastLock) {
+            long stateVersion = gameRoom.stateVersion();
+            long roomVersion = driver.roomVersion();
+            for (Map.Entry<Integer, WebSocketSession> entry : connections.sessionsOf(room.roomId()).entrySet()) {
+                PlayerGameView view = viewFor(entry.getKey());
+                ServerMessage message = type == ServerMessageType.ROOM_UPDATE
+                        ? ServerMessage.roomUpdate(stateVersion, roomVersion, view)
+                        : ServerMessage.stateUpdate(stateVersion, roomVersion, view);
+                send(entry.getValue(), message);
+            }
         }
     }
 
@@ -95,22 +118,24 @@ final class RoomBroadcaster {
         if (events.isEmpty()) {
             return;
         }
-        long stateVersion = gameRoom.stateVersion();
-        long roomVersion = driver.roomVersion();
-        Map<Integer, WebSocketSession> sessions = connections.sessionsOf(room.roomCode());
-        for (Notice notice : NoticeProjector.project(gameRoom.state(), events)) {
-            WebSocketSession session = sessions.get(notice.seat());
-            if (session == null) {
-                continue;
+        synchronized (broadcastLock) {
+            long stateVersion = gameRoom.stateVersion();
+            long roomVersion = driver.roomVersion();
+            Map<Integer, WebSocketSession> sessions = connections.sessionsOf(room.roomId());
+            for (Notice notice : NoticeProjector.project(gameRoom.state(), events)) {
+                WebSocketSession session = sessions.get(notice.seat());
+                if (session == null) {
+                    continue;
+                }
+                ServerMessageType type = switch (notice.event()) {
+                    case NoticeEvent.EventWarned ignored -> ServerMessageType.ROUND_WARNING;
+                    case NoticeEvent.RoundResolved ignored -> ServerMessageType.ROUND_RESOLVED;
+                    case NoticeEvent.GameFinished ignored -> ServerMessageType.GAME_FINISHED;
+                    // Not exhaustive on purpose: every other NoticeEvent kind is a plain, generic notice.
+                    default -> ServerMessageType.NOTICE;
+                };
+                send(session, ServerMessage.event(type, stateVersion, roomVersion, notice.event()));
             }
-            ServerMessageType type = switch (notice.event()) {
-                case NoticeEvent.EventWarned ignored -> ServerMessageType.ROUND_WARNING;
-                case NoticeEvent.RoundResolved ignored -> ServerMessageType.ROUND_RESOLVED;
-                case NoticeEvent.GameFinished ignored -> ServerMessageType.GAME_FINISHED;
-                // Not exhaustive on purpose: every other NoticeEvent kind is a plain, generic notice.
-                default -> ServerMessageType.NOTICE;
-            };
-            send(session, ServerMessage.event(type, stateVersion, roomVersion, notice.event()));
         }
     }
 

@@ -1,4 +1,4 @@
-# PROTOCOL.md - WebSocket protocol (T22)
+# PROTOCOL.md - WebSocket protocol (T22, T23)
 
 Endpoint: `/ws`. Plain `TextWebSocketHandler`, JSON text frames, no STOMP, no message broker
 (Architecture 6.8). Built by `citytrade.server.ws.GameWebSocketHandler`.
@@ -18,10 +18,15 @@ identifies both the room and the seat (Architecture 6.6: identity comes from the
 }
 ```
 
-- Anything that is not a valid HELLO (wrong shape, an unknown token, or a token for a room that is not
-  currently live) -> the connection is closed, no message is sent first.
+- Anything that is not a valid HELLO (wrong shape, an unknown token, a token for a room that is not
+  currently live, or a token for a CLOSED room) -> the connection is closed, no message is sent first.
 - `protocolVersion` other than `1` -> one `PROTOCOL_UNSUPPORTED` message, then the connection is closed.
 - Success -> one `FULL_SNAPSHOT` message for that seat, then normal exchange begins.
+- Reconnect (Architecture 6.10): HELLO with the same token any time later opens a NEW connection for the
+  same seat and replaces the old one - the old connection is closed by the server. A seat with no live
+  connection is treated as disconnected (D23): it is passive (no automatic commands are sent for it, only
+  the automatic rules like upkeep/crisis/contract payments still apply) and counts as READY (D21) until it
+  reconnects. Every other connected seat sees this in `ROOM_UPDATE`'s `view.players[].disconnected`.
 
 ## Client -> server (after HELLO)
 
@@ -43,6 +48,13 @@ Every later message is a `CommandEnvelope`:
   `PROTOCOL_UNSUPPORTED` message, then the connection is closed, exactly like a bad HELLO.
 - `UPGRADE_CITY` and `SNAPSHOT_REQUEST` take no payload fields; a payload containing any field
   (including `{}`'s extra siblings) is rejected as `INVALID_PAYLOAD`.
+- `commandId` is required on every player command (Architecture 6.7) and is the client's idempotency key:
+  sending the exact same `commandId` again from the SAME seat never reaches the engine a second time - it
+  gets back the exact same reply (`COMMAND_ACCEPTED`/`COMMAND_REJECTED`, same `stateVersion`) as the first
+  time. A missing/blank `commandId` -> `INVALID_PAYLOAD`. The same `commandId` used by a DIFFERENT seat ->
+  `COMMAND_REJECTED` with `rejectionCode: "COMMAND_ID_REUSED"` (this can only happen with a colliding
+  client-generated id; a UUID per command avoids it in practice). `commandId` is not required for `READY`
+  or `SNAPSHOT_REQUEST` (neither is an idempotency concern: both are naturally safe to repeat).
 - `commandType` is one of:
   - `READY` - payload `{ "ready": true }` or `{ "ready": false }` (D21). Not an engine command: replies
     with `ROOM_UPDATE` to every connected seat (never `COMMAND_ACCEPTED`).
@@ -120,9 +132,10 @@ types listed below (absent, not null-valued, for every other type).
 - `COMMAND_ACCEPTED` / `COMMAND_REJECTED` are sent only to the seat that sent the command, and carry
   `commandId` (echoed back). `COMMAND_REJECTED` also carries `rejectionCode` and `message`.
   `rejectionCode` is either one of the engine's `RejectionCode` values (the command reached the engine
-  and was rejected there), or `UNSUPPORTED_COMMAND_TYPE` / `INVALID_PAYLOAD` for a message that never
-  reached the engine at all (unknown `commandType`, or a payload that does not parse - including one
-  with an extra `seat` field).
+  and was rejected there), or `UNSUPPORTED_COMMAND_TYPE` / `INVALID_PAYLOAD` / `COMMAND_ID_REUSED` for a
+  message that never reached the engine at all (unknown `commandType`; a payload that does not parse,
+  including one with an extra `seat` field, or a missing `commandId`; or a `commandId` already used by a
+  different seat).
 - `NOTICE`, `ROUND_WARNING`, `ROUND_RESOLVED`, `GAME_FINISHED` carry `eventKind` (the event's shape,
   e.g. `"MarketBought"`) and `event` (its fields, privacy-filtered by `NoticeProjector` - see
   `docs/VIEW.md` "Notices"). `ROUND_WARNING` is always `eventKind: "EventWarned"`, `ROUND_RESOLVED` is
