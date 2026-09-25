@@ -5,8 +5,9 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 
 ## Current state
 - Milestone: M3 server started (T19 room/lobby REST; T20 GameRoom serial queue; T20b round flow;
-  T21 PlayerGameView + privacy projector; T22 WebSocket protocol; T23 commandId idempotency + reconnect added)
-- Next task: T22/T23 review; then T24 command log persistence + replay
+  T21 PlayerGameView + privacy projector; T22 WebSocket protocol; T23 commandId idempotency + reconnect;
+  T24 MatchLog persistence + replay added)
+- Next task: T22/T23/T24 review; then T24a M3 acceptance test
 - Target rulesets: prototype-001 and prototype-002 (`rulesets/`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -47,6 +48,50 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T24 - Command log persistence (postgres profile) + replay - READY (review pending)
+- What: new `citytrade.server.persistence` package. `MatchLog` interface (matchStarted/commandProcessed/
+  matchFinished/loadMatch/loadCommands); `InMemoryMatchLog` (default, no database, Architecture 7.1) and
+  `PostgresMatchLog` (`@Profile("postgres")`, JdbcTemplate + JSONB payload via `PGobject`) implement it
+  identically. `MatchCommandCodec` turns every `GameCommand` (all 19 types, StartRound/ResolveRound included)
+  into a `(commandType, payload)` pair and back, with the command's OWN real seat in the payload (unlike
+  `ws.ClientCommands`, which always injects a placeholder - here the stored command must replay byte-for-byte).
+  `ReplayService.replay(MatchRecord, List<LoggedCommand>, Ruleset)`: `GameSetup.create(seed, ruleset)` then
+  every ACCEPTED command, sorted by `commandSequence` (never storage/insertion order), through
+  `GameEngine.apply`; REJECTED/REFUSED commands are stored (Architecture 7.2 "for debugging") but skipped.
+- `ActiveGameCoordinator` now takes a `MatchLog`: `matchStarted` when a room's `GameRoom` is created (seed,
+  rulesetVersion, one `MatchPlayer` per seat - nickname null for a bot), `gameRoom.addListener` writes every
+  `ProcessedCommand` (READY never generates one, so it is never logged, matching the Do section), and
+  `matchFinished` in `onFinished` with the final `FinalResult`.
+- Server wiring: `ServerConfiguration.inMemoryMatchLog()` (`@Profile("!postgres")`) is the default; the
+  `postgres` profile's `PostgresConfiguration` builds the JDBC `DataSource` from the standard
+  `spring.datasource.*` properties and runs the Flyway migration (`db/migration/V1__init.sql`: matches,
+  match_players, match_commands, match_results, Architecture 7.3) once, before anything uses it.
+  `GameServerApplication` excludes Spring Boot's own `DataSourceAutoConfiguration`: without this, adding the
+  `postgres` JDBC driver to the classpath made Boot try to build a `DataSource` bean on EVERY startup
+  (not just under the `postgres` profile) and fail every existing full-context test - found by running the
+  full suite, not by inspection.
+- Files: `persistence/{MatchLog,MatchPlayer,MatchRecord,LoggedCommand,LoggedOutcome,MatchLogs,
+  MatchCommandCodec,InMemoryMatchLog,PostgresMatchLog,ReplayService}.java`, `config/PostgresConfiguration.java`,
+  `db/migration/V1__init.sql`, `docs/SERVER.md`.
+- Tests: `MatchCommandCodecTest` (round-trips every command type, including the two with `Optional<Resource>`
+  fields, through both the raw payload and a text/JSON round trip like a JSONB column), `InMemoryMatchLogTest`,
+  `ReplayServiceTest` (matches direct `GameEngine.apply`; order-independence via a shuffled-insertion test;
+  rejected/refused skipped; ruleset-version mismatch rejected) - all against `InMemoryMatchLog` for speed.
+  `PostgresMatchLogTest` (`io.zonky.test:embedded-postgres`, a real Postgres binary, no Docker): a full
+  14-round bot game driven through `ActiveGameCoordinator`/`GameRoom` (1 scripted human + 3 bots, like
+  `RoundFlowDriverTest`), then loaded FROM THE DATABASE and replayed to the same final `GameState`;
+  `command_sequence` stored out of insertion order still replays correctly; a rejected command is stored
+  (with its `RejectionCode`) but skipped. `ServerConfigurationTest` (+2: default profile's `MatchLog` bean is
+  `InMemoryMatchLog`; the `postgres` profile makes `ServerConfiguration` alone fail, since the real
+  `PostgresMatchLog` only exists via component scanning). `PostgresProfileContextTest`: the FULL
+  `GameServerApplication` context under `-Dspring.profiles.active=postgres` (embedded Postgres wired through
+  `spring.datasource.*` via `@DynamicPropertySource`) resolves `MatchLog` to `PostgresMatchLog` and has
+  already migrated the schema.
+- Verification: `./gradlew build` green (all modules, 161 game-server tests incl. the two embedded-Postgres
+  ones); `:game-server:test --rerun` clean twice in a row.
+- Notes / P3 items: `match_results`/`matches.status` are written but nothing reads them back yet (no task
+  asked for a "past games" API); T24a (M3 acceptance) is next.
 
 ### T23 - commandId idempotency + reconnect and session identity - READY (review pending)
 - What: `GameRoom` now stores an outcome per `commandId` (Architecture 6.7): a new

@@ -11,6 +11,7 @@ import citytrade.engine.ruleset.Ruleset;
 import citytrade.engine.state.GamePhase;
 import citytrade.engine.state.GameState;
 import citytrade.ruleset.json.RulesetLoader;
+import citytrade.server.persistence.InMemoryMatchLog;
 import citytrade.server.room.BotType;
 import citytrade.server.room.Room;
 import citytrade.server.room.RoomCreation;
@@ -38,8 +39,8 @@ class ActiveGameCoordinatorTest {
         Ruleset ruleset = ruleset();
         Room room = activeRoomWithThreeBots(ruleset);
         ManualRoundScheduler scheduler = new ManualRoundScheduler();
-        ActiveGameCoordinator coordinator =
-                new ActiveGameCoordinator(ruleset, FIXED_CLOCK, scheduler, WINDOW, OBJECTIVE_TIMEOUT);
+        ActiveGameCoordinator coordinator = new ActiveGameCoordinator(ruleset, FIXED_CLOCK, scheduler, WINDOW,
+                OBJECTIVE_TIMEOUT, new InMemoryMatchLog());
 
         RoundFlowDriver driver = coordinator.start(room);
         GameRoom gameRoom = driver.gameRoom();

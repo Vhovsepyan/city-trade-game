@@ -3,9 +3,14 @@ package citytrade.server.game;
 import citytrade.bots.Bot;
 import citytrade.engine.ruleset.Ruleset;
 import citytrade.engine.state.GameState;
+import citytrade.server.persistence.MatchLog;
+import citytrade.server.persistence.MatchPlayer;
 import citytrade.server.room.Room;
+import citytrade.server.room.RoomSeat;
 import java.time.Clock;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -15,7 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Creates and starts one {@link GameRoom} + {@link RoundFlowDriver} for each room that becomes ACTIVE
  * (T20b: "create a GameRoom per ACTIVE room and drive it", left open by T20). Keeps them addressable by
- * room code for later tasks (T22 WebSocket routing, T23 reconnect).
+ * room code for later tasks (T22 WebSocket routing, T23 reconnect). Also wires every processed command into
+ * the injected {@link MatchLog} in {@code commandSequence} order (T24, Architecture 7).
  */
 public final class ActiveGameCoordinator {
 
@@ -24,15 +30,17 @@ public final class ActiveGameCoordinator {
     private final RoundScheduler scheduler;
     private final Duration windowDuration;
     private final Duration objectiveChoiceTimeout;
+    private final MatchLog matchLog;
     private final Map<String, RoundFlowDriver> drivers = new ConcurrentHashMap<>();
 
     public ActiveGameCoordinator(Ruleset ruleset, Clock clock, RoundScheduler scheduler,
-            Duration windowDuration, Duration objectiveChoiceTimeout) {
+            Duration windowDuration, Duration objectiveChoiceTimeout, MatchLog matchLog) {
         this.ruleset = Objects.requireNonNull(ruleset);
         this.clock = Objects.requireNonNull(clock);
         this.scheduler = Objects.requireNonNull(scheduler);
         this.windowDuration = Objects.requireNonNull(windowDuration);
         this.objectiveChoiceTimeout = Objects.requireNonNull(objectiveChoiceTimeout);
+        this.matchLog = Objects.requireNonNull(matchLog);
     }
 
     /** Starts driving {@code room}'s game; {@code room} must already be ACTIVE with a {@code GameState}. */
@@ -43,7 +51,11 @@ public final class ActiveGameCoordinator {
         // TreeMap: bot seat order must be deterministic (AGENTS.md "Deterministic").
         Map<Integer, Bot> bots = new TreeMap<>();
         room.botSeats().forEach((seat, type) -> bots.put(seat, BotFactory.create(type)));
+        matchLog.matchStarted(room.roomId(), room.seed().orElseThrow(), room.rulesetVersion(),
+                matchPlayers(room, initial), clock.instant());
+        gameRoom.addListener(processed -> matchLog.commandProcessed(room.roomId(), processed));
         Runnable onFinished = () -> {
+            matchLog.matchFinished(room.roomId(), gameRoom.state().finalResult().orElseThrow());
             room.finish();
             // A FINISHED room's GameRoom is done for good; release its worker thread and this entry
             // instead of leaking them for the rest of the server's lifetime (R1-P2-3).
@@ -55,6 +67,15 @@ public final class ActiveGameCoordinator {
         drivers.put(room.roomCode(), driver);
         driver.start();
         return driver;
+    }
+
+    private static List<MatchPlayer> matchPlayers(Room room, GameState initial) {
+        List<MatchPlayer> players = new ArrayList<>();
+        for (RoomSeat seat : room.snapshot().seats()) {
+            players.add(new MatchPlayer(seat.seat(), seat.nickname(), initial.player(seat.seat()).city(),
+                    seat.botType() != null));
+        }
+        return players;
     }
 
     public Optional<RoundFlowDriver> driver(String roomCode) {

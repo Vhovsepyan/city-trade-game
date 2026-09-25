@@ -395,7 +395,7 @@ Accept (tests):
 - closed room -> token refused
 - log capture contains no token
 
-### T24 - Command log persistence (PostgreSQL profile) + replay  `TODO`
+### T24 - Command log persistence (PostgreSQL profile) + replay  `DONE`
 Depends on: T23
 Docs: Architecture 7.
 Do:

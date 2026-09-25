@@ -5,6 +5,8 @@ import citytrade.ruleset.json.RulesetLoader;
 import citytrade.server.game.ActiveGameCoordinator;
 import citytrade.server.game.RoundScheduler;
 import citytrade.server.game.ScheduledExecutorRoundScheduler;
+import citytrade.server.persistence.InMemoryMatchLog;
+import citytrade.server.persistence.MatchLog;
 import citytrade.server.room.RoomRegistry;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,6 +15,7 @@ import java.time.Clock;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 /** Constructs validated configuration and the in-memory room registry. */
 @Configuration
@@ -66,11 +69,22 @@ public class ServerConfiguration {
         return new ScheduledExecutorRoundScheduler(gameClock);
     }
 
+    /**
+     * Default {@link MatchLog}: no database (Architecture 7.1, T19 "runs in memory by default"). The
+     * {@code postgres} profile supplies {@code PostgresMatchLog} instead (component-scanned, its own
+     * {@code @Profile("postgres")}), which this bean must then step aside for.
+     */
+    @Bean
+    @Profile("!postgres")
+    public MatchLog inMemoryMatchLog() {
+        return new InMemoryMatchLog();
+    }
+
     @Bean
     public ActiveGameCoordinator activeGameCoordinator(Ruleset ruleset, GameServerProperties properties,
-            Clock gameClock, RoundScheduler roundScheduler) {
+            Clock gameClock, RoundScheduler roundScheduler, MatchLog matchLog) {
         return new ActiveGameCoordinator(ruleset, gameClock, roundScheduler, properties.getWindowDuration(),
-                properties.getObjectiveChoiceTimeout());
+                properties.getObjectiveChoiceTimeout(), matchLog);
     }
 
     private static String requireText(String value, String name) {

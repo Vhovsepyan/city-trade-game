@@ -9,9 +9,15 @@ dependencies {
     implementation project(':game-bots')
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    // T24: MatchLog's postgres profile (Flyway migrations, JdbcTemplate, JSONB payload via PGobject).
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+    implementation 'org.postgresql:postgresql'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    // T24: real PostgreSQL for tests, no Docker required.
+    testImplementation 'io.zonky.test:embedded-postgres:2.2.2'
 }
 
 springBoot {
