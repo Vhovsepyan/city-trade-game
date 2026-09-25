@@ -415,7 +415,7 @@ Accept (tests):
 - server works without the `postgres` profile (in-memory) and with it
 - `docs/SERVER.md`: how to run in memory and with PostgreSQL
 
-### T24a - M3 acceptance: full multiplayer server test  `TODO`
+### T24a - M3 acceptance: full multiplayer server test  `DONE`
 Depends on: T24
 Do: one end-to-end test through REST + WebSocket (real server on a random port, injected clock):
 create room (host = human 1) -> 2 humans join -> host adds 1 bot -> start (3 humans + 1 bot = 4 seats) ->

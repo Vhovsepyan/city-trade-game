@@ -63,3 +63,77 @@ original game.
 
 `PostgresMatchLogTest` and any other `postgres`-profile test use `io.zonky.test:embedded-postgres`, a real
 PostgreSQL binary downloaded and run per test JVM - no Docker, no external service required.
+
+`M3AcceptanceTest` (T24a) drives one full 14-round game through the real REST + WebSocket server on a
+random port: room creation, join, add-bot and start over REST; objective choice (one seat via the D22
+timeout); concurrent WebSocket commands; per-seat privacy; disconnect/reconnect; `commandId` idempotency;
+an all-READY early round end; a window-timer-driven round end; the game running to FINISHED; and a
+command-log replay (`ReplayService`) that reproduces the exact final `GameState`.
+
+## Try it yourself: 1 human + 3 bots
+
+No build step needed beyond the wrapper; every command below is copy-pasteable as-is (`curl` for REST,
+`node` for the WebSocket connection - Node 22 has `fetch` and `WebSocket` built in, no `npm install`).
+
+1. Start the server. `--game.window-duration`/`--game.objective-choice-timeout` are shortened here only so
+   a full 14-round game finishes in a few minutes instead of the ~28 minutes the 120s/60s production
+   defaults would take with nobody sending `READY`; drop them to use the real defaults instead.
+
+   ```
+   ./gradlew :game-server:bootRun --args='--game.window-duration=15s --game.objective-choice-timeout=15s'
+   ```
+
+2. In another terminal, create a room, add 3 bots, and start the game:
+
+   ```
+   curl -s -X POST http://localhost:8080/rooms -H "Content-Type: application/json" -d "{\"nickname\":\"you\"}"
+   ```
+
+   Copy the `roomCode` and `token` from the response into the next commands (`ROOM_CODE`, `TOKEN`):
+
+   ```
+   curl -s -X POST http://localhost:8080/rooms/ROOM_CODE/bots -H "Authorization: Bearer TOKEN" -H "Content-Type: application/json" -d "{\"type\":\"BASELINE\"}"
+   curl -s -X POST http://localhost:8080/rooms/ROOM_CODE/bots -H "Authorization: Bearer TOKEN" -H "Content-Type: application/json" -d "{\"type\":\"BASELINE\"}"
+   curl -s -X POST http://localhost:8080/rooms/ROOM_CODE/bots -H "Authorization: Bearer TOKEN" -H "Content-Type: application/json" -d "{\"type\":\"BASELINE\"}"
+   curl -s -X POST http://localhost:8080/rooms/ROOM_CODE/start -H "Authorization: Bearer TOKEN"
+   ```
+
+3. Connect as the human seat and watch the game play out. Save the script below as `play.mjs` (replace
+   `TOKEN` with your own), then run `node play.mjs`. It HELLOs, keeps the first 2 dealt objectives (the
+   default ruleset's `objectives.keptPerPlayer`), sends `READY` every round so it never waits out the
+   window timer, logs every server message, and exits once `GAME_FINISHED` arrives:
+
+   ```js
+   const token = "TOKEN";
+   const ws = new WebSocket("ws://localhost:8080/ws");
+   let n = 0;
+
+   ws.addEventListener("open", () => {
+     ws.send(JSON.stringify({ protocolVersion: 1, token }));
+   });
+
+   ws.addEventListener("message", (event) => {
+     const msg = JSON.parse(event.data);
+     console.log(msg.type, JSON.stringify(msg).slice(0, 200));
+
+     if (msg.view && msg.view.phase === "SETUP" && msg.view.own.keptObjectives.length === 0) {
+       const ids = msg.view.own.dealtObjectives.slice(0, 2).map((o) => o.id);
+       ws.send(JSON.stringify({
+         protocolVersion: 1, commandId: `c-${++n}`, commandType: "CHOOSE_OBJECTIVES",
+         payload: { keptObjectiveIds: ids },
+       }));
+     }
+     if (msg.view && msg.view.phase === "WINDOW") {
+       ws.send(JSON.stringify({
+         protocolVersion: 1, commandId: `c-${++n}`, commandType: "READY", payload: { ready: true },
+       }));
+     }
+     if (msg.type === "GAME_FINISHED") {
+       console.log("finished:", JSON.stringify(msg.event));
+       ws.close();
+     }
+   });
+   ```
+
+   This script only ever chooses objectives and readies up; see `docs/PROTOCOL.md` for every other command
+   type (buying/selling, trades, contracts, projects, bids) a real client would send instead.

@@ -7,8 +7,10 @@ import java.util.List;
 /**
  * Deterministic {@link RoundScheduler} test double: records what got scheduled instead of firing it in real
  * time, so tests drive the round flow (Architecture 6.4) by calling {@link #fireLatest()} instead of sleeping.
+ * Public so it can also back a full {@code @SpringBootTest} context (e.g. {@code M3AcceptanceTest} in the
+ * {@code citytrade.server} package), not just same-package unit tests.
  */
-final class ManualRoundScheduler implements RoundScheduler {
+public final class ManualRoundScheduler implements RoundScheduler {
 
     private final List<Runnable> pending = new ArrayList<>();
 
@@ -27,7 +29,7 @@ final class ManualRoundScheduler implements RoundScheduler {
      * (the objective-choice deadline, then one window deadline per round), so "the current timer" is always
      * the last one scheduled that has not fired yet.
      */
-    synchronized void fireLatest() {
+    public synchronized void fireLatest() {
         if (pending.isEmpty()) {
             throw new IllegalStateException("no task is currently scheduled");
         }

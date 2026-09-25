@@ -6,8 +6,8 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 ## Current state
 - Milestone: M3 server started (T19 room/lobby REST; T20 GameRoom serial queue; T20b round flow;
   T21 PlayerGameView + privacy projector; T22 WebSocket protocol; T23 commandId idempotency + reconnect;
-  T24 MatchLog persistence + replay added)
-- Next task: T22/T23/T24 review; then T24a M3 acceptance test
+  T24 MatchLog persistence + replay; T24a M3 acceptance test added)
+- Next task: T19-T24a review, then M4 (T25 React + Vite skeleton)
 - Target rulesets: prototype-001 and prototype-002 (`rulesets/`)
 - `.claude/settings.json` has an uncommitted owner change from BEFORE T02 (see git status at
   session start). It is not part of T02; agents do not touch or commit it.
@@ -48,6 +48,55 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Tests: ...
 - Notes / P3 items: ...
 -->
+
+### T24a - M3 acceptance: full multiplayer server test - READY (review pending)
+- What: `M3AcceptanceTest` (top-level `citytrade.server` package): one `@SpringBootTest(RANDOM_PORT)` covering
+  every Do-list step in order over the REAL REST + WebSocket server - create room, 2 more humans join, host
+  adds 1 bot, start (4 seats); objectives chosen for seats 0/1 over WS, seat 2 left unset so only the D22
+  objective-choice timeout chooses for it; Round 1's 3 human WebSocket clients send `BUY_FROM_MARKET`
+  concurrently (`CompletableFuture` + a `CountDownLatch` starting gate) while the bot acts through the bot
+  coordinator; per-seat privacy re-checked on the real wire (reusing T22's structural-absence technique); one
+  seat disconnects and reconnects with its token, gets a fresh `FULL_SNAPSHOT`; a duplicate `commandId` from
+  the reconnected seat returns the identical `stateVersion`/`roomVersion`; all 3 humans READY ends Round 1
+  early; nobody READYs Round 2, so only the window timer resolves it; the remaining rounds READY through to
+  FINISHED; `GAME_FINISHED` is received; finally `ReplayService.replay` against the SAME `MatchLog` bean the
+  server itself wrote to reproduces the exact live final `GameState` (`assertEquals`).
+- `game.objective-choice-timeout=3s` / `game.window-duration=8s` override the 60s/120s production defaults
+  (still the real, injected `Clock` + `ScheduledExecutorRoundScheduler`, just short enough to run fast) - both
+  chosen generously above the real REST+WebSocket setup latency and the earlier per-round checks, so round 1
+  never accidentally resolves via the timer before this test's own all-READY step (see Round 1 fix below).
+- `docs/SERVER.md` "Try it yourself": exact `curl` (REST) + a copy-pasteable Node `.mjs` script (built-in
+  `fetch`/`WebSocket`, Node 22, no `npm install`) that plays 1 human + 3 `BASELINE` bots to `GAME_FINISHED`;
+  manually run end-to-end against a real `bootRun` (different port, since 8080 was already taken locally) to
+  confirm the steps work as written, not just read for plausibility.
+- Files: `game-server/src/test/java/citytrade/server/M3AcceptanceTest.java`, `docs/SERVER.md`.
+- Round 1 fix (own, before review): every later `awaitMessage` call originally re-captured its scan-from
+  index via `handlers[0].messages.size()` right after the PREVIOUS await returned. Once round 1 resolves,
+  StartRound/ResolveRound cascade with no further input and can outrun this test thread between two awaits,
+  so the freshly re-read `size()` could already be PAST the very message the next await was looking for
+  (round 2's WINDOW state, or round N's `RoundResolved`) - an intermittent timeout, reproduced twice under
+  `--rerun`. Fixed by taking ONE fixed anchor right before round 1's READY commands and reusing it, unchanged,
+  for every remaining await in the test; each predicate disambiguates by the round number carried in the
+  message itself (`view.round` for a WINDOW phase, the new `isRoundResolved` helper's `event.round` for a
+  `RoundResolved` notice) instead of by position, so scanning the same growing, never-trimmed message log from
+  a stale-but-still-valid starting point is always correct regardless of how far the cascade has already run.
+- Verification: `./gradlew build` green (all modules). `M3AcceptanceTest` alone re-run 20 times in a row
+  (`--rerun` each time) after the round-1 fix - all 20 clean, 0 flaky.
+- Round 1 review fix (R1-P1-1): the test used the production `Clock.systemUTC()` + real `game.objective-choice
+  -timeout=3s` / `game.window-duration=8s` delays, so the D22 objective-choice deadline and Round 2's window
+  deadline only resolved after really waiting out those durations - wall-clock dependent and a flakiness risk
+  under a slow CI machine. Fixed by adding a nested `@TestConfiguration` (`TestSchedulingConfiguration`) that
+  swaps in a `Clock.fixed(Instant.EPOCH, UTC)` and a `ManualRoundScheduler` (both `@Primary`, under different
+  bean names so they don't collide with `ServerConfiguration`'s production beans) - the same deterministic
+  `RoundScheduler` test double `ActiveGameCoordinatorTest`/`RoundFlowDriverTest` already use, now made `public`
+  so this top-level `citytrade.server` test can reuse it too. The test now calls `roundScheduler.fireLatest()`
+  itself, right after awaiting `COMMAND_ACCEPTED` for seats 0/1's objective choices (so firing the timeout
+  can't race and overwrite their in-flight commands) and again once Round 2's WINDOW state is observed, instead
+  of sleeping for real time; the `SHORT_TIMEOUT`/property overrides that existed only to size those real waits
+  were removed as no longer needed. The REST + WebSocket server itself stays real and unmocked.
+  Verification: `./gradlew build` green; `M3AcceptanceTest` re-run several times (`--rerun`) - all clean, and
+  each run now takes ~10s of test time instead of waiting out the 3s/8s timers.
+- Notes / P3 items: M3 is functionally complete; T19-T24a are all still pending their first/next review round.
 
 ### T24 - Command log persistence (postgres profile) + replay - READY (review pending)
 - What: new `citytrade.server.persistence` package. `MatchLog` interface (matchStarted/commandProcessed/
@@ -472,28 +521,10 @@ Keep only the last 10 entries; summarize older ones in one line under "Earlier".
 - Verification: Gradle test/build attempts were blocked in this sandbox by the JDK 25 worker's
   `java.security` access error; no source/test failure was reached.
 
-### T18 - First balance report - DONE (review round 1)
-- What: 3 x 1000 games (baseline x4, baseline/trader mix, trader x4), seed 1. `docs/balance-report-prototype-001.md`.
-- Findings: "do everything" wins (57.5% of trader winners at max 19, 34.6% shared victories); Level 2 in Round 1,
-  Level 3 by Round 4.4; trading stops after Round 11; 50-65 unspent Money; Agricultural strongest (39% baseline),
-  Technology weakest (19.7% trader). Bots do not use projects/contracts, so those are not judged.
-- Suggested (owner decides): Level 2 cost 4; Grand Landmark 10 Money; Research Lab F1 E2 M1 T1; later Money -1/level.
-- Ruleset not changed. No code changed.
-
-### T17 - Simulation runner + metrics - DONE (review round 1)
-- What: `game-sim` CLI `SimulationMain` (`./gradlew :game-sim:run --args="--ruleset prototype-001 --games 1000
-  --seed 1 --bots baseline,trader,baseline,trader"`; also `--rulesets-dir`, `--out` (default `build/sim`)).
-  Game i uses seed + i. Writes `<ruleset>_<bots>_seed<S>_games<N>.json` (summary) and `.csv` (one row per city per game).
-- Metrics: Arch 8.2 (Prestige by city, level 2/3 reach rate + round, produced/traded/discarded, market use,
-  resource demand early/mid/late, contracts, project completion, Strained rounds, holdings + market steps by round)
-  + win rate by city and bot (shared victory = 1/winners), Prestige distribution (all, per city, winner).
-- Engine: new event `ResourcesProduced(seat, produced)` in step 1.3 (needed for "produced"); `BotGame.Observer`.
-- Choice (metrics only): early/mid/late = rounds 1-5 / 6-10 / 11-14 (`GamePart`). Demand = resources paid for
-  levels, buildings, upkeep, crises, projects, event options.
-- Tests: sim (Options, Distribution, GamePart, Collector vs real game events, Report by hand, Main end-to-end +
-  same args = same files); ProductionTest, BotGameTest observer; 3 event-list tests updated for the new event.
-
 ## Earlier
+- T18 DONE: first balance report (3x1000 games, prototype-001); "do everything" wins, Level 2 in Round 1,
+  trading stops after Round 11; ruleset/code unchanged, suggestions only.
+- T17 DONE: `game-sim` CLI + metrics (Arch 8.2), new `ResourcesProduced` event.
 - T16 DONE: `TraderBot` (Arch 8.1 B) - value-threshold trading, spare-resource offers, warned-crisis prep,
   bounded bids; shared helpers in `BotActions`.
 - T15 DONE: `game-bots` `Bot`/`BaselineBot` (Arch 8.1 A, market fallback, no negotiation), `BotGame` runner.
